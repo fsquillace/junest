@@ -1,63 +1,93 @@
 #!/usr/bin/env bash
+#
+# This file is part of JuJu: The universal GNU/Linux package manager
+#
+# Copyright (c) 2012-2014 Filippo Squillace <feel.squally@gmail.com>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Library General Public License as published
+# by the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-JUJU_HOME=$1
-[ -n $JUJU_HOME ] && JUJU_HOME=~/.juju
-JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
-JUJU_BIN=$(dirname "$0")
-ORIGIN_WD=$(pwd)
+NAME='juju'
+VERSION='1.0'
 
+source "$(dirname $0)/../lib/core.sh"
 
-function setup_juju(){
-    trap - QUIT EXIT ABRT KILL TERM INT
-    trap "rm -rf ${maindir}; die \"Error occurred when installing $pkggrp\"" EXIT QUIT ABRT KILL TERM INT
+###################################
+### General functions           ###
+###################################
 
-    maindir=$(TMPDIR=/tmp mktemp -d -t juju.XXXXXXXXXX)
-    builtin cd ${maindir}
+usage() {
+		echo -e "JuJu: The portable GNU/Linux distribution"
+        echo -e "Usage: $NAME <operation> [options]"
+        echo -e "Operations:"
+		echo -e "-i, --setup-from-file <image>  Setup the JuJu image ${JUJU_HOME}"
+        echo -e "-h, --help                     Show this help message"
+        echo -e "-v, --version                  Show the $NAME version"
+}
 
-    info "Downloading JuJu..."
-    imagefile=juju-$(uname -m).tar.gz
-    wget ${JUJU_REPO}/$imagefile
-    tar -zxpf $imagefile
-
-    info "Installing JuJu..."
-    mkdir -p $JUJU_HOME
-    cp -f -a ${maindir}/juju/* $JUJU_HOME
-    info "JuJu installed successfully"
-
-    builtin cd $ORIGIN_WD
-    trap - QUIT EXIT ABRT KILL TERM INT
+version() {
+	echo -e "JuJu ($VERSION): The portable GNU/Linux distribution"
+	echo -e "Copyright (c) 2012-2014 Filippo Squillace <feel.squally@gmail.com>"
+	echo -e "Homepage: http://github.com/fsquillace/juju"
 }
 
 
-function run_juju(){
-    ${JUJU_BIN}/arch-chroot $JUJU_HOME
-}
+###################################
+### MAIN PROGRAM                ###
+###################################
 
+TEMP=`getopt -o ihv --long setup-from-file,help,version -n 'juju' -- "$@"`
 
-echoerr() { echo "$@" 1>&2; }
-function die(){
-# $@: msg (mandatory) - str: Message to print
-    error $@
-    exit 1
-}
-function error(){
-# $@: msg (mandatory) - str: Message to print
-    echoerr -e "\033[1;31m$@\033[0m"
-}
-function warn(){
-# $@: msg (mandatory) - str: Message to print
-    echoerr -e "\033[1;33m$@\033[0m"
-}
-function info(){
-# $@: msg (mandatory) - str: Message to print
-    echo -e "\033[1;37m$@\033[0m"
-}
+if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; exit ; fi
 
-if [ ! "$(ls -A $JUJU_HOME)" ]
+# Note the quotes around `$TEMP': they are essential!
+eval set -- "$TEMP"
+
+OPT_SETUP_FROM_FILE=false
+OPT_HELP=false
+OPT_VERSION=false
+while true ; do
+    case "$1" in
+        -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ;;
+        -h|--help) OPT_HELP=true ; shift ;;
+        -v|--version) OPT_VERSION=true ; shift ;;
+        --) shift ; break ;;
+        *) error "Internal error!" ; exit 1 ;;
+    esac
+done
+
+$OPT_HELP && usage && exit
+$OPT_VERSION && version && exit
+
+ARGS=()
+for arg do
+    ARGS+=($arg)
+done
+
+############## CHECKING ESSENTIAL  COMMANDS ####################
+# Check if the essentials commands are installed (wget and tar)
+if ! which wget &> /dev/null || ! which tar &> /dev/null
 then
-    setup_juju
+    error "Error: wget and tar commands are essentials for JuJu. Get them first."
+	exit 1
 fi
 
-run_juju
+################ DEFINE ACTION ########################
+if $OPT_SETUP_FROM_FILE; then
+	setup_from_file_juju ${ARGS[@]}
+else
+    setup_and_run_juju
+fi
 
-
+# vim: set ts=4 sw=4 noet:
