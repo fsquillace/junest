@@ -96,7 +96,7 @@ function setup_from_file_juju(){
 
 
 function run_juju(){
-    ${JUJU_BIN}/arch-chroot $JUJU_HOME
+    ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME
 }
 
 
@@ -119,7 +119,7 @@ function build_image_juju(){
     mkdir -p ${maindir}/root
     prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -d ${maindir}/root pacman
+    pacstrap -d ${maindir}/root pacman arch-install-scripts
 
     info "Compiling and installing yaourt..."
     mkdir -p ${maindir}/yaourt/{package-query,yaourt}
