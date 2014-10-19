@@ -6,16 +6,19 @@ Description
 -----------
 **JuJu** is a small and portable GNU/Linux distribution based on ArchLinux.
 
-JuJu can be used inside another GNU/Linx OS via chroot. It only contains the package manager (called pacman) in order to access to a wide range of packages from ArchLinux repositories.
+JuJu can be used inside another GNU/Linx OS via chroot.
+It only contains the package manager (called pacman and yaourt) in order to access
+to a wide range of packages from ArchLinux repositories.
 
-The main advantage of using JuJu is because you have an isolated environment in which you can install
-packages without affecting a production system. Another advantage is that with JuJu
-you can access to a really wide range of packages inside GNU/Linux systems that contains
-limited repositories (such as CentOS and RedHat).
+The main advantage of using JuJu is because you have an isolated environment
+in which you can install packages without affecting a production system.
+Another advantage is that with JuJu you can access to a really wide range
+of packages inside GNU/Linux systems that contains limited repositories
+(such as CentOS and RedHat).
 
 Quickstart
 ----------
-After installing JuJu (See next section) just run the main juju script:
+After installing JuJu (see next section) just run the main juju script:
 ```bash
 juju
 ```

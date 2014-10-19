@@ -22,6 +22,8 @@
 # https://wiki.archlinux.org/index.php/PKGBUILD
 # https://wiki.archlinux.org/index.php/Creating_Packages
 
+set -e
+
 ################################ IMPORTS #################################
 # Define the variables for the dependency commands bash, wget, tar, which, awk, grep, xz, file
 WGET=wget
@@ -64,8 +66,7 @@ function setup_juju(){
 
     info "Installing JuJu..."
     mkdir -p ${JUJU_HOME}
-    builtin cd ${JUJU_HOME}
-    tar -zxpf ${maindir}/${imagefile}
+    tar -zxpf ${maindir}/${imagefile} -C ${JUJU_HOME}
     info "JuJu installed successfully"
 
     cleanup_build_directory ${maindir}
@@ -87,8 +88,7 @@ function setup_from_file_juju(){
     fi
     info "Installing JuJu from ${imagefile}..."
     mkdir -p ${JUJU_HOME}
-    builtin cd ${JUJU_HOME}
-    tar -zxpf ${ORIGIN_WD}/${imagefile}
+    tar -zxpf ${ORIGIN_WD}/${imagefile} -C ${JUJU_HOME}
     info "JuJu installed successfully"
 
     builtin cd $ORIGIN_WD
@@ -109,4 +109,36 @@ function setup_and_run_juju(){
     run_juju
 }
 
+function build_image_juju(){
+# The function must runs on ArchLinux
+# The dependencies are:
+# arch-install-scripts
+# base-devel
+# package-query
+    local maindir=$(TMPDIR=/tmp mktemp -d -t juju.XXXXXXXXXX)
+    mkdir -p ${maindir}/root
+    prepare_build_directory
+    info "Installing pacman and its dependencies..."
+    pacstrap -d ${maindir}/root pacman
 
+    info "Compiling and installing yaourt..."
+    mkdir -p ${maindir}/yaourt/{package-query,yaourt}
+
+    builtin cd ${maindir}/yaourt/package-query
+    wget https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
+    makepkg -sfc --asroot
+    pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
+
+    builtin cd ${maindir}/yaourt/yaourt
+    wget https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
+    makepkg -sfc --asroot
+    pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
+
+    rm ${maindir}/root/var/cache/pacman/pkg/*
+
+    builtin cd ${ORIGIN_WD}
+    local imagefile="juju-$(uname -m).tar.gz"
+    info "Compressing image to ${imagefile}..."
+    tar -zcpf ${imagefile} -C ${maindir}/root .
+    cleanup_build_directory ${maindir}
+}
