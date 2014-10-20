@@ -98,8 +98,9 @@ function _setup_juju(){
 
 
 function run_juju(){
-    ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME
+    ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c 'mkdir -p /run/lock && /bin/sh'
 }
+
 
 function run_no_root_juju(){
     if ${JUJU_HOME}/usr/bin/proot ${JUJU_HOME}/usr/bin/true &> /dev/null
@@ -110,6 +111,7 @@ function run_no_root_juju(){
     fi
 }
 
+
 function setup_and_run_juju(){
 # Setup and run the JuJu environment
 # The setup function will be executed only if the
@@ -119,6 +121,7 @@ function setup_and_run_juju(){
     run_juju
 }
 
+
 function setup_and_run_no_root_juju(){
 # Setup and run the JuJu environment
 # The setup function will be executed only if the
@@ -127,6 +130,7 @@ function setup_and_run_no_root_juju(){
     [ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
     run_no_root_juju
 }
+
 
 function build_image_juju(){
 # The function must runs on ArchLinux
