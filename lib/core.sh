@@ -97,7 +97,12 @@ function run_juju(){
 }
 
 function run_no_root_juju(){
-    ${JUJU_HOME}/usr/bin/proot -S ${JUJU_HOME}
+    if ${JUJU_HOME}/usr/bin/proot ${JUJU_HOME}/usr/bin/true &> /dev/null
+    then
+        ${JUJU_HOME}/usr/bin/proot -S ${JUJU_HOME}
+    else
+        PROOT_NO_SECCOMP=1 ${JUJU_HOME}/usr/bin/proot -S ${JUJU_HOME}
+    fi
 }
 
 function setup_and_run_juju(){
