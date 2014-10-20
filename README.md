@@ -36,7 +36,7 @@ $ juju -f
 
 The first time you execute it, the script will download the JuJu image and place it
 to the default directory ~/.juju.
-You can change this behavior by changing the environment variable *JUJU\_HOME*.
+You can change the default directory by changing the environment variable *JUJU\_HOME*.
 
 Installation
 ------------
