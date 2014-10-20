@@ -64,9 +64,7 @@ function setup_juju(){
     $WGET ${JUJU_REPO}/${imagefile}
 
     info "Installing JuJu..."
-    mkdir -p ${JUJU_HOME}
-    tar -zxpf ${maindir}/${imagefile} -C ${JUJU_HOME}
-    info "JuJu installed successfully"
+    _setup_juju ${maindir}/${imagefile}
 
     cleanup_build_directory ${maindir}
 }
@@ -84,11 +82,18 @@ function setup_from_file_juju(){
     [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
 
     info "Installing JuJu from ${imagefile}..."
-    mkdir -p ${JUJU_HOME}
-    tar -zxpf ${ORIGIN_WD}/${imagefile} -C ${JUJU_HOME}
-    info "JuJu installed successfully"
+    _setup_juju ${ORIGIN_WD}/${imagefile}
 
     builtin cd $ORIGIN_WD
+}
+
+
+function _setup_juju(){
+    imagepath=$1
+    mkdir -p ${JUJU_HOME}
+    tar -zxpf ${imagepath} -C ${JUJU_HOME}
+    mkdir -p ${JUJU_HOME}/run/lock
+    info "JuJu installed successfully"
 }
 
 
