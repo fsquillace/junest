@@ -1,6 +1,6 @@
 JuJu
 ====
-**JuJu**: the portable GNU/Linux distribution.
+**JuJu**: the portable GNU/Linux distribution
 
 Description
 -----------
@@ -19,17 +19,24 @@ The main advantage of using JuJu are:
 
 Quickstart
 ----------
-After installing JuJu (see next section) you can run juju either as root or as normal user.
-To run as root:
+There are three different ways you can run JuJu:
 
-    # juju
-
-To run as normal user:
-
-    $ juju -n
+- As normal user - Allow to make basic operations using [proot](https://wiki.archlinux.org/index.php/Proot):
+```
+$ juju
+```
+- As fakeroot - Allow to install/remove packages using [proot](https://wiki.archlinux.org/index.php/Proot):
+```
+$ juju -f
+```
+- As root - Allow to have fully root privileges inside JuJu environment using [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) (you need to be root for executing this):
+```
+# juju -r
+```
 
 The first time you execute it, the script will download the JuJu image and place it
 to the default directory ~/.juju.
+You can change this behavior by changing the environment variable *JUJU\_HOME*.
 
 Installation
 ------------
@@ -63,7 +70,9 @@ Troubleshooting
 In order to install packages using yaourt you may need to install the package groups *base-devel*
 that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
 
+```
     pacman -S base-devel
+```
 
 - **Q**: Why do I get the error: "FATAL: kernel too old"?
 - **A**: This is because the executable from the precompiled package cannot
@@ -71,8 +80,10 @@ always run if the kernel is old.
 In order to check if the executable can be compatible with the kernel of
 the host OS just use file command, for instance:
 
+```
     file ~/.juju/usr/bin/bash
     ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
+```
 
 From the output you can see what is the minimum recommended Linux kernel version.
 

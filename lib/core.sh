@@ -53,6 +53,15 @@ function prepare_build_directory(){
 }
 
 
+function _setup_juju(){
+    imagepath=$1
+    mkdir -p ${JUJU_HOME}
+    tar -zxpf ${imagepath} -C ${JUJU_HOME}
+    mkdir -p ${JUJU_HOME}/run/lock
+    info "JuJu installed successfully"
+}
+
+
 function setup_juju(){
 # Setup the JuJu environment
     local maindir=$(TMPDIR=/tmp mktemp -d -t juju.XXXXXXXXXX)
@@ -88,47 +97,29 @@ function setup_from_file_juju(){
 }
 
 
-function _setup_juju(){
-    imagepath=$1
-    mkdir -p ${JUJU_HOME}
-    tar -zxpf ${imagepath} -C ${JUJU_HOME}
-    mkdir -p ${JUJU_HOME}/run/lock
-    info "JuJu installed successfully"
-}
-
-
-function run_juju(){
+function run_juju_as_root(){
+    mkdir -p ${JUJU_HOME}/${HOME}
     ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c 'mkdir -p /run/lock && /bin/sh'
 }
 
 
-function run_no_root_juju(){
+function _run_juju_with_proot(){
     if ${JUJU_HOME}/usr/bin/proot ${JUJU_HOME}/usr/bin/true &> /dev/null
     then
-        ${JUJU_HOME}/usr/bin/proot -S ${JUJU_HOME}
+        ${JUJU_HOME}/usr/bin/proot $@ ${JUJU_HOME}
     else
-        PROOT_NO_SECCOMP=1 ${JUJU_HOME}/usr/bin/proot -S ${JUJU_HOME}
+        PROOT_NO_SECCOMP=1 ${JUJU_HOME}/usr/bin/proot $@ ${JUJU_HOME}
     fi
 }
 
 
-function setup_and_run_juju(){
-# Setup and run the JuJu environment
-# The setup function will be executed only if the
-# JuJu envinronment in $JUJU_HOME is not present.
-
-    [ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
-    run_juju
+function run_juju_as_fakeroot(){
+    _run_juju_with_proot "-S"
 }
 
 
-function setup_and_run_no_root_juju(){
-# Setup and run the JuJu environment
-# The setup function will be executed only if the
-# JuJu envinronment in $JUJU_HOME is not present.
-
-    [ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
-    run_no_root_juju
+function run_juju_as_user(){
+    _run_juju_with_proot "-R"
 }
 
 
