@@ -26,7 +26,7 @@ set -e
 
 ################################ IMPORTS #################################
 # Define the variables for the dependency commands bash, wget, tar, which, awk, grep, xz, file
-WGET=wget
+WGET="wget --no-check-certificate"
 TAR=tar
 source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
@@ -61,7 +61,7 @@ function setup_juju(){
     info "Downloading JuJu..."
     builtin cd ${maindir}
     local imagefile=juju-$(uname -m).tar.gz
-    wget ${JUJU_REPO}/${imagefile}
+    $WGET ${JUJU_REPO}/${imagefile}
 
     info "Installing JuJu..."
     mkdir -p ${JUJU_HOME}
@@ -134,18 +134,18 @@ function build_image_juju(){
     mkdir -p ${maindir}/packages/{package-query,yaourt,proot}
 
     builtin cd ${maindir}/packages/package-query
-    wget https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
+    $WGET https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
 
     builtin cd ${maindir}/packages/yaourt
-    wget https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
+    $WGET https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
 
     info "Compiling and installing proot..."
     builtin cd ${maindir}/packages/proot
-    wget https://aur.archlinux.org/packages/pr/proot/PKGBUILD
+    $WGET https://aur.archlinux.org/packages/pr/proot/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
