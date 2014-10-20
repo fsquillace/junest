@@ -56,6 +56,26 @@ To install the image named juju-x86\_64.tar.gz:
 
     # juju -i juju-x86_64.tar.gz
 
+Troubleshooting
+---------------
+- **Q**: Why do I get the error "Cannot find the gzip binary required for compressing man and info pages." when I try to install package with yaourt?
+- **A**: JuJu comes with a very basic number of packages.
+In order to install packages using yaourt you may need to install the package groups *base-devel*
+that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
+
+    pacman -S base-devel
+
+- **Q**: Why do I get the error: "FATAL: kernel too old"?
+- **A**: This is because the executable from the precompiled package cannot
+always run if the kernel is old.
+In order to check if the executable can be compatible with the kernel of
+the host OS just use file command, for instance:
+
+    file ~/.juju/usr/bin/bash
+    ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
+
+From the output you can see what is the minimum recommended Linux kernel version.
+
 License
 -------
 Copyright (c) 2012-2014
