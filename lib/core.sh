@@ -33,7 +33,6 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 ################################# VARIABLES ##############################
 [ -z ${JUJU_HOME} ] && JUJU_HOME=~/.juju
 JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
-JUJU_BIN=$(dirname "$0")
 ORIGIN_WD=$(pwd)
 
 ################################# MAIN FUNCTIONS ##############################
@@ -82,10 +81,8 @@ function setup_from_file_juju(){
     fi
 
     local imagefile=$1
-    if [ ! -e ${imagefile} ]
-    then
-        die "Error: The JuJu image file ${imagefile} does not exist"
-    fi
+    [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
+
     info "Installing JuJu from ${imagefile}..."
     mkdir -p ${JUJU_HOME}
     tar -zxpf ${ORIGIN_WD}/${imagefile} -C ${JUJU_HOME}
@@ -99,6 +96,9 @@ function run_juju(){
     ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME
 }
 
+function run_no_root_juju(){
+    ${JUJU_HOME}/usr/bin/proot -S ${JUJU_HOME}
+}
 
 function setup_and_run_juju(){
 # Setup and run the JuJu environment
@@ -107,6 +107,15 @@ function setup_and_run_juju(){
 
     [ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
     run_juju
+}
+
+function setup_and_run_no_root_juju(){
+# Setup and run the JuJu environment
+# The setup function will be executed only if the
+# JuJu envinronment in $JUJU_HOME is not present.
+
+    [ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
+    run_no_root_juju
 }
 
 function build_image_juju(){
@@ -119,20 +128,26 @@ function build_image_juju(){
     mkdir -p ${maindir}/root
     prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -d ${maindir}/root pacman arch-install-scripts
+    pacstrap -d ${maindir}/root pacman arch-install-scripts binutils
 
     info "Compiling and installing yaourt..."
-    mkdir -p ${maindir}/yaourt/{package-query,yaourt}
+    mkdir -p ${maindir}/packages/{package-query,yaourt,proot}
 
-    builtin cd ${maindir}/yaourt/package-query
+    builtin cd ${maindir}/packages/package-query
     wget https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
 
-    builtin cd ${maindir}/yaourt/yaourt
+    builtin cd ${maindir}/packages/yaourt
     wget https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
+
+    info "Compiling and installing proot..."
+    builtin cd ${maindir}/packages/proot
+    wget https://aur.archlinux.org/packages/pr/proot/PKGBUILD
+    makepkg -sfc --asroot
+    pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
     rm ${maindir}/root/var/cache/pacman/pkg/*
 

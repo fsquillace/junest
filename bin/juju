@@ -32,6 +32,7 @@ usage() {
         echo -e "Usage: $NAME [options]"
         echo -e "Options:"
 		echo -e "-i, --setup-from-file <image>  Setup the JuJu image in ${JUJU_HOME}"
+		echo -e "-n, --no-root                  Run JuJu without root privileges"
 		echo -e "-b, --build-image              Build a JuJu image (must run in ArchLinux only)"
         echo -e "-h, --help                     Show this help message"
         echo -e "-v, --version                  Show the $NAME version"
@@ -48,7 +49,7 @@ version() {
 ### MAIN PROGRAM                ###
 ###################################
 
-TEMP=`getopt -o bihv --long build-imagesetup-from-file,help,version -n 'juju' -- "$@"`
+TEMP=`getopt -o nbihv --long no-root,build-image,setup-from-file,help,version -n 'juju' -- "$@"`
 
 if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; exit ; fi
 
@@ -56,12 +57,14 @@ if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; 
 eval set -- "$TEMP"
 
 OPT_SETUP_FROM_FILE=false
+OPT_NO_ROOT=false
 OPT_BUILD_IMAGE=false
 OPT_HELP=false
 OPT_VERSION=false
 while true ; do
     case "$1" in
         -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ;;
+        -n|--no-root) OPT_NO_ROOT=true ; shift ;;
         -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
         -h|--help) OPT_HELP=true ; shift ;;
         -v|--version) OPT_VERSION=true ; shift ;;
@@ -89,6 +92,8 @@ fi
 ################ DEFINE ACTION ########################
 if $OPT_SETUP_FROM_FILE; then
 	setup_from_file_juju ${ARGS[@]}
+elif $OPT_NO_ROOT; then
+	setup_and_run_no_root_juju
 elif $OPT_BUILD_IMAGE; then
 	build_image_juju
 else
