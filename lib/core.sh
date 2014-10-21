@@ -25,9 +25,6 @@
 set -e
 
 ################################ IMPORTS #################################
-# Define the variables for the dependency commands bash, wget, tar, which, awk, grep, xz, file
-WGET="wget --no-check-certificate"
-TAR=tar
 source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
@@ -35,6 +32,10 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
 ORIGIN_WD=$(pwd)
 
+# Define the variables for the dependency commands bash, wget, tar, which, awk, grep, xz, file
+WGET="wget --no-check-certificate"
+TAR=tar
+PROOT="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2 --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
 ################################# MAIN FUNCTIONS ##############################
 
 
@@ -104,11 +105,11 @@ function run_juju_as_root(){
 
 
 function _run_juju_with_proot(){
-    if ${JUJU_HOME}/usr/bin/proot ${JUJU_HOME}/usr/bin/true &> /dev/null
+    if ${PROOT} ${JUJU_HOME}/usr/bin/true &> /dev/null
     then
-        ${JUJU_HOME}/usr/bin/proot $@ ${JUJU_HOME}
+        ${PROOT} $@ ${JUJU_HOME}
     else
-        PROOT_NO_SECCOMP=1 ${JUJU_HOME}/usr/bin/proot $@ ${JUJU_HOME}
+        PROOT_NO_SECCOMP=1 ${PROOT} $@ ${JUJU_HOME}
     fi
 }
 
