@@ -84,14 +84,6 @@ for arg do
     ARGS+=($arg)
 done
 
-############## CHECKING ESSENTIAL  COMMANDS ####################
-# Check if the essentials commands are installed (wget and tar)
-if ! which wget &> /dev/null || ! which tar &> /dev/null
-then
-    error "Error: wget and tar commands are essentials for JuJu. Get them first."
-	exit 1
-fi
-
 ################ DEFINE ACTION ########################
 if $OPT_SETUP_FROM_FILE; then
 	setup_from_file_juju ${ARGS[@]}

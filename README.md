@@ -63,6 +63,15 @@ To install the image named juju-x86\_64.tar.gz:
 
     # juju -i juju-x86_64.tar.gz
 
+Dependencies
+------------
+JuJu comes with a very short list of dependencies in order to be installed in most
+of GNU/Linux distributions. The dependencies needed to be in the host OS are:
+- bash
+- wget or curl
+- mkdir
+- linux kernel 2.6.32
+
 Troubleshooting
 ---------------
 - **Q**: Why do I get the error "Cannot find the gzip binary required for compressing man and info pages." when I try to install package with yaourt?

@@ -32,9 +32,19 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
 ORIGIN_WD=$(pwd)
 
-# Define the variables for the dependency commands bash, wget, tar, which, awk, grep, xz, file
-WGET="wget --no-check-certificate"
+# The essentials executables that MUST exist in the host OS are (wget|curl), bash, mkdir
+if command -v wget > /dev/null 2>&1
+then
+    WGET="wget --no-check-certificate"
+elif command -v curl > /dev/null 2>&1
+then
+    WGET="curl -J -O -k"
+else
+    error "Error: Either wget or curl commands must be installed"
+    exit 1
+fi
 TAR=tar
+
 PROOT="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2 --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
 ################################# MAIN FUNCTIONS ##############################
 
