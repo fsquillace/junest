@@ -35,3 +35,33 @@ function info(){
 # $@: msg (mandatory) - str: Message to print
     echo -e "\033[1;37m$@\033[0m"
 }
+
+function ask(){
+    # $1: question string
+    # $2: default value - can be either Y, y, N, n (by default Y)
+
+    local default="Y"
+    [ -z $2 ] || default=$(echo "$2" | tr '[:lower:]' '[:upper:]')
+
+    local other="n"
+    [ "$default" == "N" ] && other="y"
+
+    local prompt="$1 (${default}/${other})> "
+
+    local res="none"
+    while [ "$res" != "Y" ] && [ "$res" != "N"  ] && [ "$res" != "" ];
+    do
+        read -p "$prompt" res
+        res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
+    done
+
+    [ "$res" == "" ] && res="$default"
+
+    if [ "$res" == "Y" ]
+    then
+        return 0
+    else
+        return 1
+    fi
+
+}

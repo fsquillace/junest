@@ -133,6 +133,20 @@ function run_juju_as_user(){
     _run_juju_with_proot "-R"
 }
 
+function delete_juju(){
+    ! ask "Are you sure to delete JuJu located in ${JUJU_HOME}" "N" && return
+    if mountpoint -q ${JUJU_HOME}
+    then
+        info "There are mounted directories inside ${JUJU_HOME}"
+        if ! umount --force ${JUJU_HOME}
+        then
+            error "Cannot umount directories in ${JUJU_HOME}"
+            error "Try to delete juju using root permissions"
+            exit 1
+        fi
+    fi
+    rm -rf ${JUJU_HOME}/*
+}
 
 function build_image_juju(){
 # The function must runs on ArchLinux

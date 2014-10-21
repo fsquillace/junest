@@ -35,6 +35,7 @@ usage() {
 		echo -e "-f, --fakeroot                 Run JuJu with fakeroot privileges"
 		echo -e "-r, --root                     Run JuJu with root privileges"
 		echo -e "-b, --build-image              Build a JuJu image (must run in ArchLinux only)"
+		echo -e "-d, --delete                   Delete JuJu from ${JUJU_HOME}"
         echo -e "-h, --help                     Show this help message"
         echo -e "-v, --version                  Show the $NAME version"
 }
@@ -50,7 +51,7 @@ version() {
 ### MAIN PROGRAM                ###
 ###################################
 
-TEMP=`getopt -o rfbihv --long root,fakeroot,build-image,setup-from-file,help,version -n 'juju' -- "$@"`
+TEMP=`getopt -o drfbihv --long delete,root,fakeroot,build-image,setup-from-file,help,version -n 'juju' -- "$@"`
 
 if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; exit ; fi
 
@@ -61,6 +62,7 @@ OPT_SETUP_FROM_FILE=false
 OPT_FAKEROOT=false
 OPT_ROOT=false
 OPT_BUILD_IMAGE=false
+OPT_DELETE=false
 OPT_HELP=false
 OPT_VERSION=false
 while true ; do
@@ -69,6 +71,7 @@ while true ; do
         -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
         -r|--root) OPT_ROOT=true ; shift ;;
         -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
+        -d|--delete) OPT_DELETE=true ; shift ;;
         -h|--help) OPT_HELP=true ; shift ;;
         -v|--version) OPT_VERSION=true ; shift ;;
         --) shift ; break ;;
@@ -93,12 +96,14 @@ elif $OPT_BUILD_IMAGE; then
 	exit
 fi
 
-[ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
+[ ! "$(ls -A $JUJU_HOME)" ] && ! $OPT_DELETE && setup_juju
 
 if $OPT_FAKEROOT; then
 	run_juju_as_fakeroot
 elif $OPT_ROOT; then
 	run_juju_as_root
+elif $OPT_DELETE; then
+	delete_juju
 else
     run_juju_as_user
 fi

@@ -70,7 +70,7 @@ of GNU/Linux distributions. The dependencies needed to be in the host OS are:
 - bash
 - wget or curl
 - mkdir
-- linux kernel 2.6.32
+- linux kernel 2.6.32+
 
 Troubleshooting
 ---------------
