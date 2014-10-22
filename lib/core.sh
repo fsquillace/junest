@@ -145,7 +145,13 @@ function delete_juju(){
             exit 1
         fi
     fi
-    rm -rf ${JUJU_HOME}/*
+    if rm -rf ${JUJU_HOME}/*
+    then
+        info "JuJu delete in ${JUJU_HOME}"
+    else
+        error "Error: Cannot delete JuJU in ${JUJU_HOME}"
+    fi
+
 }
 
 function build_image_juju(){
