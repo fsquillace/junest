@@ -147,9 +147,9 @@ function delete_juju(){
     fi
     if rm -rf ${JUJU_HOME}/*
     then
-        info "JuJu delete in ${JUJU_HOME}"
+        info "JuJu deleted in ${JUJU_HOME}"
     else
-        error "Error: Cannot delete JuJU in ${JUJU_HOME}"
+        error "Error: Cannot delete JuJu in ${JUJU_HOME}"
     fi
 
 }
