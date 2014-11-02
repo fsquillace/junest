@@ -13,9 +13,9 @@ JuJu only contains the package manager (called pacman and yaourt) in order to ac
 to a wide range of packages from ArchLinux repositories.
 
 The main advantage of using JuJu are:
-- It gives an isolated environment in which you can install packages without affecting a production system.
-- Access to a really wide range of packages even inside GNU/Linux systems that contains limited repositories (such as CentOS and RedHat).
-- Install packages without the need to be root.
+- Install packages without root privileges.
+- Isolated environment in which you can install packages without affecting a production system.
+- Access to a wide range of packages in particular for GNU/Linux systems that contain limited repositories (such as CentOS and RedHat).
 
 Quickstart
 ----------

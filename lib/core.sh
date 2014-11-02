@@ -185,6 +185,11 @@ function build_image_juju(){
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
+    ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
+    echo "en_US.UTF-8 UTF-8" >> ${maindir}/root/etc/locale.gen
+    arch-chroot ${maindir}/root locale-gen
+    echo 'LANG = "en_US.UTF-8"' >> ${maindir}/root/etc/locale.conf
+
     rm ${maindir}/root/var/cache/pacman/pkg/*
 
     builtin cd ${ORIGIN_WD}
