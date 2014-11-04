@@ -52,12 +52,11 @@ else
 fi
 TAR=tar
 
-ARCH=$(uname -m | grep -oE "^armv[567]")
+ARCH="" #$(uname -m | grep -oE "^armv[567]")
 [ "$ARCH" == "" ] && ARCH=$(uname -m)
 
 PROOT="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2 --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
 ################################# MAIN FUNCTIONS ##############################
-
 
 function cleanup_build_directory(){
 # $1: maindir (optional) - str: build directory to get rid
