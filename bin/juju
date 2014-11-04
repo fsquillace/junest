@@ -102,7 +102,7 @@ elif $OPT_DELETE; then
 	exit
 fi
 
-setup_juju
+[ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
 
 if $OPT_FAKEROOT; then
     run_juju_as_fakeroot
