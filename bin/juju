@@ -28,22 +28,24 @@ source "$(dirname $0)/../lib/core.sh"
 ###################################
 
 usage() {
-		echo -e "JuJu: The portable GNU/Linux distribution"
-        echo -e "Usage: $NAME [options]"
-        echo -e "Options:"
-		echo -e "-i, --setup-from-file <image>  Setup the JuJu image in ${JUJU_HOME}"
-		echo -e "-f, --fakeroot                 Run JuJu with fakeroot privileges"
-		echo -e "-r, --root                     Run JuJu with root privileges"
-		echo -e "-b, --build-image              Build a JuJu image (must run in ArchLinux only)"
-		echo -e "-d, --delete                   Delete JuJu from ${JUJU_HOME}"
-        echo -e "-h, --help                     Show this help message"
-        echo -e "-v, --version                  Show the $NAME version"
+    echo -e "JuJu: The portable GNU/Linux distribution"
+    echo -e "Usage: $NAME [options]"
+    echo -e "Options:"
+    echo -e "-i, --setup-from-file <image>  Setup the JuJu image in ${JUJU_HOME}"
+    echo -e "-f, --fakeroot                 Run JuJu with fakeroot privileges"
+    echo -e "-r, --root                     Run JuJu with root privileges"
+    echo -e "-b, --build-image              Build a JuJu image (must run in ArchLinux
+                                            with base-devel, package-query
+                                            and arch-install-scripts installed)"
+    echo -e "-d, --delete                   Delete JuJu from ${JUJU_HOME}"
+    echo -e "-h, --help                     Show this help message"
+    echo -e "-v, --version                  Show the $NAME version"
 }
 
 version() {
-	echo -e "JuJu ($VERSION): The portable GNU/Linux distribution"
-	echo -e "Copyright (c) 2012-2014 Filippo Squillace <feel.squally@gmail.com>"
-	echo -e "Homepage: http://github.com/fsquillace/juju"
+    echo -e "JuJu ($VERSION): The portable GNU/Linux distribution"
+    echo -e "Copyright (c) 2012-2014 Filippo Squillace <feel.squally@gmail.com>"
+    echo -e "Homepage: http://github.com/fsquillace/juju"
 }
 
 

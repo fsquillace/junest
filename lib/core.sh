@@ -28,7 +28,14 @@ set -e
 source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
-[ -z ${JUJU_HOME} ] && JUJU_HOME=~/.juju
+if [ -z ${JUJU_HOME} ] || [ ! -d ${JUJU_HOME} ]
+then
+    JUJU_HOME=~/.juju
+fi
+if [ -z ${JUJU_TEMPDIR} ] || [ ! -d ${JUJU_TEMPDIR} ]
+then
+    JUJU_TEMPDIR=/tmp
+fi
 JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
 ORIGIN_WD=$(pwd)
 
@@ -44,6 +51,9 @@ else
     exit 1
 fi
 TAR=tar
+
+ARCH=$(uname -m | grep -oE "^armv[567]")
+[ "$ARCH" == "" ] && ARCH=$(uname -m)
 
 PROOT="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2 --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
 ################################# MAIN FUNCTIONS ##############################
@@ -75,12 +85,12 @@ function _setup_juju(){
 
 function setup_juju(){
 # Setup the JuJu environment
-    local maindir=$(TMPDIR=/tmp mktemp -d -t juju.XXXXXXXXXX)
+    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     prepare_build_directory
 
     info "Downloading JuJu..."
     builtin cd ${maindir}
-    local imagefile=juju-$(uname -m).tar.gz
+    local imagefile=juju-${ARCH}.tar.gz
     $WGET ${JUJU_REPO}/${imagefile}
 
     info "Installing JuJu..."
@@ -154,17 +164,34 @@ function delete_juju(){
 
 }
 
+function _check_package(){
+    if ! pacman -Qq $1 > /dev/null
+    then
+        error "Package $1 must be installed"
+        exit 1
+    fi
+}
+
 function build_image_juju(){
 # The function must runs on ArchLinux
 # The dependencies are:
 # arch-install-scripts
 # base-devel
 # package-query
-    local maindir=$(TMPDIR=/tmp mktemp -d -t juju.XXXXXXXXXX)
+    _check_package arch-install-scripts
+    _check_package gcc
+    _check_package package-query
+    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     mkdir -p ${maindir}/root
     prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -d ${maindir}/root pacman arch-install-scripts binutils
+    pacstrap -d ${maindir}/root pacman arch-install-scripts binutils libunistring
+
+    info "Generating the locales..."
+    ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
+    echo "en_US.UTF-8 UTF-8" >> ${maindir}/root/etc/locale.gen
+    arch-chroot ${maindir}/root locale-gen
+    echo 'LANG = "en_US.UTF-8"' >> ${maindir}/root/etc/locale.conf
 
     info "Compiling and installing yaourt..."
     mkdir -p ${maindir}/packages/{package-query,yaourt,proot}
@@ -182,18 +209,15 @@ function build_image_juju(){
     info "Compiling and installing proot..."
     builtin cd ${maindir}/packages/proot
     $WGET https://aur.archlinux.org/packages/pr/proot/PKGBUILD
+    sed "s/arch=\(.*\)/arch=('any')/" PKGBUILD > PKGBUILD.1
+    mv PKGBUILD.1 PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
-
-    ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
-    echo "en_US.UTF-8 UTF-8" >> ${maindir}/root/etc/locale.gen
-    arch-chroot ${maindir}/root locale-gen
-    echo 'LANG = "en_US.UTF-8"' >> ${maindir}/root/etc/locale.conf
 
     rm ${maindir}/root/var/cache/pacman/pkg/*
 
     builtin cd ${ORIGIN_WD}
-    local imagefile="juju-$(uname -m).tar.gz"
+    local imagefile="juju-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
     tar -zcpf ${imagefile} -C ${maindir}/root .
     cleanup_build_directory ${maindir}
