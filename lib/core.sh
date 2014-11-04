@@ -47,15 +47,26 @@ elif command -v curl > /dev/null 2>&1
 then
     WGET="curl -J -O -k"
 else
-    error "Error: Either wget or curl commands must be installed"
-    exit 1
+    die "Error: Either wget or curl commands must be installed"
 fi
 TAR=tar
 
 ARCH=$(uname -m)
 [[ $ARCH =~ .*(armv6).* ]] && ARCH=${BASH_REMATCH[1]}
 
-PROOT="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2 --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
+if [ $ARCH == "i686" ]
+then
+    LD_LIB="${JUJU_HOME}/lib/ld-linux.so.2"
+elif [ $ARCH == "x86_64" ]
+then
+    LD_LIB="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2"
+elif [ $ARCH == "armv6" ]
+then
+    LD_LIB="${JUJU_HOME}/lib/ld-linux.so.3"
+else
+    die "Unknown architecture ${ARCH}"
+fi
+PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
 ################################# MAIN FUNCTIONS ##############################
 
 function cleanup_build_directory(){
@@ -101,11 +112,7 @@ function setup_juju(){
 
 function setup_from_file_juju(){
 # Setup from file the JuJu environment
-    if [ "$(ls -A $JUJU_HOME)" ]
-    then
-        error "Error: JuJu has been already installed in $JUJU_HOME"
-        return 1
-    fi
+    [ "$(ls -A $JUJU_HOME)" ] && die "Error: JuJu has been already installed in $JUJU_HOME"
 
     local imagefile=$1
     [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
@@ -150,8 +157,7 @@ function delete_juju(){
         if ! umount --force ${JUJU_HOME}
         then
             error "Cannot umount directories in ${JUJU_HOME}"
-            error "Try to delete juju using root permissions"
-            exit 1
+            die "Try to delete juju using root permissions"
         fi
     fi
     if rm -rf ${JUJU_HOME}/*
@@ -160,14 +166,12 @@ function delete_juju(){
     else
         error "Error: Cannot delete JuJu in ${JUJU_HOME}"
     fi
-
 }
 
 function _check_package(){
     if ! pacman -Qq $1 > /dev/null
     then
-        error "Package $1 must be installed"
-        exit 1
+        die "Package $1 must be installed"
     fi
 }
 
