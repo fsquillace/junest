@@ -57,7 +57,8 @@ You can build a new JuJu image from scratch by running the following command:
 In this way the script will create a directory containing all the essentials
 files to make JuJu working properly (such as pacman, yaourt, arch-chroot and proot).
 Remember that the script to build the image must run in an ArchLinux OS with
-arch-install-scripts installed.
+arch-install-scripts, package-query and the base-devel packages installed.
+To change the build directory just use the *JUJU_TMPDIR* (by default /tmp).
 
 To install the image named juju-x86\_64.tar.gz:
 
