@@ -81,31 +81,33 @@ while true ; do
     esac
 done
 
-$OPT_HELP && usage && exit
-$OPT_VERSION && version && exit
-
 ARGS=()
 for arg do
     ARGS+=($arg)
 done
 
 ################ DEFINE ACTION ########################
+
+$OPT_HELP && usage && exit
+$OPT_VERSION && version && exit
+
 if $OPT_SETUP_FROM_FILE; then
-	setup_from_file_juju ${ARGS[@]}
-	exit
+    setup_from_file_juju ${ARGS[@]}
+    exit
 elif $OPT_BUILD_IMAGE; then
-	build_image_juju
+    build_image_juju
+    exit
+elif $OPT_DELETE; then
+    delete_juju
 	exit
 fi
 
-[ ! "$(ls -A $JUJU_HOME)" ] && ! $OPT_DELETE && setup_juju
+setup_juju
 
 if $OPT_FAKEROOT; then
-	run_juju_as_fakeroot
+    run_juju_as_fakeroot
 elif $OPT_ROOT; then
-	run_juju_as_root
-elif $OPT_DELETE; then
-	delete_juju
+    run_juju_as_root
 else
     run_juju_as_user
 fi

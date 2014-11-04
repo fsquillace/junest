@@ -28,10 +28,7 @@ set -e
 source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
-if [ -z ${JUJU_HOME} ] || [ ! -d ${JUJU_HOME} ]
-then
-    JUJU_HOME=~/.juju
-fi
+[ -z ${JUJU_HOME} ] && JUJU_HOME=~/.juju
 if [ -z ${JUJU_TEMPDIR} ] || [ ! -d ${JUJU_TEMPDIR} ]
 then
     JUJU_TEMPDIR=/tmp
@@ -85,8 +82,10 @@ function prepare_build_directory(){
 
 
 function _setup_juju(){
+    mkdir -p "${JUJU_HOME}"
+    [ "$(ls -A $JUJU_HOME)" ] && die "Error: JuJu has been already installed in $JUJU_HOME"
+
     imagepath=$1
-    mkdir -p ${JUJU_HOME}
     tar -zxpf ${imagepath} -C ${JUJU_HOME}
     mkdir -p ${JUJU_HOME}/run/lock
     info "JuJu installed successfully"
@@ -112,8 +111,6 @@ function setup_juju(){
 
 function setup_from_file_juju(){
 # Setup from file the JuJu environment
-    [ "$(ls -A $JUJU_HOME)" ] && die "Error: JuJu has been already installed in $JUJU_HOME"
-
     local imagefile=$1
     [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
 
