@@ -52,8 +52,8 @@ else
 fi
 TAR=tar
 
-ARCH="" #$(uname -m | grep -oE "^armv[567]")
-[ "$ARCH" == "" ] && ARCH=$(uname -m)
+ARCH=$(uname -m)
+[[ $ARCH =~ .*(armv6).* ]] && ARCH=${BASH_REMATCH[1]}
 
 PROOT="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2 --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
 ################################# MAIN FUNCTIONS ##############################
