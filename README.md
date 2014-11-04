@@ -74,6 +74,8 @@ of GNU/Linux distributions. The dependencies needed to be in the host OS are:
 
 Troubleshooting
 ---------------
+
+###Cannot use AUR repository###
 - **Q**: Why do I get the error "Cannot find the gzip binary required for compressing man and info pages." when I try to install package with yaourt?
 - **A**: JuJu comes with a very basic number of packages.
 In order to install packages using yaourt you may need to install the package groups *base-devel*
@@ -83,6 +85,7 @@ that contains all the essential packages for compiling source code (such as gcc,
     pacman -S base-devel
 ```
 
+###Kernel too old###
 - **Q**: Why do I get the error: "FATAL: kernel too old"?
 - **A**: This is because the executable from the precompiled package cannot
 always run if the kernel is old.
@@ -91,10 +94,28 @@ the host OS just use file command, for instance:
 
 ```
     file ~/.juju/usr/bin/bash
-    ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked (uses shared libs), for GNU/Linux 2.6.32, BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
+    ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked
+    (uses shared libs), for GNU/Linux 2.6.32,
+    BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
 ```
 
 From the output you can see what is the minimum recommended Linux kernel version.
+
+###SUID permissions###
+- **Q**: Why I do not have permissions for ping?
+```
+    ping www.google.com
+    ping: icmp open socket: Operation not permitted
+```
+
+- **A**: The ping command uses *suid* permissions that allow to execute the command using
+root privileges. The fakeroot mode is not able to execute a command set with suid,
+and you may need to use root privileges. There are other few commands that
+have *suid* permission, you can list the commands from your JuJu environment
+with the following command:
+```
+    find /usr/bin -perm +4000
+```
 
 License
 -------
