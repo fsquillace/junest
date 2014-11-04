@@ -29,6 +29,7 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
 [ -z ${JUJU_HOME} ] && JUJU_HOME=~/.juju
+mkdir -p "${JUJU_HOME}"
 if [ -z ${JUJU_TEMPDIR} ] || [ ! -d ${JUJU_TEMPDIR} ]
 then
     JUJU_TEMPDIR=/tmp
@@ -82,7 +83,6 @@ function prepare_build_directory(){
 
 
 function _setup_juju(){
-    mkdir -p "${JUJU_HOME}"
     [ "$(ls -A $JUJU_HOME)" ] && die "Error: JuJu has been already installed in $JUJU_HOME"
 
     imagepath=$1

@@ -16,6 +16,7 @@ The main advantage of using JuJu are:
 - Install packages without root privileges.
 - Isolated environment in which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular for GNU/Linux systems that contain limited repositories (such as CentOS and RedHat).
+- Architectures available i686, x86\_64 and ARMv6
 
 Quickstart
 ----------
@@ -46,7 +47,7 @@ Just clone JuJu somewhere (for example in ~/juju):
     $ export PATH=~/juju/bin:$PATH
 
 JuJu can only works on GNU/Linux OS with kernel version greater or equal
-2.6.32 on 64 bit architecture (32 bit and arm will be available soon).
+2.6.32 on 64 bit 32 bit and ARMv6 architectures.
 
 Advanced usage
 --------------
