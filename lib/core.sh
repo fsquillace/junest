@@ -29,7 +29,6 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
 [ -z ${JUJU_HOME} ] && JUJU_HOME=~/.juju
-mkdir -p "${JUJU_HOME}"
 if [ -z ${JUJU_TEMPDIR} ] || [ ! -d ${JUJU_TEMPDIR} ]
 then
     JUJU_TEMPDIR=/tmp
@@ -67,6 +66,11 @@ fi
 PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
 ################################# MAIN FUNCTIONS ##############################
 
+function is_juju_installed(){
+    [ -d "$JUJU_HOME" ] && [ "$(ls -A $JUJU_HOME)" ] && return 0
+    return 1
+}
+
 function cleanup_build_directory(){
 # $1: maindir (optional) - str: build directory to get rid
     local maindir=$1
@@ -83,8 +87,8 @@ function prepare_build_directory(){
 
 
 function _setup_juju(){
-    [ "$(ls -A $JUJU_HOME)" ] && die "Error: JuJu has been already installed in $JUJU_HOME"
-
+    is_juju_installed && die "Error: JuJu has been already installed in $JUJU_HOME"
+    mkdir -p "${JUJU_HOME}"
     imagepath=$1
     tar -zxpf ${imagepath} -C ${JUJU_HOME}
     mkdir -p ${JUJU_HOME}/run/lock

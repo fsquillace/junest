@@ -91,18 +91,22 @@ done
 $OPT_HELP && usage && exit
 $OPT_VERSION && version && exit
 
-if $OPT_SETUP_FROM_FILE; then
-    setup_from_file_juju ${ARGS[@]}
-    exit
-elif $OPT_BUILD_IMAGE; then
+if $OPT_BUILD_IMAGE; then
     build_image_juju
     exit
 elif $OPT_DELETE; then
     delete_juju
-	exit
+    exit
 fi
 
-[ ! "$(ls -A $JUJU_HOME)" ] && setup_juju
+if ! is_juju_installed
+then
+    if $OPT_SETUP_FROM_FILE; then
+        setup_from_file_juju ${ARGS[@]}
+    else
+        setup_juju
+    fi
+fi
 
 if $OPT_FAKEROOT; then
     run_juju_as_fakeroot
