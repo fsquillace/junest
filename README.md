@@ -16,7 +16,7 @@ The main advantage of using JuJu are:
 - Install packages without root privileges.
 - Isolated environment in which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular for GNU/Linux systems that contain limited repositories (such as CentOS and RedHat).
-- Architectures available i686, x86\_64 and ARMv6
+- Available for x86\_64, i686 and ARMv6 architectures.
 
 Quickstart
 ----------
@@ -78,9 +78,12 @@ Troubleshooting
 ---------------
 
 ###Cannot use AUR repository###
-- **Q**: Why do I get the error "Cannot find the gzip binary required for compressing man and info pages." when I try to install package with yaourt?
+- **Q**: Why do I get the following error when I try to install a package with yaourt?
+```
+Cannot find the gzip binary required for compressing man and info pages.
+```
 - **A**: JuJu comes with a very basic number of packages.
-In order to install packages using yaourt you may need to install the package groups *base-devel*
+In order to install packages using yaourt you may need to install the package group *base-devel*
 that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
 
 ```
@@ -118,6 +121,37 @@ with the following command:
 ```
     find /usr/bin -perm +4000
 ```
+
+###No characters are visible on a graphic application###
+- **Q**: Why I do not see any characters in the application I have installed?
+
+- **A**: This is probably because there are no 
+[https://wiki.archlinux.org/index.php/Font_Configuration](fonts) installed in
+the system.
+
+To quick fix this, you can just install a fonts package:
+```
+    pacman -S gnu-free-fonts
+```
+
+###Missing permissions on removing a package###
+- **Q**: Why I cannot remove the package I have installed?
+```
+    pacman -Rsn lsof
+    checking dependencies...
+
+    Packages (1): lsof-4.88-1
+
+    Total Removed Size:   0.21 MiB
+
+    error: cannot remove /usr/share/licenses/lsof/LICENSE (Permission denied)
+    error: could not remove database entry lsof-4.88-1
+```
+
+-**A**: This is probably because you have installed the package with root
+permissions. Since JuJu gives the possibility to install packages
+either as root or as normal user you need to remember that and remove
+the package with the right user!
 
 License
 -------
