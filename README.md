@@ -148,7 +148,7 @@ To quick fix this, you can just install a fonts package:
     error: could not remove database entry lsof-4.88-1
 ```
 
--**A**: This is probably because you have installed the package with root
+- **A**: This is probably because you have installed the package with root
 permissions. Since JuJu gives the possibility to install packages
 either as root or as normal user you need to remember that and remove
 the package with the right user!
