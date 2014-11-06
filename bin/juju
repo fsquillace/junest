@@ -48,6 +48,52 @@ version() {
     echo -e "Homepage: http://github.com/fsquillace/juju"
 }
 
+check_cli(){
+    if $OPT_BUILD_IMAGE
+    then
+        if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
+            $OPT_FAKEROOT || $OPT_ROOT
+        then
+            error "The build image option must be used exclusively"
+            return 1
+        fi
+    fi
+    if $OPT_DELETE
+    then
+        if $OPT_BUILD_IMAGE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
+            $OPT_FAKEROOT || $OPT_ROOT
+        then
+            error "The JuJu delete option must be used exclusively"
+            return 1
+        fi
+    fi
+    if $OPT_HELP
+    then
+        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
+            $OPT_FAKEROOT || $OPT_ROOT
+        then
+            error "The JuJu help option must be used exclusively"
+            return 1
+        fi
+    fi
+    if $OPT_VERSION
+    then
+        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
+            $OPT_FAKEROOT || $OPT_ROOT
+        then
+            error "The JuJu version option must be used exclusively"
+            return 1
+        fi
+    fi
+
+    if $OPT_FAKEROOT && $OPT_ROOT
+    then
+        error "You must access to JuJu with either fakeroot or root permissions"
+        return 1
+    fi
+    return 0
+}
+
 
 ###################################
 ### MAIN PROGRAM                ###
@@ -85,6 +131,8 @@ ARGS=()
 for arg do
     ARGS+=($arg)
 done
+
+check_cli || exit 1
 
 ################ DEFINE ACTION ########################
 
