@@ -63,7 +63,16 @@ then
 else
     die "Unknown architecture ${ARCH}"
 fi
-PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
+
+if [ -z $JUJU_ENV ] || [ "$JUJU_ENV" == "0" ]
+then
+    PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
+elif [ "$JUJU_ENV" == "1" ]
+then
+    PROOT="$LD_LIB"
+else
+    die "The variable JUJU_ENV is not properly set"
+fi
 ################################# MAIN FUNCTIONS ##############################
 
 function is_juju_installed(){
@@ -126,6 +135,8 @@ function setup_from_file_juju(){
 
 
 function run_juju_as_root(){
+    [ "$JUJU_ENV" == "1" ] && die "Error: arch-chroot can be invoked only outside the JuJu environment"
+
     mkdir -p ${JUJU_HOME}/${HOME}
     ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c 'mkdir -p /run/lock && /bin/sh'
 }
@@ -134,9 +145,9 @@ function run_juju_as_root(){
 function _run_juju_with_proot(){
     if ${PROOT} ${JUJU_HOME}/usr/bin/true &> /dev/null
     then
-        ${PROOT} $@ ${JUJU_HOME}
+        JUJU_ENV=1 ${PROOT} $@ ${JUJU_HOME}
     else
-        PROOT_NO_SECCOMP=1 ${PROOT} $@ ${JUJU_HOME}
+        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT} $@ ${JUJU_HOME}
     fi
 }
 
@@ -182,6 +193,7 @@ function build_image_juju(){
 # arch-install-scripts
 # base-devel
 # package-query
+# git
     _check_package arch-install-scripts
     _check_package gcc
     _check_package package-query
@@ -219,6 +231,10 @@ function build_image_juju(){
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
     rm ${maindir}/root/var/cache/pacman/pkg/*
+
+    info "Copying JuJu scripts..."
+    git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
+    echo 'export PATH=$PATH:/opt/juju/bin' > ${maindir}/root/etc/profile.d/juju.sh
 
     builtin cd ${ORIGIN_WD}
     local imagefile="juju-${ARCH}.tar.gz"
