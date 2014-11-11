@@ -67,9 +67,11 @@ fi
 if [ -z $JUJU_ENV ] || [ "$JUJU_ENV" == "0" ]
 then
     PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
+    SH="/bin/sh --login"
 elif [ "$JUJU_ENV" == "1" ]
 then
     PROOT="$LD_LIB"
+    SH="/bin/sh"
 else
     die "The variable JUJU_ENV is not properly set"
 fi
@@ -79,6 +81,7 @@ function is_juju_installed(){
     [ -d "$JUJU_HOME" ] && [ "$(ls -A $JUJU_HOME)" ] && return 0
     return 1
 }
+
 
 function cleanup_build_directory(){
 # $1: maindir (optional) - str: build directory to get rid
@@ -107,6 +110,8 @@ function _setup_juju(){
 
 function setup_juju(){
 # Setup the JuJu environment
+    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
+
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     prepare_build_directory
 
@@ -124,6 +129,8 @@ function setup_juju(){
 
 function setup_from_file_juju(){
 # Setup from file the JuJu environment
+    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
+
     local imagefile=$1
     [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
 
@@ -135,7 +142,7 @@ function setup_from_file_juju(){
 
 
 function run_juju_as_root(){
-    [ "$JUJU_ENV" == "1" ] && die "Error: arch-chroot can be invoked only outside the JuJu environment"
+    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
     mkdir -p ${JUJU_HOME}/${HOME}
     ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c 'mkdir -p /run/lock && /bin/sh'
@@ -145,9 +152,9 @@ function run_juju_as_root(){
 function _run_juju_with_proot(){
     if ${PROOT} ${JUJU_HOME}/usr/bin/true &> /dev/null
     then
-        JUJU_ENV=1 ${PROOT} $@ ${JUJU_HOME}
+        JUJU_ENV=1 ${PROOT} $@ ${JUJU_HOME} ${SH}
     else
-        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT} $@ ${JUJU_HOME}
+        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT} $@ ${JUJU_HOME} ${SH}
     fi
 }
 
@@ -161,7 +168,10 @@ function run_juju_as_user(){
     _run_juju_with_proot "-R"
 }
 
+
 function delete_juju(){
+    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
+
     ! ask "Are you sure to delete JuJu located in ${JUJU_HOME}" "N" && return
     if mountpoint -q ${JUJU_HOME}
     then
@@ -180,12 +190,14 @@ function delete_juju(){
     fi
 }
 
+
 function _check_package(){
     if ! pacman -Qq $1 > /dev/null
     then
         die "Package $1 must be installed"
     fi
 }
+
 
 function build_image_juju(){
 # The function must runs on ArchLinux
@@ -235,6 +247,7 @@ function build_image_juju(){
     info "Copying JuJu scripts..."
     git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
     echo 'export PATH=$PATH:/opt/juju/bin' > ${maindir}/root/etc/profile.d/juju.sh
+    chmod +x ${maindir}/root/etc/profile.d/juju.sh
 
     builtin cd ${ORIGIN_WD}
     local imagefile="juju-${ARCH}.tar.gz"
