@@ -54,8 +54,7 @@ check_cli(){
         if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            error "The build image option must be used exclusively"
-            return 1
+            die "The build image option must be used exclusively"
         fi
     fi
     if $OPT_DELETE
@@ -63,8 +62,7 @@ check_cli(){
         if $OPT_BUILD_IMAGE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            error "The JuJu delete option must be used exclusively"
-            return 1
+            die "The JuJu delete option must be used exclusively"
         fi
     fi
     if $OPT_HELP
@@ -72,8 +70,7 @@ check_cli(){
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            error "The JuJu help option must be used exclusively"
-            return 1
+            die "The JuJu help option must be used exclusively"
         fi
     fi
     if $OPT_VERSION
@@ -81,16 +78,17 @@ check_cli(){
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            error "The JuJu version option must be used exclusively"
-            return 1
+            die "The JuJu version option must be used exclusively"
         fi
     fi
 
     if $OPT_FAKEROOT && $OPT_ROOT
     then
-        error "You must access to JuJu with either fakeroot or root permissions"
-        return 1
+        die "You must access to JuJu with either fakeroot or root permissions"
     fi
+
+	[ "$ARGS" != "" ] && die "No arguments are needed. For the CLI syntax run: $NAME --help"
+
     return 0
 }
 
@@ -99,7 +97,7 @@ check_cli(){
 ### MAIN PROGRAM                ###
 ###################################
 
-TEMP=`getopt -o drfbihv --long delete,root,fakeroot,build-image,setup-from-file,help,version -n 'juju' -- "$@"`
+TEMP=`getopt -o drfbi:hv --long delete,root,fakeroot,build-image,setup-from-file:,help,version -n 'juju' -- "$@"`
 
 if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; exit ; fi
 
@@ -107,6 +105,7 @@ if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; 
 eval set -- "$TEMP"
 
 OPT_SETUP_FROM_FILE=false
+IMAGE_FILE=""
 OPT_FAKEROOT=false
 OPT_ROOT=false
 OPT_BUILD_IMAGE=false
@@ -115,7 +114,7 @@ OPT_HELP=false
 OPT_VERSION=false
 while true ; do
     case "$1" in
-        -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ;;
+        -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
         -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
         -r|--root) OPT_ROOT=true ; shift ;;
         -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
@@ -150,10 +149,12 @@ fi
 if ! is_juju_installed
 then
     if $OPT_SETUP_FROM_FILE; then
-        setup_from_file_juju ${ARGS[@]}
+        setup_from_file_juju $IMAGE_FILE
     else
         setup_juju
     fi
+elif $OPT_SETUP_FROM_FILE; then
+	die "Error: The image cannot be installed since $JUJU_HOME is not empty."
 fi
 
 if $OPT_FAKEROOT; then
