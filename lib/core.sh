@@ -59,7 +59,7 @@ then
     LD_LIB="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2"
 elif [ $ARCH == "armv6" ]
 then
-    LD_LIB="${JUJU_HOME}/lib/ld-linux.so.3"
+    LD_LIB="${JUJU_HOME}/lib/ld-linux-armhf.so.3"
 else
     die "Unknown architecture ${ARCH}"
 fi
