@@ -5,18 +5,19 @@ JuJu
 Description
 -----------
 **JuJu** is a small and portable GNU/Linux distribution based on ArchLinux.
-It allows to have an isolated GNU/Linux environment inside the home directory
-without the need to have root privileges that is accessible via chroot and run
-on whatever Linux distribution.
 
-JuJu only contains the package manager (called pacman and yaourt) in order to access
+It allows to have an isolated GNU/Linux environment inside any generic host GNU/Linux OS
+and without the need to have root privileges for installing packages.
+
+JuJu contains just the package managers (called pacman and yaourt) that allows to access
 to a wide range of packages from ArchLinux repositories.
 
-The main advantage of using JuJu are:
+The main advantages on using JuJu are:
 - Install packages without root privileges.
 - Isolated environment in which you can install packages without affecting a production system.
-- Access to a wide range of packages in particular for GNU/Linux systems that contain limited repositories (such as CentOS and RedHat).
-- Available for x86\_64, i686 and ARMv6 architectures.
+- Access to a wide range of packages in particular on GNU/Linux distros that may contain a limited repositories (such as CentOS and RedHat).
+- Available for x86\_64, i686 and ARMv6 architectures but you can build you own image from scratch too!
+- All ArchLinux lovers can have their favourite distro everywhere!
 
 Quickstart
 ----------
@@ -56,21 +57,22 @@ You can build a new JuJu image from scratch by running the following command:
     # juju -b
 
 In this way the script will create a directory containing all the essentials
-files to make JuJu working properly (such as pacman, yaourt, arch-chroot and proot).
+files in order to make JuJu working properly (such as pacman, yaourt, arch-chroot and proot).
 Remember that the script to build the image must run in an ArchLinux OS with
 arch-install-scripts, package-query, git and the base-devel packages installed.
 To change the build directory just use the *JUJU_TMPDIR* (by default /tmp).
 
-To install the image named juju-x86\_64.tar.gz:
+After creating the image juju-x86\_64.tar.gz you can install it by running:
 
     # juju -i juju-x86_64.tar.gz
 
 Dependencies
 ------------
 JuJu comes with a very short list of dependencies in order to be installed in most
-of GNU/Linux distributions. The dependencies needed to be in the host OS are:
+of GNU/Linux distributions. The dependencies needed in the host OS are:
 - bash
 - wget or curl
+- tar
 - mkdir
 - linux kernel 2.6.32+
 
