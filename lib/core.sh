@@ -209,6 +209,7 @@ function build_image_juju(){
     _check_package arch-install-scripts
     _check_package gcc
     _check_package package-query
+    _check_package git
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     mkdir -p ${maindir}/root
     prepare_build_directory
