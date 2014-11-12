@@ -238,9 +238,7 @@ function build_image_juju(){
     info "Compiling and installing proot..."
     builtin cd ${maindir}/packages/proot
     $WGET https://aur.archlinux.org/packages/pr/proot/PKGBUILD
-    sed "s/arch=\(.*\)/arch=('any')/" PKGBUILD > PKGBUILD.1
-    mv PKGBUILD.1 PKGBUILD
-    makepkg -sfc --asroot
+    makepkg -sfcA --asroot
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
     rm ${maindir}/root/var/cache/pacman/pkg/*
