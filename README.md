@@ -1,10 +1,10 @@
 JuJu
 ====
-**JuJu**: the portable GNU/Linux distribution
+**JuJu**: the GNU/Linux distribution container for non-root users
 
 Description
 -----------
-**JuJu** is a small and portable GNU/Linux distribution based on ArchLinux.
+**JuJu** is a small ArchLinux based GNU/Linux distribution.
 
 It allows to have an isolated GNU/Linux environment inside any generic host GNU/Linux OS
 and without the need to have root privileges for installing packages.
