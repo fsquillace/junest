@@ -34,6 +34,7 @@ usage() {
     echo -e "-i, --setup-from-file <image>  Setup the JuJu image in ${JUJU_HOME}"
     echo -e "-f, --fakeroot                 Run JuJu with fakeroot privileges"
     echo -e "-r, --root                     Run JuJu with root privileges"
+    echo -e "-p, --proot-args               Proot arguments"
     echo -e "-b, --build-image              Build a JuJu image (must run in ArchLinux)"
     echo -e "-d, --delete                   Delete JuJu from ${JUJU_HOME}"
     echo -e "-h, --help                     Show this help message"
@@ -83,15 +84,22 @@ check_cli(){
     then
         die "You must access to JuJu with either fakeroot or root permissions"
     fi
-
-	if [ "$ARGS" != "" ]
-	then
+    if $OPT_PROOT_ARGS
+    then
+        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
+            $OPT_ROOT || $OPT_VERSION
+        then
+            die "Invalid syntax: Proot args are not allowed with the other options"
+        fi
+    fi
+    if [ "$ARGS" != "" ]
+    then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
             $OPT_VERSION
         then
-			die "No arguments are needed. For the CLI syntax run: $NAME --help"
+            die "No arguments are needed. For the CLI syntax run: $NAME --help"
         fi
-	fi
+    fi
 
     return 0
 }
@@ -101,7 +109,7 @@ check_cli(){
 ### MAIN PROGRAM                ###
 ###################################
 
-TEMP=`getopt -o drfbi:hv --long delete,root,fakeroot,build-image,setup-from-file:,help,version -n 'juju' -- "$@"`
+TEMP=`getopt -o drp:fbi:hv --long delete,root,proot-args:,fakeroot,build-image,setup-from-file:,help,version -n 'juju' -- "$@"`
 
 if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; exit ; fi
 
@@ -112,6 +120,8 @@ OPT_SETUP_FROM_FILE=false
 IMAGE_FILE=""
 OPT_FAKEROOT=false
 OPT_ROOT=false
+OPT_PROOT_ARGS=false
+PROOT_ARGS=""
 OPT_BUILD_IMAGE=false
 OPT_DELETE=false
 OPT_HELP=false
@@ -121,6 +131,7 @@ while true ; do
         -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
         -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
         -r|--root) OPT_ROOT=true ; shift ;;
+        -p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
         -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
         -d|--delete) OPT_DELETE=true ; shift ;;
         -h|--help) OPT_HELP=true ; shift ;;
@@ -162,11 +173,11 @@ elif $OPT_SETUP_FROM_FILE; then
 fi
 
 if $OPT_FAKEROOT; then
-    run_juju_as_fakeroot ${ARGS[@]}
+    run_juju_as_fakeroot "${PROOT_ARGS}" ${ARGS[@]}
 elif $OPT_ROOT; then
     run_juju_as_root ${ARGS[@]}
 else
-    run_juju_as_user ${ARGS[@]}
+    run_juju_as_user "${PROOT_ARGS}" ${ARGS[@]}
 fi
 
 # vim: set ts=4 sw=4 noet:

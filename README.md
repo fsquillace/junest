@@ -52,10 +52,11 @@ JuJu can only works on GNU/Linux OS with kernel version greater or equal
 
 Advanced usage
 --------------
+### Build image ###
 You can build a new JuJu image from scratch by running the following command:
-
+```
     # juju -b
-
+```
 In this way the script will create a directory containing all the essentials
 files in order to make JuJu working properly (such as pacman, yaourt, arch-chroot and proot).
 Remember that the script to build the image must run in an ArchLinux OS with
@@ -65,6 +66,17 @@ To change the build directory just use the *JUJU_TMPDIR* (by default /tmp).
 After creating the image juju-x86\_64.tar.gz you can install it by running:
 
     # juju -i juju-x86_64.tar.gz
+
+### Bind directories ###
+To bind and host directory to a guest location, you can use proot arguments:
+```
+    $ juju -p "-b /mnt/mydata:/home/user/mydata"
+```
+
+Check out the proot options with:
+```
+    $ juju -p "--help"
+```
 
 Dependencies
 ------------
