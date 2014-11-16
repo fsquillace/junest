@@ -29,7 +29,7 @@ source "$(dirname $0)/../lib/core.sh"
 
 usage() {
     echo -e "JuJu: The portable GNU/Linux distribution"
-    echo -e "Usage: $NAME [options]"
+    echo -e "Usage: $NAME [options] [command]"
     echo -e "Options:"
     echo -e "-i, --setup-from-file <image>  Setup the JuJu image in ${JUJU_HOME}"
     echo -e "-f, --fakeroot                 Run JuJu with fakeroot privileges"
@@ -79,13 +79,19 @@ check_cli(){
             die "The JuJu version option must be used exclusively"
         fi
     fi
-
     if $OPT_FAKEROOT && $OPT_ROOT
     then
         die "You must access to JuJu with either fakeroot or root permissions"
     fi
 
-	[ "$ARGS" != "" ] && die "No arguments are needed. For the CLI syntax run: $NAME --help"
+	if [ "$ARGS" != "" ]
+	then
+        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
+            $OPT_VERSION
+        then
+			die "No arguments are needed. For the CLI syntax run: $NAME --help"
+        fi
+	fi
 
     return 0
 }
@@ -156,11 +162,11 @@ elif $OPT_SETUP_FROM_FILE; then
 fi
 
 if $OPT_FAKEROOT; then
-    run_juju_as_fakeroot
+    run_juju_as_fakeroot ${ARGS[@]}
 elif $OPT_ROOT; then
-    run_juju_as_root
+    run_juju_as_root ${ARGS[@]}
 else
-    run_juju_as_user
+    run_juju_as_user ${ARGS[@]}
 fi
 
 # vim: set ts=4 sw=4 noet:

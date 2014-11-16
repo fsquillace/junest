@@ -141,31 +141,41 @@ function setup_from_file_juju(){
 }
 
 
+function _define_command(){
+    local comm=$@
+    [ "$comm" == "" ] && comm=${SH}
+    echo "$comm"
+}
+
+
 function run_juju_as_root(){
     [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
+    local comm=$(_define_command $@)
     mkdir -p ${JUJU_HOME}/${HOME}
-    ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c 'mkdir -p /run/lock && /bin/sh'
+    ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && ${comm}"
 }
 
 
 function _run_juju_with_proot(){
     if ${PROOT} ${JUJU_HOME}/usr/bin/true &> /dev/null
     then
-        JUJU_ENV=1 ${PROOT} $@ ${JUJU_HOME} ${SH}
+        JUJU_ENV=1 ${PROOT} $@
     else
-        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT} $@ ${JUJU_HOME} ${SH}
+        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT} $@
     fi
 }
 
 
 function run_juju_as_fakeroot(){
-    _run_juju_with_proot "-S"
+    local comm=$(_define_command $@)
+    _run_juju_with_proot "-S" ${JUJU_HOME} ${comm}
 }
 
 
 function run_juju_as_user(){
-    _run_juju_with_proot "-R"
+    local comm=$(_define_command $@)
+    _run_juju_with_proot "-R" ${JUJU_HOME} ${comm}
 }
 
 
