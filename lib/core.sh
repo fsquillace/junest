@@ -248,6 +248,12 @@ function build_image_juju(){
     echo 'export PATH=$PATH:/opt/juju/bin' > ${maindir}/root/etc/profile.d/juju.sh
     chmod +x ${maindir}/root/etc/profile.d/juju.sh
 
+    info "Validating JuJu image..."
+    arch-chroot ${maindir}/root pacman -Qi pacman &> /dev/null
+    arch-chroot ${maindir}/root yaourt -V &> /dev/null
+    arch-chroot ${maindir}/root proot --help &> /dev/null
+    arch-chroot ${maindir}/root arch-chroot --help &> /dev/null
+
     builtin cd ${ORIGIN_WD}
     local imagefile="juju-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
