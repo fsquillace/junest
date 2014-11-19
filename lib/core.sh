@@ -83,7 +83,7 @@ function is_juju_installed(){
 }
 
 
-function cleanup_build_directory(){
+function _cleanup_build_directory(){
 # $1: maindir (optional) - str: build directory to get rid
     local maindir=$1
     builtin cd $ORIGIN_WD
@@ -92,7 +92,7 @@ function cleanup_build_directory(){
 }
 
 
-function prepare_build_directory(){
+function _prepare_build_directory(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "rm -rf ${maindir}; die \"Error occurred when installing JuJu\"" EXIT QUIT ABRT KILL TERM INT
 }
@@ -113,7 +113,7 @@ function setup_juju(){
     [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
-    prepare_build_directory
+    _prepare_build_directory
 
     info "Downloading JuJu..."
     builtin cd ${maindir}
@@ -123,7 +123,7 @@ function setup_juju(){
     info "Installing JuJu..."
     _setup_juju ${maindir}/${imagefile}
 
-    cleanup_build_directory ${maindir}
+    _cleanup_build_directory ${maindir}
 }
 
 
@@ -229,7 +229,7 @@ function build_image_juju(){
     _check_package git
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     mkdir -p ${maindir}/root
-    prepare_build_directory
+    _prepare_build_directory
     info "Installing pacman and its dependencies..."
     pacstrap -d ${maindir}/root pacman arch-install-scripts binutils libunistring
 
@@ -275,5 +275,5 @@ function build_image_juju(){
     local imagefile="juju-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
     tar -zcpf ${imagefile} -C ${maindir}/root .
-    cleanup_build_directory ${maindir}
+    _cleanup_build_directory ${maindir}
 }
