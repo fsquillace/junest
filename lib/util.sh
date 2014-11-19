@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-echoerr() { echo "$@" 1>&2; }
+function echoerr(){
+    echo "$@" 1>&2
+}
 function die(){
 # $@: msg (mandatory) - str: Message to print
     error $@
