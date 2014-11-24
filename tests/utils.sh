@@ -26,8 +26,6 @@ function install_mini_juju(){
     mkdir -p ${JUJU_HOME}/{proc,bin,sys,dev,run,tmp,etc}
     touch ${JUJU_HOME}/etc/resolv.conf
     mkdir -p ${JUJU_HOME}/usr/bin
-    #echo "root:x:0:0:root:/root:/bin/bash" > ${JUJU_HOME}/etc/passwd
-    #cp /etc/nsswitch.conf ${JUJU_HOME}
     cp /usr/bin/arch-chroot ${JUJU_HOME}/usr/bin
     install_executable /usr/bin/bash
     install_executable /usr/bin/ls

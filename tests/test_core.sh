@@ -7,6 +7,7 @@
 # coreutils
 # grep
 # sudo
+# gawk
 
 source "$(dirname $0)/utils.sh"
 CURRPWD=$PWD
@@ -119,17 +120,21 @@ function test_run_juju_as_user_proot_args(){
     is_equal $? 0 || return 1
 }
 
-#function test_run_juju_as_user_seccomp(){
-    #install_mini_juju
-    #TRUE="/usr/bin/false"
-    #run_juju_as_user "" "env" "|" "grep" "PROOT_NO_SECCOMP"
-#}
+function test_run_juju_as_user_seccomp(){
+    install_mini_juju
+    local output=$(run_juju_as_user "" "env" | grep "PROOT_NO_SECCOMP")
+    is_equal $output "" || return 1
 
-#function test_run_juju_as_fakeroot(){
-    #install_mini_juju
-    #local output=$(run_juju_as_fakeroot "" "bash")
-    #is_equal "$output" "root" || return 1
-#}
+    TRUE="/usr/bin/false"
+    local output=$(run_juju_as_user "" "env" | grep "PROOT_NO_SECCOMP")
+    is_equal $output "PROOT_NO_SECCOMP=1" || return 1
+}
+
+function test_run_juju_as_fakeroot(){
+    install_mini_juju
+    local output=$(run_juju_as_fakeroot "" "id" | awk '{print $1}')
+    is_equal "$output" "uid=0" || return 1
+}
 
 function test_delete_juju(){
     install_mini_juju
