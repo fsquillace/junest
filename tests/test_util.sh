@@ -1,8 +1,6 @@
+#!/bin/bash
+source "$(dirname $0)/utils.sh"
 source "$(dirname $0)/../lib/util.sh"
-
-function is_equal(){
-    [ "$1" == "$2" ] || return 1 && return 0
-}
 
 function test_echoerr(){
     local actual=$(echoerr "Test" 2>&1)
@@ -35,6 +33,8 @@ function test_die(){
     local actual=$(die "Test" 2>&1)
     local expected=$(echo -e "\033[1;31mTest\033[0m")
     is_equal "$actual" "$expected" || return 1
+    bash -ic "die Dying" &> /dev/null
+    is_equal $? 1 || return 1
     return 0
 }
 

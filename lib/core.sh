@@ -75,6 +75,10 @@ then
 else
     die "The variable JUJU_ENV is not properly set"
 fi
+
+CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
+TRUE=${JUJU_HOME}/usr/bin/true
+
 ################################# MAIN FUNCTIONS ##############################
 
 function is_juju_installed(){
@@ -160,12 +164,12 @@ function run_juju_as_root(){
     [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
     mkdir -p ${JUJU_HOME}/${HOME}
-    ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
+    ${CHROOT} $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
 }
 
 
 function _run_juju_with_proot(){
-    if ${PROOT} ${JUJU_HOME}/usr/bin/true &> /dev/null
+    if ${PROOT} ${TRUE} &> /dev/null
     then
         JUJU_ENV=1 ${PROOT} $@
     else
