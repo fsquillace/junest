@@ -20,6 +20,9 @@ function set_up(){
     ORIGIN_WD=$(TMPDIR=/tmp mktemp -d -t jujuowd.XXXXXXXXXX)
     cd $ORIGIN_WD
     JUJU_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t jujutemp.XXXXXXXXXX)
+
+    trap - QUIT EXIT ABRT KILL TERM INT
+    trap "rm -rf ${JUJU_HOME}; rm -rf ${ORIGIN_WD}; rm -rf ${JUJU_TEMPDIR}" EXIT QUIT ABRT KILL TERM INT
 }
 
 
@@ -27,6 +30,7 @@ function tear_down(){
     rm -rf $JUJU_HOME
     rm -rf $ORIGIN_WD
     rm -rf $JUJU_TEMPDIR
+    trap - QUIT EXIT ABRT KILL TERM INT
 }
 
 function test_is_juju_installed(){
