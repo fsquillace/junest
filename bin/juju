@@ -105,79 +105,74 @@ check_cli(){
 }
 
 
-###################################
-### MAIN PROGRAM                ###
-###################################
+function parse_arguments(){
+    TEMP=$(getopt -o drp:fbi:hv --long delete,root,proot-args:,fakeroot,build-image,setup-from-file:,help,version -n 'juju' -- "$@")
+	eval set -- "$TEMP"
 
-TEMP=`getopt -o drp:fbi:hv --long delete,root,proot-args:,fakeroot,build-image,setup-from-file:,help,version -n 'juju' -- "$@"`
+	OPT_SETUP_FROM_FILE=false
+	IMAGE_FILE=""
+	OPT_FAKEROOT=false
+	OPT_ROOT=false
+	OPT_PROOT_ARGS=false
+	PROOT_ARGS=""
+	OPT_BUILD_IMAGE=false
+	OPT_DELETE=false
+	OPT_HELP=false
+	OPT_VERSION=false
+	while true ; do
+		case "$1" in
+			-i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
+			-f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
+			-r|--root) OPT_ROOT=true ; shift ;;
+			-p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
+			-b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
+			-d|--delete) OPT_DELETE=true ; shift ;;
+			-h|--help) OPT_HELP=true ; shift ;;
+			-v|--version) OPT_VERSION=true ; shift ;;
+			--) shift ; break ;;
+			*) die "Internal error!" ;;
+		esac
+	done
 
-if [ $? != 0 ] ; then error "Error on parsing the command line. Try juju -h." ; exit ; fi
+	ARGS=()
+	for arg do
+		ARGS+=($arg)
+	done
+}
 
-# Note the quotes around `$TEMP': they are essential!
-eval set -- "$TEMP"
+function execute_operation(){
+	$OPT_HELP && usage && return
+	$OPT_VERSION && version && return
 
-OPT_SETUP_FROM_FILE=false
-IMAGE_FILE=""
-OPT_FAKEROOT=false
-OPT_ROOT=false
-OPT_PROOT_ARGS=false
-PROOT_ARGS=""
-OPT_BUILD_IMAGE=false
-OPT_DELETE=false
-OPT_HELP=false
-OPT_VERSION=false
-while true ; do
-    case "$1" in
-        -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
-        -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-        -r|--root) OPT_ROOT=true ; shift ;;
-        -p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
-        -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
-        -d|--delete) OPT_DELETE=true ; shift ;;
-        -h|--help) OPT_HELP=true ; shift ;;
-        -v|--version) OPT_VERSION=true ; shift ;;
-        --) shift ; break ;;
-        *) error "Internal error!" ; exit 1 ;;
-    esac
-done
+	if $OPT_BUILD_IMAGE; then
+		build_image_juju
+		return
+	elif $OPT_DELETE; then
+		delete_juju
+		return
+	fi
 
-ARGS=()
-for arg do
-    ARGS+=($arg)
-done
+	if ! is_juju_installed
+	then
+		if $OPT_SETUP_FROM_FILE; then
+			setup_from_file_juju $IMAGE_FILE
+		else
+			setup_juju
+		fi
+	elif $OPT_SETUP_FROM_FILE; then
+		die "Error: The image cannot be installed since $JUJU_HOME is not empty."
+	fi
 
-check_cli || exit 1
+	if $OPT_FAKEROOT; then
+		run_juju_as_fakeroot "${PROOT_ARGS}" ${ARGS[@]}
+	elif $OPT_ROOT; then
+		run_juju_as_root ${ARGS[@]}
+	else
+		run_juju_as_user "${PROOT_ARGS}" ${ARGS[@]}
+	fi
+}
 
-################ DEFINE ACTION ########################
-
-$OPT_HELP && usage && exit
-$OPT_VERSION && version && exit
-
-if $OPT_BUILD_IMAGE; then
-    build_image_juju
-    exit
-elif $OPT_DELETE; then
-    delete_juju
-    exit
-fi
-
-if ! is_juju_installed
-then
-    if $OPT_SETUP_FROM_FILE; then
-        setup_from_file_juju $IMAGE_FILE
-    else
-        setup_juju
-    fi
-elif $OPT_SETUP_FROM_FILE; then
-	die "Error: The image cannot be installed since $JUJU_HOME is not empty."
-fi
-
-if $OPT_FAKEROOT; then
-    run_juju_as_fakeroot "${PROOT_ARGS}" ${ARGS[@]}
-elif $OPT_ROOT; then
-    run_juju_as_root ${ARGS[@]}
-else
-    run_juju_as_user "${PROOT_ARGS}" ${ARGS[@]}
-fi
-
+parse_arguments $@
+check_cli
+execute_operation
 # vim: set ts=4 sw=4 noet:
