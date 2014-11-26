@@ -57,6 +57,7 @@ function test_setup_juju(){
     export -f setup_juju
     JUJU_ENV=1 bash -ic "setup_juju" &> /dev/null
     is_equal $? 1 || return 1
+    unset setup_juju
 }
 
 
@@ -71,9 +72,9 @@ function test_setup_from_file_juju(){
     bash -ic "setup_from_file_juju noexist.tar.gz" &> /dev/null
     is_equal $? 1 || return 1
 
-    export -f setup_from_file_juju
     JUJU_ENV=1 bash -ic "setup_from_file_juju" &> /dev/null
     is_equal $? 1 || return 1
+    unset setup_from_file_juju
 }
 
 
@@ -92,6 +93,7 @@ function test_run_juju_as_root(){
     export -f run_juju_as_root
     JUJU_ENV=1 bash -ic "run_juju_as_root" &> /dev/null
     is_equal $? 1 || return 1
+    unset run_juju_as_root
 }
 
 function test_run_juju_as_user(){
@@ -119,6 +121,11 @@ function test_run_juju_as_user_proot_args(){
     touch $JUJU_TEMPDIR/newdir/newfile
     run_juju_as_user "-b $JUJU_TEMPDIR/newdir:/newdir" "ls -l /newdir/newfile" 1> /dev/null
     is_equal $? 0 || return 1
+
+    export -f _run_juju_with_proot
+    ID="/usr/bin/echo 0" bash -ic "_run_juju_with_proot" &> /dev/null
+    is_equal $? 1 || return 1
+    unset _run_juju_with_proot
 }
 
 function test_run_juju_as_user_seccomp(){
@@ -149,6 +156,7 @@ function test_delete_juju(){
     export -f delete_juju
     JUJU_ENV=1 bash -ic "delete_juju" &> /dev/null
     is_equal $? 1 || return 1
+    unset delete_juju
 }
 
 
