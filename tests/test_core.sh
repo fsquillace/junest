@@ -1,17 +1,14 @@
 #!/bin/bash
-# To test this module you need to run it inside a Archlinux system. Also, the following packages needs to be installed:
-# bash
-# pacman
-# arch-install-scripts
-# proot
-# coreutils
-# grep
-# sudo
-# gawk
 
 source "$(dirname $0)/utils.sh"
 CURRPWD=$PWD
+JUJU_MAIN_HOME=/tmp/jujutesthome
+[ -e $JUJU_MAIN_HOME ] || JUJU_HOME=$JUJU_MAIN_HOME bash --rcfile "$(dirname $0)/../lib/core.sh" -ic "setup_juju"
 JUJU_HOME=""
+
+function install_mini_juju(){
+    cp -rfa $JUJU_MAIN_HOME/* $JUJU_HOME
+}
 
 function set_up(){
     cd $CURRPWD
@@ -99,14 +96,14 @@ function test_run_juju_as_root(){
 
 function test_run_juju_as_user(){
     install_mini_juju
-    local output=$(run_juju_as_user "" "mkdir -v /newdir2")
-    is_equal "$output" "/usr/bin/mkdir: created directory '/newdir2'" || return 1
+    local output=$(run_juju_as_user "" "mkdir -v /newdir2" | awk -F: '{print $1}')
+    is_equal "$output" "/usr/bin/mkdir" || return 1
     [ -e $JUJU_HOME/newdir2 ]
     is_equal $? 0 || return 1
 
     SH="mkdir -v /newdir"
-    local output=$(run_juju_as_user "")
-    is_equal "$output" "/usr/bin/mkdir: created directory '/newdir'" || return 1
+    local output=$(run_juju_as_user "" | awk -F: '{print $1}')
+    is_equal "$output" "/usr/bin/mkdir" || return 1
     [ -e $JUJU_HOME/newdir ]
     is_equal $? 0 || return 1
 }
@@ -137,7 +134,7 @@ function test_run_juju_as_user_seccomp(){
 function test_run_juju_as_fakeroot(){
     install_mini_juju
     local output=$(run_juju_as_fakeroot "" "id" | awk '{print $1}')
-    is_equal "$output" "uid=0" || return 1
+    is_equal "$output" "uid=0(root)" || return 1
 }
 
 function test_delete_juju(){
