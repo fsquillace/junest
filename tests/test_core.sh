@@ -55,10 +55,13 @@ function test_setup_juju(){
     [ -e $JUJU_HOME/run/lock ] || return 1
 
     export -f setup_juju
+    export -f die
     JUJU_ENV=1 bash -ic "setup_juju" &> /dev/null
     is_equal $? 1 || return 1
     export -n setup_juju
     unset setup_juju
+    export -n die
+    unset die
 }
 
 
@@ -70,6 +73,7 @@ function test_setup_from_file_juju(){
     [ -e $JUJU_HOME/run/lock ] || return 1
 
     export -f setup_from_file_juju
+    export -f die
     bash -ic "setup_from_file_juju noexist.tar.gz" &> /dev/null
     is_equal $? 1 || return 1
 
@@ -77,6 +81,8 @@ function test_setup_from_file_juju(){
     is_equal $? 1 || return 1
     export -n setup_from_file_juju
     unset setup_from_file_juju
+    export -n die
+    unset die
 }
 
 
@@ -158,10 +164,13 @@ function test_delete_juju(){
     is_equal $? 1 || return 1
 
     export -f delete_juju
+    export -f die
     JUJU_ENV=1 bash -ic "delete_juju" &> /dev/null
     is_equal $? 1 || return 1
+    export -n delete_juju
     unset delete_juju
-    unset delete_juju
+    export -n die
+    unset die
 }
 
 
