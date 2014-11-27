@@ -33,8 +33,11 @@ function test_die(){
     local actual=$(die "Test" 2>&1)
     local expected=$(echo -e "\033[1;31mTest\033[0m")
     is_equal "$actual" "$expected" || return 1
+    export -f die
     bash -ic "die Dying" &> /dev/null
     is_equal $? 1 || return 1
+    export -n die
+    unset die
     return 0
 }
 

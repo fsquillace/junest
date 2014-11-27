@@ -57,6 +57,7 @@ function test_setup_juju(){
     export -f setup_juju
     JUJU_ENV=1 bash -ic "setup_juju" &> /dev/null
     is_equal $? 1 || return 1
+    export -n setup_juju
     unset setup_juju
 }
 
@@ -74,6 +75,7 @@ function test_setup_from_file_juju(){
 
     JUJU_ENV=1 bash -ic "setup_from_file_juju" &> /dev/null
     is_equal $? 1 || return 1
+    export -n setup_from_file_juju
     unset setup_from_file_juju
 }
 
@@ -93,6 +95,7 @@ function test_run_juju_as_root(){
     export -f run_juju_as_root
     JUJU_ENV=1 bash -ic "run_juju_as_root" &> /dev/null
     is_equal $? 1 || return 1
+    export -n run_juju_as_root
     unset run_juju_as_root
 }
 
@@ -125,6 +128,7 @@ function test_run_juju_as_user_proot_args(){
     export -f _run_juju_with_proot
     ID="/usr/bin/echo 0" bash -ic "_run_juju_with_proot" &> /dev/null
     is_equal $? 1 || return 1
+    export -n _run_juju_with_proot
     unset _run_juju_with_proot
 }
 
@@ -156,6 +160,7 @@ function test_delete_juju(){
     export -f delete_juju
     JUJU_ENV=1 bash -ic "delete_juju" &> /dev/null
     is_equal $? 1 || return 1
+    unset delete_juju
     unset delete_juju
 }
 

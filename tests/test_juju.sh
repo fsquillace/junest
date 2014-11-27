@@ -110,6 +110,7 @@ function test_check_cli(){
     export -f parse_arguments
     export -f execute_operation
     export -f wrap_juju
+    export -f die
     bash -ic "wrap_juju -b -h" &> /dev/null
     is_equal $? 1 || return 1
     bash -ic "wrap_juju -d -r" &> /dev/null
@@ -124,6 +125,12 @@ function test_check_cli(){
     is_equal $? 1 || return 1
     bash -ic "wrap_juju -d args" &> /dev/null
     is_equal $? 1 || return 1
+    export -n check_cli
+    export -n parse_arguments
+    export -n execute_operation
+    export -n wrap_juju
+    export -n die
+    unset die
 }
 
 for func in $(declare -F | grep test_ | awk '{print $3}' | xargs)
