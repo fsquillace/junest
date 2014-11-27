@@ -78,6 +78,7 @@ fi
 
 CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
 TRUE=${JUJU_HOME}/usr/bin/true
+ID="${JUJU_HOME}/usr/bin/id -u"
 
 ################################# MAIN FUNCTIONS ##############################
 
@@ -169,12 +170,16 @@ function run_juju_as_root(){
 
 
 function _run_juju_with_proot(){
-    if ${PROOT} ${TRUE} &> /dev/null
-    then
-        JUJU_ENV=1 ${PROOT} $@
-    else
-        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT} $@
-    fi
+    ${PROOT} ${TRUE} &> /dev/null || export PROOT_NO_SECCOMP=1
+
+    [ "$(${PROOT} ${ID} 2> /dev/null )" == "0" ] && \
+        die "You cannot access with root privileges. Use --root option instead."
+
+    JUJU_ENV=1 ${PROOT} $@
+    local ret=$?
+    export -n PROOT_NO_SECCOMP
+
+    return $ret
 }
 
 
