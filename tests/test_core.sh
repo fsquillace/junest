@@ -99,10 +99,13 @@ function test_run_juju_as_root(){
     [ -e $JUJU_HOME/${HOME} ] || return 1
 
     export -f run_juju_as_root
+    export -f die
     JUJU_ENV=1 bash -ic "run_juju_as_root" &> /dev/null
     is_equal $? 1 || return 1
     export -n run_juju_as_root
     unset run_juju_as_root
+    export -n die
+    unset die
 }
 
 function test_run_juju_as_user(){
@@ -132,19 +135,24 @@ function test_run_juju_as_user_proot_args(){
     is_equal $? 0 || return 1
 
     export -f _run_juju_with_proot
+    export PROOT
+    export TRUE
     ID="/usr/bin/echo 0" bash -ic "_run_juju_with_proot" &> /dev/null
     is_equal $? 1 || return 1
     export -n _run_juju_with_proot
     unset _run_juju_with_proot
+    export -n PROOT
+    export -n TRUE
 }
 
 function test_run_juju_as_user_seccomp(){
     install_mini_juju
-    local output=$(run_juju_as_user "" "env" | grep "PROOT_NO_SECCOMP")
+    PROOT=""
+    local output=$(_run_juju_with_proot "" "env" | grep "PROOT_NO_SECCOMP")
     is_equal $output "" || return 1
 
     TRUE="/usr/bin/false"
-    local output=$(run_juju_as_user "" "env" | grep "PROOT_NO_SECCOMP")
+    local output=$(_run_juju_with_proot "" "env" | grep "PROOT_NO_SECCOMP")
     is_equal $output "PROOT_NO_SECCOMP=1" || return 1
 }
 
