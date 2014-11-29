@@ -70,8 +70,7 @@ then
     SH="/bin/sh --login"
 elif [ "$JUJU_ENV" == "1" ]
 then
-    PROOT="$LD_LIB"
-    SH="/bin/sh"
+    die "Error: Nested JuJu environments are not allowed"
 else
     die "The variable JUJU_ENV is not properly set"
 fi
@@ -115,7 +114,6 @@ function _setup_juju(){
 
 function setup_juju(){
 # Setup the JuJu environment
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     _prepare_build_directory
@@ -134,7 +132,6 @@ function setup_juju(){
 
 function setup_from_file_juju(){
 # Setup from file the JuJu environment
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
     local imagefile=$1
     [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
@@ -162,10 +159,8 @@ function _define_proot_args(){
 
 
 function run_juju_as_root(){
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
-
     mkdir -p ${JUJU_HOME}/${HOME}
-    ${CHROOT} $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
+    JUJU_ENV=1 ${CHROOT} $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
 }
 
 
@@ -196,8 +191,6 @@ function run_juju_as_user(){
 
 
 function delete_juju(){
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
-
     ! ask "Are you sure to delete JuJu located in ${JUJU_HOME}" "N" && return
     if mountpoint -q ${JUJU_HOME}
     then
