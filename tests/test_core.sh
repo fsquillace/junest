@@ -53,15 +53,6 @@ function test_setup_juju(){
     setup_juju 1> /dev/null
     [ -e $JUJU_HOME/file ] || return 1
     [ -e $JUJU_HOME/run/lock ] || return 1
-
-    export -f setup_juju
-    export -f die
-    JUJU_ENV=1 bash -ic "setup_juju" &> /dev/null
-    is_equal $? 1 || return 1
-    export -n setup_juju
-    unset setup_juju
-    export -n die
-    unset die
 }
 
 
@@ -76,13 +67,6 @@ function test_setup_from_file_juju(){
     export -f die
     bash -ic "setup_from_file_juju noexist.tar.gz" &> /dev/null
     is_equal $? 1 || return 1
-
-    JUJU_ENV=1 bash -ic "setup_from_file_juju" &> /dev/null
-    is_equal $? 1 || return 1
-    export -n setup_from_file_juju
-    unset setup_from_file_juju
-    export -n die
-    unset die
 }
 
 
@@ -97,15 +81,6 @@ function test_run_juju_as_root(){
     run_juju_as_root "[ -e /run/lock ]"
     is_equal $? 0 || return 1
     [ -e $JUJU_HOME/${HOME} ] || return 1
-
-    export -f run_juju_as_root
-    export -f die
-    JUJU_ENV=1 bash -ic "run_juju_as_root" &> /dev/null
-    is_equal $? 1 || return 1
-    export -n run_juju_as_root
-    unset run_juju_as_root
-    export -n die
-    unset die
 }
 
 function test_run_juju_as_user(){
@@ -170,15 +145,12 @@ function test_delete_juju(){
     echo "Y" | delete_juju 1> /dev/null
     is_juju_installed
     is_equal $? 1 || return 1
+}
 
-    export -f delete_juju
-    export -f die
-    JUJU_ENV=1 bash -ic "delete_juju" &> /dev/null
+function test_nested_juju(){
+    install_mini_juju
+    JUJU_ENV=1 bash -ic "source $CURRPWD/$(dirname $0)/../lib/core.sh" &> /dev/null
     is_equal $? 1 || return 1
-    export -n delete_juju
-    unset delete_juju
-    export -n die
-    unset die
 }
 
 
