@@ -70,11 +70,15 @@ then
     SH="/bin/sh --login"
 elif [ "$JUJU_ENV" == "1" ]
 then
-    PROOT="$LD_LIB"
-    SH="/bin/sh"
+    die "Error: Nested JuJu environments are not allowed"
 else
     die "The variable JUJU_ENV is not properly set"
 fi
+
+CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
+TRUE=${JUJU_HOME}/usr/bin/true
+ID="${JUJU_HOME}/usr/bin/id -u"
+
 ################################# MAIN FUNCTIONS ##############################
 
 function is_juju_installed(){
@@ -83,7 +87,7 @@ function is_juju_installed(){
 }
 
 
-function cleanup_build_directory(){
+function _cleanup_build_directory(){
 # $1: maindir (optional) - str: build directory to get rid
     local maindir=$1
     builtin cd $ORIGIN_WD
@@ -92,7 +96,7 @@ function cleanup_build_directory(){
 }
 
 
-function prepare_build_directory(){
+function _prepare_build_directory(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "rm -rf ${maindir}; die \"Error occurred when installing JuJu\"" EXIT QUIT ABRT KILL TERM INT
 }
@@ -110,10 +114,9 @@ function _setup_juju(){
 
 function setup_juju(){
 # Setup the JuJu environment
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
-    prepare_build_directory
+    _prepare_build_directory
 
     info "Downloading JuJu..."
     builtin cd ${maindir}
@@ -123,13 +126,12 @@ function setup_juju(){
     info "Installing JuJu..."
     _setup_juju ${maindir}/${imagefile}
 
-    cleanup_build_directory ${maindir}
+    _cleanup_build_directory ${maindir}
 }
 
 
 function setup_from_file_juju(){
 # Setup from file the JuJu environment
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
 
     local imagefile=$1
     [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
@@ -141,37 +143,54 @@ function setup_from_file_juju(){
 }
 
 
-function run_juju_as_root(){
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
+function _define_chroot_args(){
+    local comm=${SH}
+    [ "$1" != "" ] && comm="$@"
+    echo $comm
+}
 
+
+function _define_proot_args(){
+    local proot_args="$1"
+    shift
+    local comm=$(_define_chroot_args "$@")
+    echo "$proot_args" "${comm[@]}"
+}
+
+
+function run_juju_as_root(){
     mkdir -p ${JUJU_HOME}/${HOME}
-    ${JUJU_HOME}/usr/bin/arch-chroot $JUJU_HOME /usr/bin/bash -c 'mkdir -p /run/lock && /bin/sh'
+    JUJU_ENV=1 ${CHROOT} $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
 }
 
 
 function _run_juju_with_proot(){
-    if ${PROOT} ${JUJU_HOME}/usr/bin/true &> /dev/null
-    then
-        JUJU_ENV=1 ${PROOT} $@ ${JUJU_HOME} ${SH}
-    else
-        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT} $@ ${JUJU_HOME} ${SH}
-    fi
+    ${PROOT} ${TRUE} &> /dev/null || export PROOT_NO_SECCOMP=1
+
+    [ "$(${PROOT} ${ID} 2> /dev/null )" == "0" ] && \
+        die "You cannot access with root privileges. Use --root option instead."
+
+    JUJU_ENV=1 ${PROOT} $@
+    local ret=$?
+    export -n PROOT_NO_SECCOMP
+
+    return $ret
 }
 
 
 function run_juju_as_fakeroot(){
-    _run_juju_with_proot "-S"
+    local comm=$(_define_proot_args "$@")
+    _run_juju_with_proot "-S" ${JUJU_HOME} ${comm}
 }
 
 
 function run_juju_as_user(){
-    _run_juju_with_proot "-R"
+    local comm=$(_define_proot_args "$@")
+    _run_juju_with_proot "-R" ${JUJU_HOME} ${comm}
 }
 
 
 function delete_juju(){
-    [ "$JUJU_ENV" == "1" ] && die "Error: The operation is not allowed inside JuJu environment"
-
     ! ask "Are you sure to delete JuJu located in ${JUJU_HOME}" "N" && return
     if mountpoint -q ${JUJU_HOME}
     then
@@ -212,7 +231,7 @@ function build_image_juju(){
     _check_package git
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     mkdir -p ${maindir}/root
-    prepare_build_directory
+    _prepare_build_directory
     info "Installing pacman and its dependencies..."
     pacstrap -d ${maindir}/root pacman arch-install-scripts binutils libunistring
 
@@ -248,9 +267,15 @@ function build_image_juju(){
     echo 'export PATH=$PATH:/opt/juju/bin' > ${maindir}/root/etc/profile.d/juju.sh
     chmod +x ${maindir}/root/etc/profile.d/juju.sh
 
+    info "Validating JuJu image..."
+    arch-chroot ${maindir}/root pacman -Qi pacman &> /dev/null
+    arch-chroot ${maindir}/root yaourt -V &> /dev/null
+    arch-chroot ${maindir}/root proot --help &> /dev/null
+    arch-chroot ${maindir}/root arch-chroot --help &> /dev/null
+
     builtin cd ${ORIGIN_WD}
     local imagefile="juju-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
     tar -zcpf ${imagefile} -C ${maindir}/root .
-    cleanup_build_directory ${maindir}
+    _cleanup_build_directory ${maindir}
 }
