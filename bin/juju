@@ -18,8 +18,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-NAME='juju'
-VERSION='1.0'
+NAME='JuJu'
+CMD='juju'
+VERSION='2.5.6'
+CODE_NAME='Lion'
+DESCRIPTION='The GNU/Linux distribution container for non-root users'
+AUTHOR='Filippo Squillace <feel dot squally at gmail.com>'
+HOMEPAGE='https://github.com/fsquillace/juju'
+COPYRIGHT='2012-2014'
 
 source "$(dirname $0)/../lib/core.sh"
 
@@ -28,23 +34,23 @@ source "$(dirname $0)/../lib/core.sh"
 ###################################
 
 usage() {
-    echo -e "JuJu: The portable GNU/Linux distribution"
-    echo -e "Usage: $NAME [options] [command]"
+    echo -e "$NAME: $DESCRIPTION"
+    echo -e "Usage: $CMD [options] [command]"
     echo -e "Options:"
-    echo -e "-i, --setup-from-file <image>  Setup the JuJu image in ${JUJU_HOME}"
-    echo -e "-f, --fakeroot                 Run JuJu with fakeroot privileges"
-    echo -e "-r, --root                     Run JuJu with root privileges"
+    echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUJU_HOME}"
+    echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
+    echo -e "-r, --root                     Run $NAME with root privileges"
     echo -e "-p, --proot-args               Proot arguments"
-    echo -e "-b, --build-image              Build a JuJu image (must run in ArchLinux)"
-    echo -e "-d, --delete                   Delete JuJu from ${JUJU_HOME}"
+    echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
+    echo -e "-d, --delete                   Delete $NAME from ${JUJU_HOME}"
     echo -e "-h, --help                     Show this help message"
     echo -e "-v, --version                  Show the $NAME version"
 }
 
 version() {
-    echo -e "JuJu ($VERSION): The portable GNU/Linux distribution"
-    echo -e "Copyright (c) 2012-2014 Filippo Squillace <feel.squally@gmail.com>"
-    echo -e "Homepage: http://github.com/fsquillace/juju"
+	echo -e "$NAME $VERSION ($CODE_NAME): $DESCRIPTION"
+    echo -e "Copyright (c) $COPYRIGHT $AUTHOR"
+    echo -e "Homepage: $HOMEPAGE"
 }
 
 check_cli(){
@@ -61,7 +67,7 @@ check_cli(){
         if $OPT_BUILD_IMAGE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            die "The JuJu delete option must be used exclusively"
+            die "The $NAME delete option must be used exclusively"
         fi
     fi
     if $OPT_HELP
@@ -69,7 +75,7 @@ check_cli(){
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            die "The JuJu help option must be used exclusively"
+            die "The $NAME help option must be used exclusively"
         fi
     fi
     if $OPT_VERSION
@@ -77,12 +83,12 @@ check_cli(){
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            die "The JuJu version option must be used exclusively"
+            die "The $NAME version option must be used exclusively"
         fi
     fi
     if $OPT_FAKEROOT && $OPT_ROOT
     then
-        die "You must access to JuJu with either fakeroot or root permissions"
+        die "You must access to $NAME with either fakeroot or root permissions"
     fi
     if $OPT_PROOT_ARGS
     then
@@ -97,7 +103,7 @@ check_cli(){
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
             $OPT_VERSION
         then
-            die "No arguments are needed. For the CLI syntax run: $NAME --help"
+            die "No arguments are needed. For the CLI syntax run: $CMD --help"
         fi
     fi
 
@@ -106,7 +112,7 @@ check_cli(){
 
 
 function parse_arguments(){
-    TEMP=$(getopt -o drp:fbi:hv --long delete,root,proot-args:,fakeroot,build-image,setup-from-file:,help,version -n 'juju' -- "$@")
+    TEMP=$(getopt -o drp:fbi:hv --long delete,root,proot-args:,fakeroot,build-image,setup-from-file:,help,version -n "$CMD" -- "$@")
 	eval set -- "$TEMP"
 
 	OPT_SETUP_FROM_FILE=false
