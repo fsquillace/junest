@@ -50,7 +50,7 @@ function test_setup_juju(){
         tar -czvf juju-${ARCH}.tar.gz file
     }
     WGET=wget_mock
-    setup_juju 1> /dev/null
+    setup_juju &> /dev/null
     [ -e $JUJU_HOME/file ] || return 1
     [ -e $JUJU_HOME/run/lock ] || return 1
 }
@@ -59,7 +59,7 @@ function test_setup_juju(){
 function test_setup_from_file_juju(){
     touch file
     tar -czvf juju-${ARCH}.tar.gz file 1> /dev/null
-    setup_from_file_juju juju-${ARCH}.tar.gz 1> /dev/null
+    setup_from_file_juju juju-${ARCH}.tar.gz &> /dev/null
     [ -e $JUJU_HOME/file ] || return 1
     [ -e $JUJU_HOME/run/lock ] || return 1
 
