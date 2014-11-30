@@ -108,6 +108,9 @@ function _setup_juju(){
     imagepath=$1
     tar -zxpf ${imagepath} -C ${JUJU_HOME}
     mkdir -p ${JUJU_HOME}/run/lock
+    warn "Warn: Change the mirrorlist file according to your location:"
+    info "    nano /etc/pacman.d/mirrorlist"
+    info "    pacman -Syy"
     info "JuJu installed successfully"
 }
 
@@ -233,7 +236,7 @@ function build_image_juju(){
     mkdir -p ${maindir}/root
     _prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -d ${maindir}/root pacman arch-install-scripts binutils libunistring
+    pacstrap -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano
 
     info "Generating the locales..."
     ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime

@@ -167,6 +167,28 @@ permissions. Since JuJu gives the possibility to install packages
 either as root or as normal user you need to remember that and remove
 the package with the right user!
 
+###No servers configured for repository###
+-**Q**: Why I cannot install packages?
+```
+    pacman -S lsof
+    Packages (1): lsof-4.88-2
+
+    Total Download Size:    0.09 MiB
+    Total Installed Size:   0.21 MiB
+
+    error: no servers configured for repository: core
+    error: no servers configured for repository: community
+    error: failed to commit transaction (no servers configured for repository)
+    Errors occurred, no packages were upgraded.
+```
+
+-**A**: You need simply to update the mirrorlist file according to your location:
+```
+    # Uncomment the repository line according to your location
+    nano /etc/pacman.d/mirrorlist
+    pacman -Syy
+```
+
 License
 -------
 Copyright (c) 2012-2014
