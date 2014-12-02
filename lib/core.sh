@@ -265,8 +265,6 @@ function build_image_juju(){
 
     info "Copying JuJu scripts..."
     git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
-    echo 'export PATH=$PATH:/opt/juju/bin' > ${maindir}/root/etc/profile.d/juju.sh
-    chmod +x ${maindir}/root/etc/profile.d/juju.sh
 
     info "Setting up the pacman keyring (this might take a while!)..."
     pacman --root ${maindir}/root --noconfirm -S psmisc
