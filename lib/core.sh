@@ -233,7 +233,7 @@ function build_image_juju(){
     mkdir -p ${maindir}/root
     _prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -d ${maindir}/root pacman arch-install-scripts binutils libunistring
+    pacstrap -G -d ${maindir}/root pacman arch-install-scripts binutils libunistring
 
     info "Generating the locales..."
     ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
@@ -260,18 +260,23 @@ function build_image_juju(){
     makepkg -sfcA --asroot
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
-    rm ${maindir}/root/var/cache/pacman/pkg/*
-
     info "Copying JuJu scripts..."
     git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
     echo 'export PATH=$PATH:/opt/juju/bin' > ${maindir}/root/etc/profile.d/juju.sh
     chmod +x ${maindir}/root/etc/profile.d/juju.sh
+
+    info "Setting up the pacman keyring (this might take a while!)..."
+    pacman --root ${maindir}/root --noconfirm -S psmisc
+    arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux; killall gpg-agent"
+    pacman --root ${maindir}/root --noconfirm -Rsn psmisc
 
     info "Validating JuJu image..."
     arch-chroot ${maindir}/root pacman -Qi pacman &> /dev/null
     arch-chroot ${maindir}/root yaourt -V &> /dev/null
     arch-chroot ${maindir}/root proot --help &> /dev/null
     arch-chroot ${maindir}/root arch-chroot --help &> /dev/null
+
+    rm ${maindir}/root/var/cache/pacman/pkg/*
 
     builtin cd ${ORIGIN_WD}
     local imagefile="juju-${ARCH}.tar.gz"
