@@ -233,7 +233,7 @@ function build_image_juju(){
     mkdir -p ${maindir}/root
     _prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -d ${maindir}/root pacman arch-install-scripts binutils libunistring
+    pacstrap -d ${maindir}/root pacman arch-install-scripts binutils libunistring sed
 
     info "Generating the locales..."
     ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
