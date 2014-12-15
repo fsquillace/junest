@@ -236,7 +236,7 @@ function build_image_juju(){
     mkdir -p ${maindir}/root
     _prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano
+    pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano sed
 
     info "Generating the locales..."
     ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
