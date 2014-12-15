@@ -69,6 +69,13 @@ function test_setup_from_file_juju(){
     is_equal $? 1 || return 1
 }
 
+function test_setup_from_file_juju_with_absolute_path(){
+    touch file
+    tar -czvf juju-${ARCH}.tar.gz file 1> /dev/null
+    setup_from_file_juju ${ORIGIN_WD}/juju-${ARCH}.tar.gz &> /dev/null
+    [ -e $JUJU_HOME/file ] || return 1
+    [ -e $JUJU_HOME/run/lock ] || return 1
+}
 
 function test_run_juju_as_root(){
     install_mini_juju

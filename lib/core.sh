@@ -137,7 +137,7 @@ function setup_from_file_juju(){
     [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
 
     info "Installing JuJu from ${imagefile}..."
-    _setup_juju ${ORIGIN_WD}/${imagefile}
+    _setup_juju ${imagefile}
 
     builtin cd $ORIGIN_WD
 }
