@@ -28,6 +28,15 @@ set -e
 source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
+
+if [ "$JUJU_ENV" == "1" ]
+then
+    die "Error: Nested JuJu environments are not allowed"
+elif [ ! -z $JUJU_ENV ] && [ "$JUJU_ENV" != "0" ]
+then
+    die "The variable JUJU_ENV is not properly set"
+fi
+
 [ -z ${JUJU_HOME} ] && JUJU_HOME=~/.juju
 if [ -z ${JUJU_TEMPDIR} ] || [ ! -d ${JUJU_TEMPDIR} ]
 then
@@ -48,36 +57,35 @@ else
 fi
 TAR=tar
 
-ARCH=$(uname -m)
-[[ $ARCH =~ .*(armv6).* ]] && ARCH=${BASH_REMATCH[1]}
+HOST_ARCH=$(uname -m)
 
-if [ $ARCH == "i686" ]
+if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
 then
+    ARCH="x86"
     LD_LIB="${JUJU_HOME}/lib/ld-linux.so.2"
-elif [ $ARCH == "x86_64" ]
+elif [ $HOST_ARCH == "x86_64" ]
 then
+    ARCH="x86_64"
     LD_LIB="${JUJU_HOME}/lib64/ld-linux-x86-64.so.2"
-elif [ $ARCH == "armv6" ]
+elif [[ $HOST_ARCH =~ .*(arm).* ]]
 then
+    ARCH="arm"
     LD_LIB="${JUJU_HOME}/lib/ld-linux-armhf.so.3"
 else
     die "Unknown architecture ${ARCH}"
 fi
 
-if [ -z $JUJU_ENV ] || [ "$JUJU_ENV" == "0" ]
-then
-    PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${JUJU_HOME}/usr/bin/proot"
-    SH="/bin/sh --login"
-elif [ "$JUJU_ENV" == "1" ]
-then
-    die "Error: Nested JuJu environments are not allowed"
-else
-    die "The variable JUJU_ENV is not properly set"
-fi
+PROOT_BIN="${JUJU_HOME}/usr/bin/proot"
+PROOT_COMPAT_BIN="${JUJU_HOME}/opt/proot/proot-${ARCH}"
+PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${PROOT_BIN}"
+PROOT_COMPAT="${PROOT_COMPAT_BIN}"
+PROOT_LINK=http://static.proot.me/proot-${ARCH}
 
+SH="/bin/sh --login"
 CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
 TRUE=${JUJU_HOME}/usr/bin/true
 ID="${JUJU_HOME}/usr/bin/id -u"
+
 
 ################################# MAIN FUNCTIONS ##############################
 
@@ -168,12 +176,27 @@ function run_juju_as_root(){
 
 
 function _run_juju_with_proot(){
-    ${PROOT} ${TRUE} &> /dev/null || export PROOT_NO_SECCOMP=1
+    local proot_bin=${PROOT}
+    if ! ${proot_bin} ${TRUE} &> /dev/null
+    then
+        if PROOT_NO_SECCOMP=1 ${proot_bin} ${TRUE} &> /dev/null
+        then
+            export PROOT_NO_SECCOMP=1
+        else
+            proot_bin=${PROOT_COMPAT}
+            if PROOT_NO_SECCOMP=1 ${proot_bin} ${TRUE} &> /dev/null
+            then
+                export PROOT_NO_SECCOMP=1
+            else
+                die "Proot cannot be executed."
+            fi
+        fi
+    fi
 
-    [ "$(${PROOT} ${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(${proot_bin} ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    JUJU_ENV=1 ${PROOT} $@
+    JUJU_ENV=1 ${proot_bin} $@
     local ret=$?
     export -n PROOT_NO_SECCOMP
 
@@ -262,6 +285,12 @@ function build_image_juju(){
     $WGET https://aur.archlinux.org/packages/pr/proot/PKGBUILD
     makepkg -sfcA --asroot
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
+
+    info "Installing compatibility binary proot"
+    mkdir -p ${maindir}/root/opt/proot
+    builtin cd ${maindir}/root/opt/proot
+    $WGET $PROOT_LINK
+    chmod +x proot-$ARCH
 
     info "Copying JuJu scripts..."
     git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
