@@ -67,6 +67,9 @@ After creating the image juju-x86\_64.tar.gz you can install it by running:
 
     # juju -i juju-x86_64.tar.gz
 
+Related wiki page:
+- [How to build a JuJu image using QEMU](https://github.com/fsquillace/juju/wiki/How-to-build-a-JuJu-image-using-QEMU)
+
 ### Bind directories ###
 To bind and host directory to a guest location, you can use proot arguments:
 ```
