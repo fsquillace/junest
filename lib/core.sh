@@ -204,6 +204,8 @@ function delete_juju(){
             die "Try to delete juju using root permissions"
         fi
     fi
+    # the CA directories are read only and can be deleted only by changing the mod
+    chmod -R +w ${JUJU_HOME}/etc/ca-certificates
     if rm -rf ${JUJU_HOME}/*
     then
         info "JuJu deleted in ${JUJU_HOME}"
