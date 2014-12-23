@@ -85,13 +85,13 @@ function test_run_juju_as_root(){
 
 function test_run_juju_as_user(){
     install_mini_juju
-    local output=$(run_juju_as_user "" "mkdir -v /newdir2" | awk -F: '{print $1}')
+    local output=$(run_juju_as_user "-k 3.10" "/usr/bin/mkdir -v /newdir2" 2> /dev/null | awk -F: '{print $1}')
     is_equal "$output" "/usr/bin/mkdir" || return 1
     [ -e $JUJU_HOME/newdir2 ]
     is_equal $? 0 || return 1
 
-    SH="mkdir -v /newdir"
-    local output=$(run_juju_as_user "" | awk -F: '{print $1}')
+    SH="/usr/bin/mkdir -v /newdir"
+    local output=$(run_juju_as_user "-k 3.10" 2> /dev/null | awk -F: '{print $1}')
     is_equal "$output" "/usr/bin/mkdir" || return 1
     [ -e $JUJU_HOME/newdir ]
     is_equal $? 0 || return 1
@@ -99,12 +99,12 @@ function test_run_juju_as_user(){
 
 function test_run_juju_as_user_proot_args(){
     install_mini_juju
-    run_juju_as_user "--help" "" 1> /dev/null
+    run_juju_as_user "--help" "" &> /dev/null
     is_equal $? 0 || return 1
 
     mkdir $JUJU_TEMPDIR/newdir
     touch $JUJU_TEMPDIR/newdir/newfile
-    run_juju_as_user "-b $JUJU_TEMPDIR/newdir:/newdir" "ls -l /newdir/newfile" 1> /dev/null
+    run_juju_as_user "-b $JUJU_TEMPDIR/newdir:/newdir -k 3.10" "ls -l /newdir/newfile" &> /dev/null
     is_equal $? 0 || return 1
 
     export -f _run_juju_with_proot
@@ -112,7 +112,7 @@ function test_run_juju_as_user_proot_args(){
     export -f info
     export PROOT
     export PROOT_COMPAT
-    ID="/usr/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
+    ID="/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
     is_equal $? 1 || return 1
     export -n _run_juju_with_proot
     export -n _run_proot
@@ -123,20 +123,20 @@ function test_run_juju_as_user_proot_args(){
 
 function test_run_juju_with_proot_with_compat(){
     install_mini_juju
-    PROOT="/usr/bin/true"
-    PROOT_COMPAT="/usr/bin/false"
-    _run_juju_with_proot "" "" 1> /dev/null
+    PROOT="/bin/true"
+    PROOT_COMPAT="/bin/false"
+    _run_juju_with_proot "" "" &> /dev/null
     is_equal $? 0 || return 1
 
-    PROOT="/usr/bin/false"
-    PROOT_COMPAT="/usr/bin/true"
-    _run_juju_with_proot "" "" 1> /dev/null
+    PROOT="/bin/false"
+    PROOT_COMPAT="/bin/true"
+    _run_juju_with_proot "" "" &> /dev/null
     is_equal $? 0 || return 1
 
     export -f _run_juju_with_proot
     export -f _run_proot
     export -f info
-    PROOT="/usr/bin/false" PROOT_COMPAT="/usr/bin/false" ID="/usr/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
+    PROOT="/bin/false" PROOT_COMPAT="/bin/false" ID="/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
     is_equal $? 1 || return 1
     export -n _run_juju_with_proot
     export -n _run_proot
@@ -145,7 +145,7 @@ function test_run_juju_with_proot_with_compat(){
 
 function test_run_juju_with_proot_as_root(){
     export -f _run_juju_with_proot
-    ID="/usr/bin/echo 0" bash -ic "_run_juju_with_proot" &> /dev/null
+    ID="/bin/echo 0" bash -ic "_run_juju_with_proot" &> /dev/null
     is_equal $? 1 || return 1
     export -n _run_juju_with_proot
     unset _run_juju_with_proot
@@ -158,13 +158,13 @@ function test_run_proot_seccomp(){
     envv(){
         env | grep "^PROOT_NO_SECCOMP"
     }
-    local output=$(_run_proot "envv" | grep "^PROOT_NO_SECCOMP")
+    local output=$(_run_proot "envv" 2> /dev/null | grep "^PROOT_NO_SECCOMP")
     is_equal $output "PROOT_NO_SECCOMP=1" || return 1
 }
 
 function test_run_juju_as_fakeroot(){
     install_mini_juju
-    local output=$(run_juju_as_fakeroot "" "id" | awk '{print $1}')
+    local output=$(run_juju_as_fakeroot "-k 3.10" "id" 2> /dev/null | awk '{print $1}')
     is_equal "$output" "uid=0(root)" || return 1
 }
 
