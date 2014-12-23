@@ -116,14 +116,16 @@ function test_run_juju_as_user_proot_args(){
 
     export -f _run_juju_with_proot
     export -f _run_proot
-    export -f info
+    export -f warn
+    export -f die
     export PROOT
     export PROOT_COMPAT
     ID="/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
     is_equal $? 1 || return 1
     export -n _run_juju_with_proot
     export -n _run_proot
-    export -n info
+    export -n warn
+    export -n die
     export -n PROOT
     export -n PROOT_COMPAT
 }
@@ -142,12 +144,14 @@ function test_run_juju_with_proot_with_compat(){
 
     export -f _run_juju_with_proot
     export -f _run_proot
-    export -f info
+    export -f warn
+    export -f die
     PROOT="/bin/false" PROOT_COMPAT="/bin/false" ID="/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
     is_equal $? 1 || return 1
     export -n _run_juju_with_proot
     export -n _run_proot
-    export -n info
+    export -n warn
+    export -n die
 }
 
 function test_run_juju_with_proot_as_root(){
