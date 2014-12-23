@@ -101,8 +101,6 @@ function test_run_juju_as_user_proot_args(){
     install_mini_juju
     run_juju_as_user "--help" "" 1> /dev/null
     is_equal $? 0 || return 1
-    run_juju_as_user "--helps" "" &> /dev/null
-    is_equal $? 1 || return 1
 
     mkdir $JUJU_TEMPDIR/newdir
     touch $JUJU_TEMPDIR/newdir/newfile
@@ -110,24 +108,57 @@ function test_run_juju_as_user_proot_args(){
     is_equal $? 0 || return 1
 
     export -f _run_juju_with_proot
+    export -f _run_proot
+    export -f info
     export PROOT
-    export TRUE
+    export PROOT_COMPAT
+    ID="/usr/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
+    is_equal $? 1 || return 1
+    export -n _run_juju_with_proot
+    export -n _run_proot
+    export -n info
+    export -n PROOT
+    export -n PROOT_COMPAT
+}
+
+function test_run_juju_with_proot_with_compat(){
+    install_mini_juju
+    PROOT="/usr/bin/true"
+    PROOT_COMPAT="/usr/bin/false"
+    _run_juju_with_proot "" "" 1> /dev/null
+    is_equal $? 0 || return 1
+
+    PROOT="/usr/bin/false"
+    PROOT_COMPAT="/usr/bin/true"
+    _run_juju_with_proot "" "" 1> /dev/null
+    is_equal $? 0 || return 1
+
+    export -f _run_juju_with_proot
+    export -f _run_proot
+    export -f info
+    PROOT="/usr/bin/false" PROOT_COMPAT="/usr/bin/false" ID="/usr/bin/echo 1" bash -ic "_run_juju_with_proot --helps" &> /dev/null
+    is_equal $? 1 || return 1
+    export -n _run_juju_with_proot
+    export -n _run_proot
+    export -n info
+}
+
+function test_run_juju_with_proot_as_root(){
+    export -f _run_juju_with_proot
     ID="/usr/bin/echo 0" bash -ic "_run_juju_with_proot" &> /dev/null
     is_equal $? 1 || return 1
     export -n _run_juju_with_proot
     unset _run_juju_with_proot
-    export -n PROOT
-    export -n TRUE
 }
 
-function test_run_juju_as_user_seccomp(){
-    install_mini_juju
-    PROOT=""
-    local output=$(_run_juju_with_proot "" "env" | grep "PROOT_NO_SECCOMP")
+function test_run_proot_seccomp(){
+    local output=$(_run_proot "env" | grep "^PROOT_NO_SECCOMP")
     is_equal $output "" || return 1
 
-    TRUE="/usr/bin/false"
-    local output=$(_run_juju_with_proot "" "env" | grep "PROOT_NO_SECCOMP")
+    envv(){
+        env | grep "^PROOT_NO_SECCOMP"
+    }
+    local output=$(_run_proot "envv" | grep "^PROOT_NO_SECCOMP")
     is_equal $output "PROOT_NO_SECCOMP=1" || return 1
 }
 
@@ -152,7 +183,6 @@ function test_nested_juju(){
     JUJU_ENV=1 bash -ic "source $CURRPWD/$(dirname $0)/../lib/core.sh" &> /dev/null
     is_equal $? 1 || return 1
 }
-
 
 for func in $(declare -F | grep test_ | awk '{print $3}' | xargs)
 do
