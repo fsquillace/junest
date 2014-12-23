@@ -175,7 +175,7 @@ function run_juju_as_root(){
 function _run_proot(){
     if ! JUJU_ENV=1 ${@}
     then
-        info "Trying execute proot with PROOT_NO_SECCOMP=1 "
+        warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
         JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${@}
     fi
 }
@@ -187,10 +187,10 @@ function _run_juju_with_proot(){
 
     if ! _run_proot ${PROOT} ${@}
     then
-        info "Trying to execute proot compat binary"
+        warn "Proot error: Trying to execute proot compatible binary..."
         if ! _run_proot ${PROOT_COMPAT} ${@}
         then
-            die "Proot cannot be executed: Try to use juju -p \"-k 3.10\""
+            die "Error: Check if the juju arguments are correct or use the option juju -p \"-k 3.10\""
         fi
     fi
 }
