@@ -47,8 +47,8 @@ Just clone JuJu somewhere (for example in ~/juju):
     $ git clone git://github.com/fsquillace/juju ~/juju
     $ export PATH=~/juju/bin:$PATH
 
-JuJu can only works on GNU/Linux OS with kernel version greater or equal
-2.6.32 on 64 bit 32 bit and ARMv6 architectures.
+JuJu can works on GNU/Linux OS with kernel version greater or equal
+2.6.0 (JuJu was not tested on kernel versions older than this) on 64 bit 32 bit and ARMv6 architectures.
 
 Advanced usage
 --------------
@@ -84,12 +84,15 @@ Check out the proot options with:
 Dependencies
 ------------
 JuJu comes with a very short list of dependencies in order to be installed in most
-of GNU/Linux distributions. The dependencies needed in the host OS are:
+of GNU/Linux distributions. The needed executables in the host OS are:
 - bash
 - wget or curl
 - tar
+- getopt
+- id
 - mkdir
-- linux kernel 2.6.32+
+
+The minimum recommended linux kernel is 2.6.0+
 
 Troubleshooting
 ---------------
@@ -110,9 +113,17 @@ that contains all the essential packages for compiling source code (such as gcc,
 ###Kernel too old###
 - **Q**: Why do I get the error: "FATAL: kernel too old"?
 - **A**: This is because the executable from the precompiled package cannot
-always run if the kernel is old.
-In order to check if the executable can be compatible with the kernel of
-the host OS just use file command, for instance:
+properly run if the kernel is old.
+JuJu contains two different PRoot binaries, and one of them is highly compatible
+with old linux kernel versions. JuJu will detect which PRoot binary need to be
+executed but you may need to specify the PRoot *-k* option if the guest rootfs
+requires a newer kernel version:
+```
+    juju -p "-k 3.10"
+```
+
+In order to check if an executable inside JuJu environment can be compatible
+with the kernel of the host OS just use the *file* command, for instance:
 
 ```
     file ~/.juju/usr/bin/bash
