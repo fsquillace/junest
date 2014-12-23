@@ -83,9 +83,7 @@ PROOT_LINK=http://static.proot.me/proot-${ARCH}
 
 SH="/bin/sh --login"
 CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
-TRUE=${JUJU_HOME}/usr/bin/true
 ID="${JUJU_HOME}/usr/bin/id -u"
-
 
 ################################# MAIN FUNCTIONS ##############################
 
@@ -174,33 +172,27 @@ function run_juju_as_root(){
     JUJU_ENV=1 ${CHROOT} $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
 }
 
+function _run_proot(){
+    if ! JUJU_ENV=1 ${@}
+    then
+        info "Trying execute proot with PROOT_NO_SECCOMP=1 "
+        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${@}
+    fi
+}
+
 
 function _run_juju_with_proot(){
-    local proot_bin=${PROOT}
-    if ! ${proot_bin} ${TRUE} &> /dev/null
-    then
-        if PROOT_NO_SECCOMP=1 ${proot_bin} ${TRUE} &> /dev/null
-        then
-            export PROOT_NO_SECCOMP=1
-        else
-            proot_bin=${PROOT_COMPAT}
-            if PROOT_NO_SECCOMP=1 ${proot_bin} ${TRUE} &> /dev/null
-            then
-                export PROOT_NO_SECCOMP=1
-            else
-                die "Proot cannot be executed."
-            fi
-        fi
-    fi
-
-    [ "$(${proot_bin} ${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    JUJU_ENV=1 ${proot_bin} $@
-    local ret=$?
-    export -n PROOT_NO_SECCOMP
-
-    return $ret
+    if ! _run_proot ${PROOT} ${@}
+    then
+        info "Trying to execute proot compat binary"
+        if ! _run_proot ${PROOT_COMPAT} ${@}
+        then
+            die "Proot cannot be executed: Try to use juju -p \"-k 3.10\""
+        fi
+    fi
 }
 
 
