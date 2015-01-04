@@ -45,16 +45,9 @@ fi
 JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
 ORIGIN_WD=$(pwd)
 
-# The essentials executables that MUST exist in the host OS are (wget|curl), bash, mkdir
-if command -v wget > /dev/null 2>&1
-then
-    WGET="wget --no-check-certificate"
-elif command -v curl > /dev/null 2>&1
-then
-    WGET="curl -J -O -k"
-else
-    die "Error: Either wget or curl commands must be installed"
-fi
+WGET="wget --no-check-certificate"
+CURL="curl -J -O -k"
+
 TAR=tar
 
 HOST_ARCH=$(uname -m)
@@ -86,6 +79,11 @@ CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
 ID="${JUJU_HOME}/usr/bin/id -u"
 
 ################################# MAIN FUNCTIONS ##############################
+
+function download(){
+    $WGET $1 || $CURL $1 || \
+        die "Error: Both wget and curl commands have failed on downloading $1"
+}
 
 function is_juju_installed(){
     [ -d "$JUJU_HOME" ] && [ "$(ls -A $JUJU_HOME)" ] && return 0
@@ -130,7 +128,7 @@ function setup_juju(){
     info "Downloading JuJu..."
     builtin cd ${maindir}
     local imagefile=juju-${ARCH}.tar.gz
-    $WGET ${JUJU_REPO}/${imagefile}
+    download ${JUJU_REPO}/${imagefile}
 
     info "Installing JuJu..."
     _setup_juju ${maindir}/${imagefile}
@@ -265,25 +263,25 @@ function build_image_juju(){
     mkdir -p ${maindir}/packages/{package-query,yaourt,proot}
 
     builtin cd ${maindir}/packages/package-query
-    $WGET https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
+    download https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
 
     builtin cd ${maindir}/packages/yaourt
-    $WGET https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
+    download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
 
     info "Compiling and installing proot..."
     builtin cd ${maindir}/packages/proot
-    $WGET https://aur.archlinux.org/packages/pr/proot/PKGBUILD
+    download https://aur.archlinux.org/packages/pr/proot/PKGBUILD
     makepkg -sfcA --asroot
     pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
     info "Installing compatibility binary proot"
     mkdir -p ${maindir}/root/opt/proot
     builtin cd ${maindir}/root/opt/proot
-    $WGET $PROOT_LINK
+    download $PROOT_LINK
     chmod +x proot-$ARCH
 
     info "Copying JuJu scripts..."
@@ -295,10 +293,10 @@ function build_image_juju(){
     pacman --root ${maindir}/root --noconfirm -Rsn psmisc
 
     info "Validating JuJu image..."
-    arch-chroot ${maindir}/root pacman -Qi pacman &> /dev/null
-    arch-chroot ${maindir}/root yaourt -V &> /dev/null
-    arch-chroot ${maindir}/root proot --help &> /dev/null
-    arch-chroot ${maindir}/root arch-chroot --help &> /dev/null
+    arch-chroot ${maindir}/root pacman -Qi pacman 1> /dev/null
+    arch-chroot ${maindir}/root yaourt -V 1> /dev/null
+    arch-chroot ${maindir}/root proot --help 1> /dev/null
+    arch-chroot ${maindir}/root arch-chroot --help 1> /dev/null
 
     rm ${maindir}/root/var/cache/pacman/pkg/*
 

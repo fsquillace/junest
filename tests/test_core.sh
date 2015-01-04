@@ -30,12 +30,32 @@ function tear_down(){
     trap - QUIT EXIT ABRT KILL TERM INT
 }
 
+
 function test_is_juju_installed(){
     is_juju_installed
     is_equal $? 1 || return 1
     touch $JUJU_HOME/just_file
     is_juju_installed
     is_equal $? 0 || return 1
+}
+
+
+function test_download(){
+    WGET=/bin/true
+    CURL=/bin/false
+    download
+    is_equal $? 0 || return 1
+    WGET=/bin/false
+    CURL=/bin/true
+    download
+    is_equal $? 0 || return 1
+
+    export -f download
+    export -f die
+    WGET=/bin/false CURL=/bin/false bash -ic "download something" 2> /dev/null
+    is_equal $? 1 || return 1
+    export -n die
+    export -n download
 }
 
 
