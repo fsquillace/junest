@@ -68,10 +68,7 @@ else
     die "Unknown architecture ${ARCH}"
 fi
 
-PROOT_BIN="${JUJU_HOME}/usr/bin/proot"
-PROOT_COMPAT_BIN="${JUJU_HOME}/opt/proot/proot-${ARCH}"
-PROOT="$LD_LIB --library-path ${JUJU_HOME}/usr/lib:${JUJU_HOME}/lib ${PROOT_BIN}"
-PROOT_COMPAT="${PROOT_COMPAT_BIN}"
+PROOT_COMPAT="${JUJU_HOME}/opt/proot/proot-${ARCH}"
 PROOT_LINK=http://static.proot.me/proot-${ARCH}
 
 SH="/bin/sh --login"
@@ -183,13 +180,9 @@ function _run_juju_with_proot(){
     [ "$(${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    if ! _run_proot ${PROOT} ${@}
+    if ! _run_proot ${PROOT_COMPAT} ${@}
     then
-        warn "Proot error: Trying to execute proot compatible binary..."
-        if ! _run_proot ${PROOT_COMPAT} ${@}
-        then
-            die "Error: Check if the juju arguments are correct or use the option juju -p \"-k 3.10\""
-        fi
+        die "Error: Check if the juju arguments are correct or use the option juju -p \"-k 3.10\""
     fi
 }
 
@@ -271,12 +264,6 @@ function build_image_juju(){
     download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
     makepkg -sfc --asroot
     pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
-
-    info "Compiling and installing proot..."
-    builtin cd ${maindir}/packages/proot
-    download https://aur.archlinux.org/packages/pr/proot/PKGBUILD
-    makepkg -sfcA --asroot
-    pacman --noconfirm --root ${maindir}/root -U proot*.pkg.tar.xz
 
     info "Installing compatibility binary proot"
     mkdir -p ${maindir}/root/opt/proot
