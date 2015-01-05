@@ -168,19 +168,19 @@ function run_juju_as_root(){
 }
 
 function _run_proot(){
-    if ! JUJU_ENV=1 ${@}
+    if ! JUJU_ENV=1 ${PROOT_COMPAT} ${@}
     then
         warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
-        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${@}
+        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} ${@}
     fi
 }
 
 
 function _run_juju_with_proot(){
-    [ "$(${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(_run_proot ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    if ! _run_proot ${PROOT_COMPAT} ${@}
+    if ! _run_proot ${@}
     then
         die "Error: Check if the juju arguments are correct or use the option juju -p \"-k 3.10\""
     fi
