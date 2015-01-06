@@ -174,6 +174,7 @@ function test_run_juju_with_proot_as_root(){
 }
 
 function test_run_proot_seccomp(){
+    TRUE=""
     PROOT_COMPAT=env
     local output=$(_run_proot | grep "^PROOT_NO_SECCOMP")
     is_equal $output "" || return 1
