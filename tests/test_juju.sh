@@ -34,7 +34,7 @@ function run_juju_as_user(){
 }
 
 function wrap_juju(){
-    parse_arguments $@
+    parse_arguments "$@"
     check_cli
     execute_operation
 }

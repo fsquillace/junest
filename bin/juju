@@ -178,7 +178,7 @@ function execute_operation(){
 	fi
 }
 
-parse_arguments $@
+parse_arguments "$@"
 check_cli
 execute_operation
 # vim: set ts=4 sw=4 noet:
