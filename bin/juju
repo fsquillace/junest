@@ -112,9 +112,6 @@ check_cli(){
 
 
 function parse_arguments(){
-    TEMP=$(getopt -o drp:fbi:hv --long delete,root,proot-args:,fakeroot,build-image,setup-from-file:,help,version -n "$CMD" -- "$@")
-	eval set -- "$TEMP"
-
 	OPT_SETUP_FROM_FILE=false
 	IMAGE_FILE=""
 	OPT_FAKEROOT=false
@@ -125,7 +122,8 @@ function parse_arguments(){
 	OPT_DELETE=false
 	OPT_HELP=false
 	OPT_VERSION=false
-	while true ; do
+	for opt in $@
+	do
 		case "$1" in
 			-i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
 			-f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
@@ -136,7 +134,8 @@ function parse_arguments(){
 			-h|--help) OPT_HELP=true ; shift ;;
 			-v|--version) OPT_VERSION=true ; shift ;;
 			--) shift ; break ;;
-			*) die "Internal error!" ;;
+			-*) die "Invalid option $1" ;;
+			*) break ;;
 		esac
 	done
 

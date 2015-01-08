@@ -24,13 +24,17 @@ function setup_juju(){
     echo "setup_juju"
 }
 function run_juju_as_fakeroot(){
-    echo "run_juju_as_fakeroot $@"
+    local proot_args="$1"
+    shift
+    echo "run_juju_as_fakeroot($proot_args,$@)"
 }
 function run_juju_as_root(){
     echo "run_juju_as_root $@"
 }
 function run_juju_as_user(){
-    echo "run_juju_as_user $@"
+    local proot_args="$1"
+    shift
+    echo "run_juju_as_user($proot_args,$@)"
 }
 
 function wrap_juju(){
@@ -75,27 +79,27 @@ function test_delete_juju(){
 }
 function test_run_juju_as_fakeroot(){
     local output=$(wrap_juju -f)
-    is_equal $output "run_juju_as_fakeroot" || return 1
+    is_equal $output "run_juju_as_fakeroot(,)" || return 1
     local output=$(wrap_juju --fakeroot)
-    is_equal $output "run_juju_as_fakeroot" || return 1
+    is_equal $output "run_juju_as_fakeroot(,)" || return 1
 
     local output=$(wrap_juju -f -p "-b arg")
-    is_equal "${output[@]}" "run_juju_as_fakeroot -b arg" || return 1
-    local output=$(wrap_juju -f -p "-b arg" -- command)
-    is_equal "${output[@]}" "run_juju_as_fakeroot -b arg command" || return 1
-    local output=$(wrap_juju -f command)
-    is_equal "${output[@]}" "run_juju_as_fakeroot  command" || return 1
+    is_equal "${output[@]}" "run_juju_as_fakeroot(-b arg,)" || return 1
+    local output=$(wrap_juju -f -p "-b arg" -- command -kv)
+    is_equal "${output[@]}" "run_juju_as_fakeroot(-b arg,command -kv)" || return 1
+    local output=$(wrap_juju -f command --as)
+    is_equal "${output[@]}" "run_juju_as_fakeroot(,command --as)" || return 1
 }
 function test_run_juju_as_user(){
     local output=$(wrap_juju)
-    is_equal $output "run_juju_as_user" || return 1
+    is_equal $output "run_juju_as_user(,)" || return 1
 
     local output=$(wrap_juju -p "-b arg")
-    is_equal "${output[@]}" "run_juju_as_user -b arg" || return 1
-    local output=$(wrap_juju -p "-b arg" -- command)
-    is_equal "${output[@]}" "run_juju_as_user -b arg command" || return 1
-    local output=$(wrap_juju command)
-    is_equal "${output[@]}" "run_juju_as_user  command" || return 1
+    is_equal "${output[@]}" "run_juju_as_user(-b arg,)" || return 1
+    local output=$(wrap_juju -p "-b arg" -- command -ll)
+    is_equal "${output[@]}" "run_juju_as_user(-b arg,command -ll)" || return 1
+    local output=$(wrap_juju command -ls)
+    is_equal "${output[@]}" "run_juju_as_user(,command -ls)" || return 1
 }
 function test_run_juju_as_root(){
     local output=$(wrap_juju -r)

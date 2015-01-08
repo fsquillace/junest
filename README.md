@@ -88,7 +88,6 @@ of GNU/Linux distributions. The needed executables in the host OS are:
 - bash
 - wget or curl
 - tar
-- getopt
 - id
 - mkdir
 
