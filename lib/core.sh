@@ -73,6 +73,7 @@ PROOT_LINK=http://static.proot.me/proot-${ARCH}
 
 SH="/bin/sh --login"
 CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
+TRUE=${JUJU_HOME}/usr/bin/true
 ID="${JUJU_HOME}/usr/bin/id -u"
 
 ################################# MAIN FUNCTIONS ##############################
@@ -154,48 +155,47 @@ function _define_chroot_args(){
 }
 
 
-function _define_proot_args(){
-    local proot_args="$1"
-    shift
-    local comm=$(_define_chroot_args "$@")
-    echo "$proot_args" "${comm[@]}"
-}
-
-
 function run_juju_as_root(){
     mkdir -p ${JUJU_HOME}/${HOME}
     JUJU_ENV=1 ${CHROOT} $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
 }
 
 function _run_proot(){
-    if ! JUJU_ENV=1 ${@}
+    local proot_args="$1"
+    if ${PROOT_COMPAT} $proot_args ${TRUE} &> /dev/null
+    then
+        JUJU_ENV=1 ${PROOT_COMPAT} ${@}
+    elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args ${TRUE} &> /dev/null
     then
         warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
-        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${@}
-    fi
-}
-
-
-function _run_juju_with_proot(){
-    [ "$(${ID} 2> /dev/null )" == "0" ] && \
-        die "You cannot access with root privileges. Use --root option instead."
-
-    if ! _run_proot ${PROOT_COMPAT} ${@}
-    then
+        JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} ${@}
+    else
         die "Error: Check if the juju arguments are correct or use the option juju -p \"-k 3.10\""
     fi
 }
 
 
+function _run_juju_with_proot(){
+    [ "$(_run_proot ${ID} 2> /dev/null )" == "0" ] && \
+        die "You cannot access with root privileges. Use --root option instead."
+
+    _run_proot "${@}"
+}
+
+
 function run_juju_as_fakeroot(){
-    local comm=$(_define_proot_args "$@")
-    _run_juju_with_proot "-S" ${JUJU_HOME} ${comm}
+    local proot_args="$1"
+    shift
+    local comm=$(_define_chroot_args "$@")
+    _run_juju_with_proot "-S ${JUJU_HOME} ${proot_args}" ${comm}
 }
 
 
 function run_juju_as_user(){
-    local comm=$(_define_proot_args "$@")
-    _run_juju_with_proot "-R" ${JUJU_HOME} ${comm}
+    local proot_args="$1"
+    shift
+    local comm=$(_define_chroot_args "$@")
+    _run_juju_with_proot "-R ${JUJU_HOME} $proot_args" ${comm}
 }
 
 
