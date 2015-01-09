@@ -236,11 +236,13 @@ function build_image_juju(){
 # base-devel
 # package-query
 # git
+# sudo
     _check_package arch-install-scripts
     _check_package gcc
     _check_package package-query
     _check_package git
-    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
+    _check_package sudo
+    local maindir=$(TMPDIR=$JUJU_TEMPDIR sudo -u $SUDO_USER mktemp -d -t juju.XXXXXXXXXX)
     mkdir -p ${maindir}/root
     _prepare_build_directory
     info "Installing pacman and its dependencies..."
@@ -253,16 +255,16 @@ function build_image_juju(){
     echo 'LANG = "en_US.UTF-8"' >> ${maindir}/root/etc/locale.conf
 
     info "Compiling and installing yaourt..."
-    mkdir -p ${maindir}/packages/{package-query,yaourt,proot}
+    sudo -u $SUDO_USER mkdir -p ${maindir}/packages/{package-query,yaourt}
 
     builtin cd ${maindir}/packages/package-query
     download https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
-    makepkg -sfc --asroot
+    sudo -u $SUDO_USER makepkg -sfc
     pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
 
     builtin cd ${maindir}/packages/yaourt
     download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
-    makepkg -sfc --asroot
+    sudo -u $SUDO_USER makepkg -sfc
     pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
 
     info "Installing compatibility binary proot"
@@ -275,14 +277,12 @@ function build_image_juju(){
     git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
 
     info "Setting up the pacman keyring (this might take a while!)..."
-    pacman --root ${maindir}/root --noconfirm -S psmisc
-    arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux; killall gpg-agent"
-    pacman --root ${maindir}/root --noconfirm -Rsn psmisc
+    arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
 
     info "Validating JuJu image..."
     arch-chroot ${maindir}/root pacman -Qi pacman 1> /dev/null
     arch-chroot ${maindir}/root yaourt -V 1> /dev/null
-    arch-chroot ${maindir}/root proot --help 1> /dev/null
+    arch-chroot ${maindir}/root /opt/proot/proot-$ARCH --help 1> /dev/null
     arch-chroot ${maindir}/root arch-chroot --help 1> /dev/null
 
     rm ${maindir}/root/var/cache/pacman/pkg/*
