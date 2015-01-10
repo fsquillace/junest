@@ -40,6 +40,9 @@ The first time you execute it, the script will download the JuJu image and place
 to the default directory ~/.juju.
 You can change the default directory by changing the environment variable *JUJU\_HOME*.
 
+If you are new on Archlinux and you are not familiar with *pacman* package manager
+visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
+
 Installation
 ------------
 Just clone JuJu somewhere (for example in ~/juju):

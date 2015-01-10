@@ -236,42 +236,44 @@ function build_image_juju(){
 # base-devel
 # package-query
 # git
-# sudo
     _check_package arch-install-scripts
     _check_package gcc
     _check_package package-query
     _check_package git
-    _check_package sudo
-    local maindir=$(TMPDIR=$JUJU_TEMPDIR sudo -u $SUDO_USER mktemp -d -t juju.XXXXXXXXXX)
+    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     mkdir -p ${maindir}/root
     _prepare_build_directory
     info "Installing pacman and its dependencies..."
-    pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano sed
+    pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano
 
     info "Generating the locales..."
+    # sed command is required for locale-gen
+    pacman --noconfirm --root ${maindir}/root -S sed
     ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     echo "en_US.UTF-8 UTF-8" >> ${maindir}/root/etc/locale.gen
     arch-chroot ${maindir}/root locale-gen
     echo 'LANG = "en_US.UTF-8"' >> ${maindir}/root/etc/locale.conf
-
-    info "Compiling and installing yaourt..."
-    sudo -u $SUDO_USER mkdir -p ${maindir}/packages/{package-query,yaourt}
-
-    builtin cd ${maindir}/packages/package-query
-    download https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
-    sudo -u $SUDO_USER makepkg -sfc
-    pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
-
-    builtin cd ${maindir}/packages/yaourt
-    download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
-    sudo -u $SUDO_USER makepkg -sfc
-    pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
+    pacman --noconfirm --root ${maindir}/root -Rsn sed
 
     info "Installing compatibility binary proot"
     mkdir -p ${maindir}/root/opt/proot
     builtin cd ${maindir}/root/opt/proot
     download $PROOT_LINK
     chmod +x proot-$ARCH
+
+    # AUR packages requires non-root user to be compiled. proot fakes the user to 10
+    info "Compiling and installing yaourt..."
+    mkdir -p ${maindir}/packages/{package-query,yaourt}
+
+    builtin cd ${maindir}/packages/package-query
+    download https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
+    ${maindir}/root/opt/proot/proot-$ARCH -i 10 makepkg -sfc
+    pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
+
+    builtin cd ${maindir}/packages/yaourt
+    download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
+    ${maindir}/root/opt/proot/proot-$ARCH -i 10 makepkg -sfc
+    pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
 
     info "Copying JuJu scripts..."
     git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
