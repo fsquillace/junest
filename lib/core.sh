@@ -46,7 +46,7 @@ JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
 ORIGIN_WD=$(pwd)
 
 WGET="wget --no-check-certificate"
-CURL="curl -J -O -k"
+CURL="curl -L -J -O -k"
 
 TAR=tar
 
