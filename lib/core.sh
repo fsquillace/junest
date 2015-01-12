@@ -108,7 +108,7 @@ function _setup_juju(){
     is_juju_installed && die "Error: JuJu has been already installed in $JUJU_HOME"
     mkdir -p "${JUJU_HOME}"
     imagepath=$1
-    tar -zxpf ${imagepath} -C ${JUJU_HOME}
+    $TAR -zxpf ${imagepath} -C ${JUJU_HOME}
     mkdir -p ${JUJU_HOME}/run/lock
     warn "Warn: Change the mirrorlist file according to your location:"
     info "    nano /etc/pacman.d/mirrorlist"
@@ -292,6 +292,6 @@ function build_image_juju(){
     builtin cd ${ORIGIN_WD}
     local imagefile="juju-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
-    tar -zcpf ${imagefile} -C ${maindir}/root .
+    $TAR -zcpf ${imagefile} -C ${maindir}/root .
     _cleanup_build_directory ${maindir}
 }
