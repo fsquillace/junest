@@ -16,7 +16,7 @@ The main advantages on using JuJu are:
 - Install packages without root privileges.
 - Isolated environment in which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular on GNU/Linux distros that may contain a limited repositories (such as CentOS and RedHat).
-- Available for x86\_64, i686 and ARMv6 architectures but you can build you own image from scratch too!
+- Available for x86\_64, x86 and ARM architectures but you can build you own image from scratch too!
 - All ArchLinux lovers can have their favourite distro everywhere!
 
 Quickstart
@@ -36,8 +36,8 @@ $ juju -f
 # juju -r
 ```
 
-The first time you execute it, the script will download the JuJu image and place it
-to the default directory ~/.juju.
+If the JuJu image has not been downloaded yet, the script will download
+the JuJu image and will place it to the default directory ~/.juju.
 You can change the default directory by changing the environment variable *JUJU\_HOME*.
 
 If you are new on Archlinux and you are not familiar with *pacman* package manager
@@ -45,13 +45,20 @@ visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rose
 
 Installation
 ------------
-Just clone JuJu somewhere (for example in ~/juju):
+Just clone the JuJu repo somewhere (for example in ~/juju):
 
     $ git clone git://github.com/fsquillace/juju ~/juju
     $ export PATH=~/juju/bin:$PATH
 
+Alternatively, another installation method would be to directly download the JuJu image and place it to the default directory ~/.juju:
+
+    $ ARCH=<one of "x86_64", "x86", "arm">
+    $ mkdir ~/.juju
+    $ curl https://bitbucket.org/fsquillace/juju-repo/raw/master/juju-${ARCH}.tar.gz | tar -xz -C ~/.juju
+    $ export PATH=~/.juju/opt/juju/bin:$PATH
+
 JuJu can works on GNU/Linux OS with kernel version greater or equal
-2.6.0 (JuJu was not tested on kernel versions older than this) on 64 bit 32 bit and ARMv6 architectures.
+2.6.0 (JuJu was not tested on kernel versions older than this) on 64 bit, 32 bit and ARM architectures.
 
 Advanced usage
 --------------
