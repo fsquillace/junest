@@ -230,36 +230,36 @@ function _check_package(){
 
 
 function build_image_juju(){
-# The function must runs on ArchLinux
-# The dependencies are:
-# arch-install-scripts
-# base-devel
-# package-query
-# git
+# The function must runs on ArchLinux with non-root privileges.
+    [ "$(id -u)" == "0" ] && \
+        die "You cannot build with root privileges."
+
     _check_package arch-install-scripts
     _check_package gcc
     _check_package package-query
     _check_package git
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
-    mkdir -p ${maindir}/root
-    _prepare_build_directory
+    sudo mkdir -p ${maindir}/root
+    trap - QUIT EXIT ABRT KILL TERM INT
+    trap "sudo rm -rf ${maindir}; die \"Error occurred when installing JuJu\"" EXIT QUIT ABRT KILL TERM INT
     info "Installing pacman and its dependencies..."
-    pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano
+    # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
+    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano archlinux-keyring
 
     info "Generating the locales..."
     # sed command is required for locale-gen
-    pacman --noconfirm --root ${maindir}/root -S sed
-    ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
-    echo "en_US.UTF-8 UTF-8" >> ${maindir}/root/etc/locale.gen
-    arch-chroot ${maindir}/root locale-gen
-    echo 'LANG = "en_US.UTF-8"' >> ${maindir}/root/etc/locale.conf
-    pacman --noconfirm --root ${maindir}/root -Rsn sed
+    sudo pacman --noconfirm --root ${maindir}/root -S sed
+    sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
+    sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
+    sudo arch-chroot ${maindir}/root locale-gen
+    sudo bash -c "echo 'LANG = \"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
+    sudo pacman --noconfirm --root ${maindir}/root -Rsn sed
 
     info "Installing compatibility binary proot"
-    mkdir -p ${maindir}/root/opt/proot
+    sudo mkdir -p ${maindir}/root/opt/proot
     builtin cd ${maindir}/root/opt/proot
-    download $PROOT_LINK
-    chmod +x proot-$ARCH
+    sudo $CURL $PROOT_LINK
+    sudo chmod +x proot-$ARCH
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
     info "Compiling and installing yaourt..."
@@ -267,31 +267,32 @@ function build_image_juju(){
 
     builtin cd ${maindir}/packages/package-query
     download https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
-    ${maindir}/root/opt/proot/proot-$ARCH -i 10 makepkg -sfc
-    pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
+    makepkg -sfc
+    sudo pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
 
     builtin cd ${maindir}/packages/yaourt
     download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
-    ${maindir}/root/opt/proot/proot-$ARCH -i 10 makepkg -sfc
-    pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
+    makepkg -sfc
+    sudo pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
 
     info "Copying JuJu scripts..."
-    git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
+    sudo git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
 
     info "Setting up the pacman keyring (this might take a while!)..."
-    arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
+    sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
 
     info "Validating JuJu image..."
-    arch-chroot ${maindir}/root pacman -Qi pacman 1> /dev/null
-    arch-chroot ${maindir}/root yaourt -V 1> /dev/null
-    arch-chroot ${maindir}/root /opt/proot/proot-$ARCH --help 1> /dev/null
-    arch-chroot ${maindir}/root arch-chroot --help 1> /dev/null
+    sudo arch-chroot ${maindir}/root pacman -Qi pacman 1> /dev/null
+    sudo arch-chroot ${maindir}/root yaourt -V 1> /dev/null
+    sudo arch-chroot ${maindir}/root /opt/proot/proot-$ARCH --help 1> /dev/null
+    sudo arch-chroot ${maindir}/root arch-chroot --help 1> /dev/null
 
-    rm ${maindir}/root/var/cache/pacman/pkg/*
+    sudo rm ${maindir}/root/var/cache/pacman/pkg/*
 
     builtin cd ${ORIGIN_WD}
     local imagefile="juju-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
-    $TAR -zcpf ${imagefile} -C ${maindir}/root .
-    _cleanup_build_directory ${maindir}
+    sudo $TAR -zcpf ${imagefile} -C ${maindir}/root .
+    trap - QUIT EXIT ABRT KILL TERM INT
+    sudo rm -fr "$maindir"
 }
