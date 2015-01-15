@@ -20,8 +20,8 @@
 
 NAME='JuJu'
 CMD='juju'
-VERSION='2.5.6'
-CODE_NAME='Lion'
+VERSION='3.6.9'
+CODE_NAME='Snake'
 DESCRIPTION='The GNU/Linux distribution container for non-root users'
 AUTHOR='Filippo Squillace <feel dot squally at gmail.com>'
 HOMEPAGE='https://github.com/fsquillace/juju'
