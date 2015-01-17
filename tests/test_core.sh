@@ -24,6 +24,8 @@ function set_up(){
 
 
 function tear_down(){
+    # the CA directories are read only and can be deleted only by changing the mod
+    [ -d ${JUJU_HOME}/etc/ca-certificates ] && chmod -R +w ${JUJU_HOME}/etc/ca-certificates
     rm -rf $JUJU_HOME
     rm -rf $ORIGIN_WD
     rm -rf $JUJU_TEMPDIR

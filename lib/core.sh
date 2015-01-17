@@ -176,7 +176,7 @@ function _run_proot(){
 
 
 function _run_juju_with_proot(){
-    [ "$(_run_proot ${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(_run_proot "" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
     _run_proot "${@}"
