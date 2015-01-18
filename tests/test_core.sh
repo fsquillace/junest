@@ -168,9 +168,14 @@ function test_run_juju_with_proot_compat(){
 }
 
 function test_run_juju_with_proot_as_root(){
+    install_mini_juju
     export -f _run_juju_with_proot
+    export TRUE
+    export PROOT_COMPAT
     ID="/bin/echo 0" bash -ic "_run_juju_with_proot" &> /dev/null
     is_equal $? 1 || return 1
+    export -n TRUE
+    export -n PROOT_COMPAT
     export -n _run_juju_with_proot
     unset _run_juju_with_proot
 }
