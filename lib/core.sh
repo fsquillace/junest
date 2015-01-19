@@ -244,16 +244,15 @@ function build_image_juju(){
     trap "sudo rm -rf ${maindir}; die \"Error occurred when installing JuJu\"" EXIT QUIT ABRT KILL TERM INT
     info "Installing pacman and its dependencies..."
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
-    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano archlinux-keyring
+    # yaourt requires sed
+    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano archlinux-keyring sed
 
     info "Generating the locales..."
     # sed command is required for locale-gen
-    sudo pacman --noconfirm --root ${maindir}/root -S sed
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
     sudo arch-chroot ${maindir}/root locale-gen
     sudo bash -c "echo 'LANG = \"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
-    sudo pacman --noconfirm --root ${maindir}/root -Rsn sed
 
     info "Installing compatibility binary proot"
     sudo mkdir -p ${maindir}/root/opt/proot
@@ -274,6 +273,14 @@ function build_image_juju(){
     download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
     makepkg -sfc
     sudo pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
+    # Apply patches for yaourt and makepkg
+    sudo mkdir -p ${maindir}/root/opt/yaourt/bin/
+    sudo cp ${maindir}/root/usr/bin/yaourt ${maindir}/root/opt/yaourt/bin/
+    sudo sed -i -e 's/"--asroot"//' ${maindir}/root/opt/yaourt/bin/yaourt
+    sudo cp ${maindir}/root/usr/bin/makepkg ${maindir}/root/opt/yaourt/bin/
+    sudo sed -i -e 's/EUID\s==\s0/false/' ${maindir}/root/opt/yaourt/bin/makepkg
+    sudo bash -c "echo 'export PATH=/opt/yaourt/bin:$PATH' > ${maindir}/root/etc/profile.d/juju.sh"
+    sudo chmod +x ${maindir}/root/etc/profile.d/juju.sh
 
     info "Copying JuJu scripts..."
     sudo git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
