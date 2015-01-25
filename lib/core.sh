@@ -296,18 +296,46 @@ function build_image_juju(){
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
 
-    info "Validating JuJu image..."
-    sudo arch-chroot ${maindir}/root pacman -Qi pacman 1> /dev/null
-    sudo arch-chroot ${maindir}/root yaourt -V 1> /dev/null
-    sudo arch-chroot ${maindir}/root /opt/proot/proot-$ARCH --help 1> /dev/null
-    sudo arch-chroot ${maindir}/root arch-chroot --help 1> /dev/null
-
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
 
-    builtin cd ${ORIGIN_WD}
+    mkdir -p ${maindir}/output
+    builtin cd ${maindir}/output
     local imagefile="juju-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
     sudo $TAR -zcpf ${imagefile} -C ${maindir}/root .
+
+    info "Validating JuJu image..."
+    mkdir -p ${maindir}/root_test
+    $TAR -zxpf ${imagefile} -C ${maindir}/root_test
+    mkdir -p ${maindir}/root_test/run/lock
+    sed -i -e "s/#Server/Server/" ${maindir}/root_test/etc/pacman.d/mirrorlist
+    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -Syy
+
+    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test pacman -Qi pacman 1> /dev/null
+    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test yaourt -V 1> /dev/null
+    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test /opt/proot/proot-$ARCH --help 1> /dev/null
+    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test arch-chroot --help 1> /dev/null
+
+    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -S base-devel
+    local yaourt_package=tcptraceroute
+    info "Installing ${yaourt_package} package from AUR repo using proot..."
+    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
+    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test tcptraceroute localhost
+
+    local repo_package=sysstat
+    info "Installing ${repo_package} package from official repo using proot..."
+    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -S ${repo_package}
+    ${maindir}/root/opt/proot/proot-$ARCH -R ${maindir}/root_test iostat
+    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test iostat
+
+    local repo_package=iftop
+    info "Installing ${repo_package} package from official repo using root..."
+    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -S ${repo_package}
+    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test iftop -t -s 5
+
+    sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
+
+    builtin cd ${ORIGIN_WD}
     trap - QUIT EXIT ABRT KILL TERM INT
     sudo rm -fr "$maindir"
 }
