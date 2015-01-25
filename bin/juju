@@ -122,7 +122,7 @@ function parse_arguments(){
 	OPT_DELETE=false
 	OPT_HELP=false
 	OPT_VERSION=false
-	for opt in $@
+	for opt in "$@"
 	do
 		case "$1" in
 			-i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
@@ -140,8 +140,9 @@ function parse_arguments(){
 	done
 
 	ARGS=()
-	for arg do
-		ARGS+=($arg)
+	for arg in "$@"
+	do
+		ARGS+=("$arg")
 	done
 }
 
@@ -169,11 +170,11 @@ function execute_operation(){
 	fi
 
 	if $OPT_FAKEROOT; then
-		run_juju_as_fakeroot "${PROOT_ARGS}" ${ARGS[@]}
+		run_juju_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
 	elif $OPT_ROOT; then
-		run_juju_as_root ${ARGS[@]}
+		run_juju_as_root "${ARGS[@]}"
 	else
-		run_juju_as_user "${PROOT_ARGS}" ${ARGS[@]}
+		run_juju_as_user "${PROOT_ARGS}" "${ARGS[@]}"
 	fi
 }
 
