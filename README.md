@@ -98,8 +98,8 @@ of GNU/Linux distributions. The needed executables in the host OS are:
 - bash
 - wget or curl
 - tar
-- id
 - mkdir
+- chown (for root access only)
 
 The minimum recommended linux kernel is 2.6.0+
 
@@ -171,24 +171,20 @@ To quick fix this, you can just install a fonts package:
     pacman -S gnu-free-fonts
 ```
 
-###Missing permissions on removing a package###
-- **Q**: Why I cannot remove the package I have installed?
+###Differences between filesystem and package ownership###
+- **Q**: Why do I get warning when I install a package using root privileges?
 ```
-    pacman -Rsn lsof
-    checking dependencies...
-
-    Packages (1): lsof-4.88-1
-
-    Total Removed Size:   0.21 MiB
-
-    error: cannot remove /usr/share/licenses/lsof/LICENSE (Permission denied)
-    error: could not remove database entry lsof-4.88-1
+    pacman -S systat
+    ...
+    warning: directory ownership differs on /usr/
+    filesystem: 1000:100  package: 0:0
+    ...
 ```
 
-- **A**: This is probably because you have installed the package with root
-permissions. Since JuJu gives the possibility to install packages
-either as root or as normal user you need to remember that and remove
-the package with the right user!
+- **A**: In these cases the package installation went smoothly anyway.
+This should happen every time you install package with root privileges
+since JuJu will try to preserve the JuJu environment by assigning ownership
+of the files to the real user.
 
 ###No servers configured for repository###
 -**Q**: Why I cannot install packages?

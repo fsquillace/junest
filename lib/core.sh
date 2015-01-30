@@ -73,8 +73,9 @@ PROOT_LINK=http://static.proot.me/proot-${ARCH}
 
 SH=("/bin/sh" "--login")
 CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
-TRUE=${JUJU_HOME}/usr/bin/true
-ID="${JUJU_HOME}/usr/bin/id -u"
+TRUE=/usr/bin/true
+ID="/usr/bin/id -u"
+CHOWN="/usr/bin/chown"
 
 ################################# MAIN FUNCTIONS ##############################
 
@@ -148,16 +149,23 @@ function setup_from_file_juju(){
 }
 
 
-function _define_chroot_args(){
-    local comm=${SH[@]}
-    [ "$1" != "" ] && comm="$@"
-    echo $comm
-}
-
-
 function run_juju_as_root(){
-    mkdir -p ${JUJU_HOME}/${HOME}
-    JUJU_ENV=1 ${CHROOT} $JUJU_HOME /usr/bin/bash -c "mkdir -p /run/lock && $(_define_chroot_args "$@")"
+    local main_cmd="${SH[@]}"
+    [ "$1" != "" ] && main_cmd="$@"
+
+    local uid=$UID
+    [ -z $SUDO_UID ] || uid=$SUDO_UID:$SUDO_GID
+
+    local cmd="
+mkdir -p ${JUJU_HOME}/${HOME}
+mkdir -p /run/lock
+${main_cmd}
+"
+
+    JUJU_ENV=1 ${CHROOT} $JUJU_HOME /usr/bin/bash -c "${cmd}"
+
+    # The ownership of the files in JuJu is assigned to the real user
+    [ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}
 }
 
 function _run_proot(){
@@ -239,7 +247,7 @@ function _check_package(){
 
 function build_image_juju(){
 # The function must runs on ArchLinux with non-root privileges.
-    [ "$(id -u)" == "0" ] && \
+    [ "$(${ID})" == "0" ] && \
         die "You cannot build with root privileges."
 
     _check_package arch-install-scripts

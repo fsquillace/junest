@@ -102,14 +102,21 @@ function test_setup_from_file_juju_with_absolute_path(){
 function test_run_juju_as_root(){
     install_mini_juju
     CHROOT="sudo $CHROOT"
-    SH="type -t type"
+    CHOWN="sudo $CHOWN"
+    SH=("type" "-t" "type")
     local output=$(run_juju_as_root)
     is_equal $output "builtin" || return 1
     local output=$(run_juju_as_root pwd)
     is_equal $output "/" || return 1
     run_juju_as_root "[ -e /run/lock ]"
     is_equal $? 0 || return 1
-    [ -e $JUJU_HOME/${HOME} ] || return 1
+    run_juju_as_root "[ -e $HOME ]"
+    is_equal $? 0 || return 1
+
+    # test that normal user has ownership of the files created by root
+    run_juju_as_root "touch /a_root_file"
+    local output=$(run_juju_as_root "stat -c '%u' /a_root_file")
+    is_equal $output "$UID" || return 1
 }
 
 function test_run_juju_as_user(){
