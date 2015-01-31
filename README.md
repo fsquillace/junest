@@ -1,40 +1,39 @@
 JuJu
 ====
-**JuJu**: the GNU/Linux distribution container for non-root users
+**JuJu**: the Arch Linux based distro that runs upon any Linux distros without root access
 
 Description
 -----------
-**JuJu** is a small ArchLinux based GNU/Linux distribution.
+**JuJu** is a lightweight Arch Linux based distribution.
 
 It allows to have an isolated GNU/Linux environment inside any generic host GNU/Linux OS
 and without the need to have root privileges for installing packages.
 
-JuJu contains just the package managers (called pacman and yaourt) that allows to access
-to a wide range of packages from ArchLinux repositories.
+JuJu contains mainly the package managers (called pacman and yaourt) that allows to access
+to a wide range of packages from Arch Linux repositories.
 
 The main advantages on using JuJu are:
 - Install packages without root privileges.
 - Isolated environment in which you can install packages without affecting a production system.
-- Access to a wide range of packages in particular on GNU/Linux distros that may contain a limited repositories (such as CentOS and RedHat).
-- Available for x86\_64, x86 and ARM architectures but you can build you own image from scratch too!
-- All ArchLinux lovers can have their favourite distro everywhere!
+- Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
+- Available for x86\_64, x86 and ARM architectures but you can build your own image from scratch too!
+- All Arch Linux lovers can have their favourite distro everywhere!
 
 Quickstart
 ----------
 There are three different ways you can run JuJu:
 
 - As normal user - Allow to make basic operations using [proot](https://wiki.archlinux.org/index.php/Proot):
-```
-$ juju
-```
+
+    juju
+
 - As fakeroot - Allow to install/remove packages using [proot](https://wiki.archlinux.org/index.php/Proot):
-```
-$ juju -f
-```
+
+    juju -f
+
 - As root - Allow to have fully root privileges inside JuJu environment using [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) (you need to be root for executing this):
-```
-# juju -r
-```
+
+    juju -r
 
 If the JuJu image has not been downloaded yet, the script will download
 the JuJu image and will place it to the default directory ~/.juju.
@@ -47,15 +46,15 @@ Installation
 ------------
 Just clone the JuJu repo somewhere (for example in ~/juju):
 
-    $ git clone git://github.com/fsquillace/juju ~/juju
-    $ export PATH=~/juju/bin:$PATH
+    git clone git://github.com/fsquillace/juju ~/juju
+    export PATH=~/juju/bin:$PATH
 
 Alternatively, another installation method would be to directly download the JuJu image and place it to the default directory ~/.juju:
 
-    $ ARCH=<one of "x86_64", "x86", "arm">
-    $ mkdir ~/.juju
-    $ curl https://bitbucket.org/fsquillace/juju-repo/raw/master/juju-${ARCH}.tar.gz | tar -xz -C ~/.juju
-    $ export PATH=~/.juju/opt/juju/bin:$PATH
+    ARCH=<one of "x86_64", "x86", "arm">
+    mkdir ~/.juju
+    curl https://bitbucket.org/fsquillace/juju-repo/raw/master/juju-${ARCH}.tar.gz | tar -xz -C ~/.juju
+    export PATH=~/.juju/opt/juju/bin:$PATH
 
 JuJu can works on GNU/Linux OS with kernel version greater or equal
 2.6.0 (JuJu was not tested on kernel versions older than this) on 64 bit, 32 bit and ARM architectures.
@@ -64,32 +63,30 @@ Advanced usage
 --------------
 ### Build image ###
 You can build a new JuJu image from scratch by running the following command:
-```
-    # juju -b
-```
+
+    juju -b
+
 In this way the script will create a directory containing all the essentials
 files in order to make JuJu working properly (such as pacman, yaourt, arch-chroot and proot).
-Remember that the script to build the image must run in an ArchLinux OS with
+Remember that the script to build the image must run in an Arch Linux OS with
 arch-install-scripts, package-query, git and the base-devel packages installed.
 To change the build directory just use the *JUJU_TEMPDIR* (by default /tmp).
 
 After creating the image juju-x86\_64.tar.gz you can install it by running:
 
-    # juju -i juju-x86_64.tar.gz
+    juju -i juju-x86_64.tar.gz
 
 Related wiki page:
 - [How to build a JuJu image using QEMU](https://github.com/fsquillace/juju/wiki/How-to-build-a-JuJu-image-using-QEMU)
 
 ### Bind directories ###
 To bind and host directory to a guest location, you can use proot arguments:
-```
-    $ juju -p "-b /mnt/mydata:/home/user/mydata"
-```
+
+    juju -p "-b /mnt/mydata:/home/user/mydata"
 
 Check out the proot options with:
-```
-    $ juju -p "--help"
-```
+
+    juju -p "--help"
 
 Dependencies
 ------------
