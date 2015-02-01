@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# This file is part of JuJu: The portable GNU/Linux distribution
+# This file is part of JuJu (https://github.com/fsquillace/juju)
 #
-# Copyright (c) 2012-2014 Filippo Squillace <feel.squally@gmail.com>
+# Copyright (c) 2012-2015
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published

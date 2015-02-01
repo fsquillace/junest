@@ -4,13 +4,12 @@ JuJu
 
 Description
 -----------
-**JuJu** is a lightweight Arch Linux based distribution.
-
-It allows to have an isolated GNU/Linux environment inside any generic host GNU/Linux OS
+**JuJu** is a lightweight Arch Linux based distribution that allows to have
+an isolated GNU/Linux environment inside any generic host GNU/Linux OS
 and without the need to have root privileges for installing packages.
 
 JuJu contains mainly the package managers (called pacman and yaourt) that allows to access
-to a wide range of packages from Arch Linux repositories.
+to a wide range of packages from the Arch Linux repositories.
 
 The main advantages on using JuJu are:
 - Install packages without root privileges.
@@ -80,7 +79,7 @@ Related wiki page:
 - [How to build a JuJu image using QEMU](https://github.com/fsquillace/juju/wiki/How-to-build-a-JuJu-image-using-QEMU)
 
 ### Bind directories ###
-To bind and host directory to a guest location, you can use proot arguments:
+To bind a host directory to a guest location, you can use proot arguments:
 
     juju -p "-b /mnt/mydata:/home/user/mydata"
 
@@ -160,7 +159,7 @@ with the following command:
 - **Q**: Why I do not see any characters in the application I have installed?
 
 - **A**: This is probably because there are no 
-[https://wiki.archlinux.org/index.php/Font_Configuration](fonts) installed in
+[fonts](https://wiki.archlinux.org/index.php/Font_Configuration) installed in
 the system.
 
 To quick fix this, you can just install a fonts package:
@@ -207,7 +206,7 @@ of the files to the real user.
 
 License
 -------
-Copyright (c) 2012-2014
+Copyright (c) 2012-2015
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU Library General Public License as published
