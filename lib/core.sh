@@ -254,6 +254,9 @@ function build_image_juju(){
     _check_package gcc
     _check_package package-query
     _check_package git
+
+    local disable_validation=$1
+
     local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
     sudo mkdir -p ${maindir}/root
     trap - QUIT EXIT ABRT KILL TERM INT
@@ -312,6 +315,18 @@ function build_image_juju(){
     info "Compressing image to ${imagefile}..."
     sudo $TAR -zcpf ${imagefile} -C ${maindir}/root .
 
+    $disable_validation || validate_image "${maindir}" "${imagefile}"
+
+    sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
+
+    builtin cd ${ORIGIN_WD}
+    trap - QUIT EXIT ABRT KILL TERM INT
+    sudo rm -fr "$maindir"
+}
+
+function validate_image(){
+    local maindir=$1
+    local imagefile=$2
     info "Validating JuJu image..."
     mkdir -p ${maindir}/root_test
     $TAR -zxpf ${imagefile} -C ${maindir}/root_test
@@ -340,10 +355,4 @@ function build_image_juju(){
     info "Installing ${repo_package} package from official repo using root..."
     ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -S ${repo_package}
     sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test iftop -t -s 5
-
-    sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
-
-    builtin cd ${ORIGIN_WD}
-    trap - QUIT EXIT ABRT KILL TERM INT
-    sudo rm -fr "$maindir"
 }

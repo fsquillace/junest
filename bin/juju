@@ -42,6 +42,7 @@ usage() {
     echo -e "-r, --root                     Run $NAME with root privileges"
     echo -e "-p, --proot-args               Proot arguments"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
+    echo -e "-n, --disable-validation       Disable the $NAME image validation"
     echo -e "-d, --delete                   Delete $NAME from ${JUJU_HOME}"
     echo -e "-h, --help                     Show this help message"
     echo -e "-v, --version                  Show the $NAME version"
@@ -62,10 +63,18 @@ check_cli(){
             die "The build image option must be used exclusively"
         fi
     fi
+    if $OPT_DISABLE_VALIDATION
+    then
+        if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
+            $OPT_FAKEROOT || $OPT_ROOT
+        then
+            die "The disable validation option must be used with the build image option only"
+        fi
+    fi
     if $OPT_DELETE
     then
         if $OPT_BUILD_IMAGE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT
+            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
         then
             die "The $NAME delete option must be used exclusively"
         fi
@@ -73,7 +82,7 @@ check_cli(){
     if $OPT_HELP
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT
+            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
         then
             die "The $NAME help option must be used exclusively"
         fi
@@ -81,7 +90,7 @@ check_cli(){
     if $OPT_VERSION
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT
+            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
         then
             die "The $NAME version option must be used exclusively"
         fi
@@ -93,7 +102,7 @@ check_cli(){
     if $OPT_PROOT_ARGS
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
-            $OPT_ROOT || $OPT_VERSION
+            $OPT_ROOT || $OPT_VERSION || $OPT_DISABLE_VALIDATION
         then
             die "Invalid syntax: Proot args are not allowed with the other options"
         fi
@@ -101,7 +110,7 @@ check_cli(){
     if [ "$ARGS" != "" ]
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
-            $OPT_VERSION
+            $OPT_VERSION || $OPT_DISABLE_VALIDATION
         then
             die "No arguments are needed. For the CLI syntax run: $CMD --help"
         fi
@@ -119,6 +128,7 @@ function parse_arguments(){
 	OPT_PROOT_ARGS=false
 	PROOT_ARGS=""
 	OPT_BUILD_IMAGE=false
+	OPT_DISABLE_VALIDATION=false
 	OPT_DELETE=false
 	OPT_HELP=false
 	OPT_VERSION=false
@@ -130,6 +140,7 @@ function parse_arguments(){
 			-r|--root) OPT_ROOT=true ; shift ;;
 			-p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
 			-b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
+			-n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
 			-d|--delete) OPT_DELETE=true ; shift ;;
 			-h|--help) OPT_HELP=true ; shift ;;
 			-v|--version) OPT_VERSION=true ; shift ;;
@@ -151,7 +162,7 @@ function execute_operation(){
 	$OPT_VERSION && version && return
 
 	if $OPT_BUILD_IMAGE; then
-		build_image_juju
+		build_image_juju $OPT_DISABLE_VALIDATION
 		return
 	elif $OPT_DELETE; then
 		delete_juju

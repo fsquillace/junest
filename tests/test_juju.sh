@@ -117,6 +117,8 @@ function test_check_cli(){
     export -f die
     bash -ic "wrap_juju -b -h" &> /dev/null
     is_equal $? 1 || return 1
+    bash -ic "wrap_juju -n -v" &> /dev/null
+    is_equal $? 1 || return 1
     bash -ic "wrap_juju -d -r" &> /dev/null
     is_equal $? 1 || return 1
     bash -ic "wrap_juju -h -f" &> /dev/null

@@ -63,10 +63,11 @@ Advanced usage
 ### Build image ###
 You can build a new JuJu image from scratch by running the following command:
 
-    juju -b
+    juju -b [-n]
 
-In this way the script will create a directory containing all the essentials
+The script will create a directory containing all the essentials
 files in order to make JuJu working properly (such as pacman, yaourt, arch-chroot and proot).
+The option `-n` will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
 arch-install-scripts, package-query, git and the base-devel packages installed.
 To change the build directory just use the *JUJU_TEMPDIR* (by default /tmp).
@@ -183,7 +184,7 @@ since JuJu will try to preserve the JuJu environment by assigning ownership
 of the files to the real user.
 
 ###No servers configured for repository###
--**Q**: Why I cannot install packages?
+- **Q**: Why I cannot install packages?
 ```
     pacman -S lsof
     Packages (1): lsof-4.88-2
@@ -197,7 +198,7 @@ of the files to the real user.
     Errors occurred, no packages were upgraded.
 ```
 
--**A**: You need simply to update the mirrorlist file according to your location:
+- **A**: You need simply to update the mirrorlist file according to your location:
 ```
     # Uncomment the repository line according to your location
     nano /etc/pacman.d/mirrorlist
