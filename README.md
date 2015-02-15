@@ -88,6 +88,21 @@ Check out the proot options with:
 
     juju -p "--help"
 
+### JuJu as a container ###
+Although JuJu has not been designed to be a complete container, it is even possible to
+virtualize the process tree thanks to the [systemd container](https://wiki.archlinux.org/index.php/Systemd-nspawn).
+The JuJu containter allows to run services inside the container that can be
+visible from the host OS through the network.
+The drawbacks of this are that the host OS must use systemd as a service manager,
+and the container can only be executed using root privileges.
+
+To boot a JuJu container:
+
+    sudo systemd-nspawn -bD ~/.juju
+
+Related wiki page:
+- [How to run juju as a container](https://github.com/fsquillace/juju/wiki/How-to-run-JuJu-as-a-container)
+
 Dependencies
 ------------
 JuJu comes with a very short list of dependencies in order to be installed in most
