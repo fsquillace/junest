@@ -3,14 +3,18 @@ language: bash
 install:
     - PATH=$PWD/bin:$PATH
     - juju -f echo 'Installing juju'
-
-script:
     - sed -i -e "s/#Server/Server/" ~/.juju/etc/pacman.d/mirrorlist
     - juju -f pacman --noconfirm -Syy
-    - juju -f pacman --noconfirm -S base-devel
+
+script:
 # Test on installing package from AUR (issue #58)
+    #- juju -f pacman --noconfirm -S base-devel
     #- juju -f yaourt --noconfirm -S tcptraceroute
     #- juju -f tcptraceroute localhost
 # Test on installing package from official repo
     - juju -f pacman --noconfirm -S sysstat
     - juju -f iostat
+# Test on installing package from official repo with root access (TODO: may not work in ubuntu)
+    #- juju -f pacman --noconfirm -S iftop
+    #- sudo bin/juju -r iftop -t -s 5
+    - yes | juju -d
