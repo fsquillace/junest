@@ -2,6 +2,8 @@ JuJu
 ====
 **JuJu**: the Arch Linux based distro that runs upon any Linux distros without root access
 
+![Build status](https://api.travis-ci.org/fsquillace/juju.png?branch=master)
+
 Description
 -----------
 **JuJu** is a lightweight Arch Linux based distribution that allows to have
@@ -24,15 +26,21 @@ There are three different ways you can run JuJu:
 
 - As normal user - Allow to make basic operations using [proot](https://wiki.archlinux.org/index.php/Proot):
 
+```sh
     juju
+```
 
 - As fakeroot - Allow to install/remove packages using [proot](https://wiki.archlinux.org/index.php/Proot):
 
+```sh
     juju -f
+```
 
 - As root - Allow to have fully root privileges inside JuJu environment using [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) (you need to be root for executing this):
 
+```sh
     juju -r
+```
 
 If the JuJu image has not been downloaded yet, the script will download
 the JuJu image and will place it to the default directory ~/.juju.
