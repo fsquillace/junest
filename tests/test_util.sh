@@ -1,6 +1,9 @@
 #!/bin/bash
 source "$(dirname $0)/../lib/util.sh"
 
+# Disable the exiterr
+set +e
+
 function test_echoerr(){
     local actual=$(echoerr "Test" 2>&1)
     assertEquals "$actual" "Test"
@@ -28,12 +31,8 @@ function test_die(){
     local actual=$(die "Test" 2>&1)
     local expected=$(echo -e "\033[1;31mTest\033[0m")
     assertEquals "$actual" "$expected"
-    export -f die
-    bash -ic "die Dying" &> /dev/null
+    $(die Dying 2> /dev/null)
     assertEquals $? 1
-    export -n die
-    unset die
-    return 0
 }
 
 function test_ask(){

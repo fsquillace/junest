@@ -1,6 +1,9 @@
 #!/bin/bash
-source "$(dirname $0)/utils.sh"
 source $(dirname $0)/../bin/juju -h &> /dev/null
+
+# Disable the exiterr
+set +e
+
 ## Mock functions ##
 function usage(){
     echo "usage"
@@ -43,105 +46,79 @@ function wrap_juju(){
     execute_operation
 }
 
-
-function set_up(){
-    echo > /dev/null
-}
-
-function tear_down(){
-    echo > /dev/null
-}
-
-
 function test_help(){
     local output=$(wrap_juju -h)
-    is_equal $output "usage" || return 1
+    assertEquals $output "usage"
     local output=$(wrap_juju --help)
-    is_equal $output "usage" || return 1
+    assertEquals $output "usage"
 }
 function test_version(){
     local output=$(wrap_juju -v)
-    is_equal $output "version" || return 1
+    assertEquals $output "version"
     local output=$(wrap_juju --version)
-    is_equal $output "version" || return 1
+    assertEquals $output "version"
 }
 function test_build_image_juju(){
     local output=$(wrap_juju -b)
-    is_equal $output "build_image_juju" || return 1
+    assertEquals $output "build_image_juju"
     local output=$(wrap_juju --build-image)
-    is_equal $output "build_image_juju" || return 1
+    assertEquals $output "build_image_juju"
 }
 function test_delete_juju(){
     local output=$(wrap_juju -d)
-    is_equal $output "delete_juju" || return 1
+    assertEquals $output "delete_juju"
     local output=$(wrap_juju --delete)
-    is_equal $output "delete_juju" || return 1
+    assertEquals $output "delete_juju"
 }
 function test_run_juju_as_fakeroot(){
     local output=$(wrap_juju -f)
-    is_equal $output "run_juju_as_fakeroot(,)" || return 1
+    assertEquals $output "run_juju_as_fakeroot(,)"
     local output=$(wrap_juju --fakeroot)
-    is_equal $output "run_juju_as_fakeroot(,)" || return 1
+    assertEquals $output "run_juju_as_fakeroot(,)"
 
     local output=$(wrap_juju -f -p "-b arg")
-    is_equal "${output[@]}" "run_juju_as_fakeroot(-b arg,)" || return 1
+    assertEquals "${output[@]}" "run_juju_as_fakeroot(-b arg,)"
     local output=$(wrap_juju -f -p "-b arg" -- command -kv)
-    is_equal "${output[@]}" "run_juju_as_fakeroot(-b arg,command -kv)" || return 1
+    assertEquals "${output[@]}" "run_juju_as_fakeroot(-b arg,command -kv)"
     local output=$(wrap_juju -f command --as)
-    is_equal "${output[@]}" "run_juju_as_fakeroot(,command --as)" || return 1
+    assertEquals "${output[@]}" "run_juju_as_fakeroot(,command --as)"
 }
 function test_run_juju_as_user(){
     local output=$(wrap_juju)
-    is_equal $output "run_juju_as_user(,)" || return 1
+    assertEquals $output "run_juju_as_user(,)"
 
     local output=$(wrap_juju -p "-b arg")
-    is_equal "${output[@]}" "run_juju_as_user(-b arg,)" || return 1
+    assertEquals "$output" "run_juju_as_user(-b arg,)"
     local output=$(wrap_juju -p "-b arg" -- command -ll)
-    is_equal "${output[@]}" "run_juju_as_user(-b arg,command -ll)" || return 1
+    assertEquals "$output" "run_juju_as_user(-b arg,command -ll)"
     local output=$(wrap_juju command -ls)
-    is_equal "${output[@]}" "run_juju_as_user(,command -ls)" || return 1
+    assertEquals "$output" "run_juju_as_user(,command -ls)"
 }
 function test_run_juju_as_root(){
     local output=$(wrap_juju -r)
-    is_equal $output "run_juju_as_root" || return 1
+    assertEquals $output "run_juju_as_root"
 
     local output=$(wrap_juju -r command)
-    is_equal "${output[@]}" "run_juju_as_root command" || return 1
+    assertEquals "${output[@]}" "run_juju_as_root command"
 }
 
 function test_check_cli(){
-    export -f check_cli
-    export -f parse_arguments
-    export -f execute_operation
-    export -f wrap_juju
-    export -f die
-    bash -ic "wrap_juju -b -h" &> /dev/null
-    is_equal $? 1 || return 1
-    bash -ic "wrap_juju -n -v" &> /dev/null
-    is_equal $? 1 || return 1
-    bash -ic "wrap_juju -d -r" &> /dev/null
-    is_equal $? 1 || return 1
-    bash -ic "wrap_juju -h -f" &> /dev/null
-    is_equal $? 1 || return 1
-    bash -ic "wrap_juju -v -i fsd" &> /dev/null
-    is_equal $? 1 || return 1
-    bash -ic "wrap_juju -f -r" &> /dev/null
-    is_equal $? 1 || return 1
-    bash -ic "wrap_juju -p args -v" &> /dev/null
-    is_equal $? 1 || return 1
-    bash -ic "wrap_juju -d args" &> /dev/null
-    is_equal $? 1 || return 1
-    export -n check_cli
-    export -n parse_arguments
-    export -n execute_operation
-    export -n wrap_juju
-    export -n die
-    unset die
+    $(wrap_juju -b -h 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_juju -n -v 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_juju -d -r 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_juju -h -f 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_juju -v -i fsd 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_juju -f -r 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_juju -p args -v 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_juju -d args 2> /dev/null)
+    assertEquals $? 1
 }
 
-for func in $(declare -F | grep test_ | awk '{print $3}' | xargs)
-do
-    set_up
-    $func && echo -e "${func}...\033[1;32mOK\033[0m" || echo -e "${func}...\033[1;31mFAIL\033[0m"
-    tear_down
-done
+source $(dirname $0)/shunit2
