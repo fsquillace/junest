@@ -1,16 +1,19 @@
 #!/bin/bash
 
-source "$(dirname $0)/utils.sh"
-CURRPWD=$PWD
-JUJU_MAIN_HOME=/tmp/jujutesthome
-[ -e $JUJU_MAIN_HOME ] || JUJU_HOME=$JUJU_MAIN_HOME bash --rcfile "$(dirname $0)/../lib/core.sh" -ic "setup_juju"
-JUJU_HOME=""
+function oneTimeSetUp(){
+    [ -z "$SKIP_ROOT_TESTS" ] && SKIP_ROOT_TESTS=0
+
+    CURRPWD=$PWD
+    JUJU_MAIN_HOME=/tmp/jujutesthome
+    [ -e $JUJU_MAIN_HOME ] || JUJU_HOME=$JUJU_MAIN_HOME bash --rcfile "$(dirname $0)/../lib/core.sh" -ic "setup_juju"
+    JUJU_HOME=""
+}
 
 function install_mini_juju(){
     cp -rfa $JUJU_MAIN_HOME/* $JUJU_HOME
 }
 
-function set_up(){
+function setUp(){
     cd $CURRPWD
     JUJU_HOME=$(TMPDIR=/tmp mktemp -d -t jujuhome.XXXXXXXXXX)
     source "$(dirname $0)/../lib/core.sh"
@@ -18,12 +21,14 @@ function set_up(){
     cd $ORIGIN_WD
     JUJU_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t jujutemp.XXXXXXXXXX)
 
+    set +e
+
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "rm -rf ${JUJU_HOME}; rm -rf ${ORIGIN_WD}; rm -rf ${JUJU_TEMPDIR}" EXIT QUIT ABRT KILL TERM INT
 }
 
 
-function tear_down(){
+function tearDown(){
     # the CA directories are read only and can be deleted only by changing the mod
     [ -d ${JUJU_HOME}/etc/ca-certificates ] && chmod -R +w ${JUJU_HOME}/etc/ca-certificates
     rm -rf $JUJU_HOME
@@ -35,10 +40,10 @@ function tear_down(){
 
 function test_is_juju_installed(){
     is_juju_installed
-    is_equal $? 1 || return 1
+    assertEquals $? 1
     touch $JUJU_HOME/just_file
     is_juju_installed
-    is_equal $? 0 || return 1
+    assertEquals $? 0
 }
 
 
@@ -46,18 +51,15 @@ function test_download(){
     WGET=/bin/true
     CURL=/bin/false
     download
-    is_equal $? 0 || return 1
+    assertEquals $? 0
+
     WGET=/bin/false
     CURL=/bin/true
     download
-    is_equal $? 0 || return 1
+    assertEquals $? 0
 
-    export -f download
-    export -f die
-    WGET=/bin/false CURL=/bin/false bash -ic "download something" 2> /dev/null
-    is_equal $? 1 || return 1
-    export -n die
-    export -n download
+    $(WGET=/bin/false CURL=/bin/false download something 2> /dev/null)
+    assertEquals $? 1
 }
 
 
@@ -67,14 +69,14 @@ function test_setup_juju(){
         # inside $JUJU_TEMPDIR
         local cwd=${PWD#${JUJU_TEMPDIR}}
         local parent_dir=${PWD%${cwd}}
-        is_equal $JUJU_TEMPDIR ${parent_dir} || return 1
+        assertEquals "$JUJU_TEMPDIR" "${parent_dir}"
         touch file
         tar -czvf juju-${ARCH}.tar.gz file
     }
     WGET=wget_mock
     setup_juju &> /dev/null
-    [ -e $JUJU_HOME/file ] || return 1
-    [ -e $JUJU_HOME/run/lock ] || return 1
+    assertTrue "[ -e $JUJU_HOME/file ]"
+    assertTrue "[ -e $JUJU_HOME/run/lock ]"
 }
 
 
@@ -82,166 +84,128 @@ function test_setup_from_file_juju(){
     touch file
     tar -czvf juju-${ARCH}.tar.gz file 1> /dev/null
     setup_from_file_juju juju-${ARCH}.tar.gz &> /dev/null
-    [ -e $JUJU_HOME/file ] || return 1
-    [ -e $JUJU_HOME/run/lock ] || return 1
+    assertTrue "[ -e $JUJU_HOME/file ]"
+    assertTrue "[ -e $JUJU_HOME/run/lock ]"
 
-    export -f setup_from_file_juju
-    export -f die
-    bash -ic "setup_from_file_juju noexist.tar.gz" &> /dev/null
-    is_equal $? 1 || return 1
+    $(setup_from_file_juju noexist.tar.gz 2> /dev/null)
+    assertEquals $? 1
 }
 
 function test_setup_from_file_juju_with_absolute_path(){
     touch file
     tar -czvf juju-${ARCH}.tar.gz file 1> /dev/null
     setup_from_file_juju ${ORIGIN_WD}/juju-${ARCH}.tar.gz &> /dev/null
-    [ -e $JUJU_HOME/file ] || return 1
-    [ -e $JUJU_HOME/run/lock ] || return 1
+    assertTrue "[ -e $JUJU_HOME/file ]"
+    assertTrue "[ -e $JUJU_HOME/run/lock ]"
 }
 
 function test_run_juju_as_root(){
+    [ $SKIP_ROOT_TESTS -eq 1 ] && return
+
     install_mini_juju
     CHROOT="sudo $CHROOT"
     CHOWN="sudo $CHOWN"
     SH=("type" "-t" "type")
     local output=$(run_juju_as_root)
-    is_equal $output "builtin" || return 1
+    assertEquals $output "builtin"
     local output=$(run_juju_as_root pwd)
-    is_equal $output "/" || return 1
+    assertEquals $output "/"
     run_juju_as_root "[ -e /run/lock ]"
-    is_equal $? 0 || return 1
+    assertEquals $? 0
     run_juju_as_root "[ -e $HOME ]"
-    is_equal $? 0 || return 1
+    assertEquals $? 0
 
     # test that normal user has ownership of the files created by root
     run_juju_as_root "touch /a_root_file"
     local output=$(run_juju_as_root "stat -c '%u' /a_root_file")
-    is_equal $output "$UID" || return 1
+    assertEquals $output "$UID"
 }
 
 function test_run_juju_as_user(){
     install_mini_juju
     local output=$(run_juju_as_user "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2" | awk -F: '{print $1}')
-    is_equal "$output" "/usr/bin/mkdir" || return 1
-    [ -e $JUJU_HOME/newdir2 ]
-    is_equal $? 0 || return 1
+    assertEquals "$output" "/usr/bin/mkdir"
+    assertTrue "[ -e $JUJU_HOME/newdir2 ]"
 
     SH=("/usr/bin/mkdir" "-v" "/newdir")
     local output=$(run_juju_as_user "-k 3.10" | awk -F: '{print $1}')
-    is_equal "$output" "/usr/bin/mkdir" || return 1
-    [ -e $JUJU_HOME/newdir ]
-    is_equal $? 0 || return 1
+    assertEquals "$output" "/usr/bin/mkdir"
+    assertTrue "[ -e $JUJU_HOME/newdir ]"
 }
 
 function test_run_juju_with_quotes(){
     install_mini_juju
     local output=$(run_juju_as_user "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2" | awk -F: '{print $1}')
-    is_equal "$output" "/usr/bin/mkdir" || return 1
-    [ -e $JUJU_HOME/newdir2 ]
-    is_equal $? 0 || return 1
+    assertEquals "$output" "/usr/bin/mkdir"
+    assertTrue "[ -e $JUJU_HOME/newdir2 ]"
 }
 
 function test_run_juju_as_user_proot_args(){
     install_mini_juju
     run_juju_as_user "--help" "" &> /dev/null
-    is_equal $? 0 || return 1
+    assertEquals $? 0
 
     mkdir $JUJU_TEMPDIR/newdir
     touch $JUJU_TEMPDIR/newdir/newfile
     run_juju_as_user "-b $JUJU_TEMPDIR/newdir:/newdir -k 3.10" "ls" "-l" "/newdir/newfile" &> /dev/null
-    is_equal $? 0 || return 1
+    assertEquals $? 0
 
-    export -f _run_juju_with_proot
-    export -f _run_proot
-    export -f warn
-    export -f die
-    export PROOT_COMPAT
-    bash -ic "_run_juju_with_proot --helps" &> /dev/null
-    is_equal $? 1 || return 1
-    export -n _run_juju_with_proot
-    export -n _run_proot
-    export -n warn
-    export -n die
-    export -n PROOT_COMPAT
+    $(_run_juju_with_proot --helps 2> /dev/null)
+    assertEquals $? 1
 }
 
 function test_run_juju_with_proot_compat(){
     PROOT_COMPAT="/bin/true"
     _run_juju_with_proot "" "" &> /dev/null
-    is_equal $? 0 || return 1
+    assertEquals $? 0
 
-    export -f _run_juju_with_proot
-    export -f _run_proot
-    export -f warn
-    export -f die
-    PROOT_COMPAT="/bin/false" bash -ic "_run_juju_with_proot --helps" &> /dev/null
-    is_equal $? 1 || return 1
-    export -n _run_juju_with_proot
-    export -n _run_proot
-    export -n warn
-    export -n die
+    $(PROOT_COMPAT="/bin/false" _run_juju_with_proot --helps 2> /dev/null)
+    assertEquals $? 1
 }
 
 function test_run_juju_with_proot_as_root(){
     install_mini_juju
-    export -f _run_proot
-    export -f run_juju_as_user
-    export -f run_juju_as_fakeroot
-    export TRUE
-    export PROOT_COMPAT
-    ID="/bin/echo 0" bash -ic "run_juju_as_user" &> /dev/null
-    is_equal $? 1 || return 1
-    ID="/bin/echo 0" bash -ic "run_juju_as_fakeroot" &> /dev/null
-    is_equal $? 1 || return 1
-    export -n TRUE
-    export -n PROOT_COMPAT
-    export -n _run_proot
-    export -n run_juju_as_user
-    export -n run_juju_as_fakeroot
-    unset _run_proot
-    unset run_juju_as_user
-    unset run_juju_as_fakeroot
+
+    $(ID="/bin/echo 0" run_juju_as_user 2> /dev/null)
+    assertEquals $? 1
+    $(ID="/bin/echo 0" run_juju_as_fakeroot 2> /dev/null)
+    assertEquals $? 1
 }
 
 function test_run_proot_seccomp(){
     TRUE=""
     PROOT_COMPAT=env
     local output=$(_run_proot | grep "^PROOT_NO_SECCOMP")
-    is_equal $output "" || return 1
+    assertEquals "$output" ""
 
     envv(){
         env | grep "^PROOT_NO_SECCOMP"
     }
     PROOT_COMPAT=envv
     local output=$(_run_proot 2> /dev/null | grep "^PROOT_NO_SECCOMP")
-    is_equal $output "PROOT_NO_SECCOMP=1" || return 1
+    assertEquals "$output" "PROOT_NO_SECCOMP=1"
 }
 
 function test_run_juju_as_fakeroot(){
     install_mini_juju
     local output=$(run_juju_as_fakeroot "-k 3.10" "id" | awk '{print $1}')
-    is_equal "$output" "uid=0(root)" || return 1
+    assertEquals "$output" "uid=0(root)"
 }
 
 function test_delete_juju(){
     install_mini_juju
     echo "N" | delete_juju 1> /dev/null
     is_juju_installed
-    is_equal $? 0 || return 1
+    assertEquals $? 0
     echo "Y" | delete_juju 1> /dev/null
     is_juju_installed
-    is_equal $? 1 || return 1
+    assertEquals $? 1
 }
 
 function test_nested_juju(){
     install_mini_juju
     JUJU_ENV=1 bash -ic "source $CURRPWD/$(dirname $0)/../lib/core.sh" &> /dev/null
-    is_equal $? 1 || return 1
+    assertEquals $? 1
 }
 
-for func in $(declare -F | grep test_ | awk '{print $3}' | xargs)
-do
-    set_up
-    $func && echo -e "${func}...\033[1;32mOK\033[0m" || echo -e "${func}...\033[1;31mFAIL\033[0m"
-    tear_down
-done
+source $(dirname $0)/shunit2

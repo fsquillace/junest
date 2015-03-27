@@ -7,6 +7,7 @@ install:
     - juju -f pacman --noconfirm -Syy
 
 script:
+    - SKIP_ROOT_TESTS=1 ./tests/test_all.sh
 # Test on installing package from AUR (issue #58)
     #- juju -f pacman --noconfirm -S base-devel
     #- juju -f yaourt --noconfirm -S tcptraceroute
