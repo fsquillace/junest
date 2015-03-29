@@ -2,7 +2,7 @@ JuJu
 ====
 **JuJu**: the Arch Linux based distro that runs upon any Linux distros without root access
 
-![Build status](https://api.travis-ci.org/fsquillace/juju.png?branch=master)
+[![Build status](https://api.travis-ci.org/fsquillace/juju.png?branch=master)](https://travis-ci.org/fsquillace/juju)
 
 Description
 -----------
