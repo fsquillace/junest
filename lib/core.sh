@@ -190,7 +190,7 @@ function _run_juju_with_proot(){
 
     if [ "$1" != "" ]
     then
-        _run_proot "${proot_args}" "${@}"
+        insert_quotes "${@}" | _run_proot "${proot_args}" "${SH[@]}"
     else
         _run_proot "${proot_args}" "${SH[@]}"
     fi

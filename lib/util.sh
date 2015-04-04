@@ -67,3 +67,14 @@ function ask(){
     fi
 
 }
+
+function insert_quotes(){
+# It inserts quotes between arguments.
+# Useful to preserve quotes on command
+# to be used inside sh -c/bash -c
+    C=''
+    for i in "$@"; do
+        C="$C \"${i//\"/\\\"}\""
+    done
+    echo ${C}
+}
