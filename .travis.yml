@@ -5,13 +5,12 @@ install:
     - juju -f echo 'Installing juju'
     - sed -i -e "s/#Server/Server/" ~/.juju/etc/pacman.d/mirrorlist
     - juju -f pacman --noconfirm -Syy
+    - juju -f pacman --noconfirm -S base-devel
 
 script:
     - SKIP_ROOT_TESTS=1 ./tests/test_all.sh
-# Test on installing package from AUR (issue #58)
-    #- juju -f pacman --noconfirm -S base-devel
-    #- juju -f yaourt --noconfirm -S tcptraceroute
-    #- juju -f tcptraceroute localhost
+# Test on installing package from AUR
+    - juju -f yaourt --noconfirm -S tcptraceroute
 # Test on installing package from official repo
     - juju -f pacman --noconfirm -S sysstat
     - juju -f iostat

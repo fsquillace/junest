@@ -105,20 +105,28 @@ function test_run_juju_as_root(){
     install_mini_juju
     CHROOT="sudo $CHROOT"
     CHOWN="sudo $CHOWN"
-    SH=("type" "-t" "type")
-    local output=$(run_juju_as_root)
-    assertEquals $output "builtin"
+
     local output=$(run_juju_as_root pwd)
-    assertEquals $output "/"
-    run_juju_as_root "[ -e /run/lock ]"
+    assertEquals "$output" "/"
+    run_juju_as_root [ -e /run/lock ]
     assertEquals $? 0
-    run_juju_as_root "[ -e $HOME ]"
+    run_juju_as_root [ -e $HOME ]
     assertEquals $? 0
 
     # test that normal user has ownership of the files created by root
-    run_juju_as_root "touch /a_root_file"
-    local output=$(run_juju_as_root "stat -c '%u' /a_root_file")
-    assertEquals $output "$UID"
+    run_juju_as_root touch /a_root_file
+    local output=$(run_juju_as_root stat -c '%u' /a_root_file)
+    assertEquals "$output" "$UID"
+
+    SH=("sh" "--login" "-c" "type -t type")
+    local output=$(run_juju_as_root)
+    assertEquals "$output" "builtin"
+    SH=("sh" "--login" "-c" "[ -e /run/lock ]")
+    run_juju_as_root
+    assertEquals $? 0
+    SH=("sh" "--login" "-c" "[ -e $HOME ]")
+    run_juju_as_root
+    assertEquals $? 0
 }
 
 function test_run_juju_as_user(){

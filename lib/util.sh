@@ -67,3 +67,21 @@ function ask(){
     fi
 
 }
+
+function insert_quotes_on_spaces(){
+# It inserts quotes between arguments.
+# Useful to preserve quotes on command
+# to be used inside sh -c/bash -c
+    C=''
+    whitespace="[[:space:]]"
+    for i in "$@"
+    do
+        if [[ $i =~ $whitespace ]]
+        then
+            C="$C \"$i\""
+        else
+            C="$C $i"
+        fi
+    done
+    echo $C
+}
