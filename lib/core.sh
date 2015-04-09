@@ -157,10 +157,17 @@ function run_juju_as_root(){
     [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
     local cmd="mkdir -p ${JUJU_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
 
+    trap - QUIT EXIT ABRT KILL TERM INT
+    trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}" EXIT QUIT ABRT KILL TERM INT
+
     JUJU_ENV=1 ${CHROOT} $JUJU_HOME "${SH[@]}" "-c" "${cmd}"
+    local ret=$?
 
     # The ownership of the files in JuJu is assigned to the real user
     [ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}
+
+    trap - QUIT EXIT ABRT KILL TERM INT
+    return $?
 }
 
 function _run_proot(){

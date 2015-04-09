@@ -52,4 +52,12 @@ function test_ask(){
     assertEquals $? 1
 }
 
+function test_insert_quotes_on_spaces(){
+    local actual=$(insert_quotes_on_spaces this is "a test")
+    assertEquals "this is \"a test\"" "$actual"
+
+    local actual=$(insert_quotes_on_spaces this is 'a test')
+    assertEquals "this is \"a test\"" "$actual"
+}
+
 source $(dirname $0)/shunit2
