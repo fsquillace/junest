@@ -150,19 +150,14 @@ function setup_from_file_juju(){
 
 
 function run_juju_as_root(){
-    local main_cmd="${SH[@]}"
-    [ "$1" != "" ] && main_cmd="$@"
-
     local uid=$UID
     [ -z $SUDO_UID ] || uid=$SUDO_UID:$SUDO_GID
 
-    local cmd="
-mkdir -p ${JUJU_HOME}/${HOME}
-mkdir -p /run/lock
-${main_cmd}
-"
+    local main_cmd="${SH[@]}"
+    [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
+    local cmd="mkdir -p ${JUJU_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
 
-    JUJU_ENV=1 ${CHROOT} $JUJU_HOME /usr/bin/bash -c "${cmd}"
+    JUJU_ENV=1 ${CHROOT} $JUJU_HOME "${SH[@]}" "-c" "${cmd}"
 
     # The ownership of the files in JuJu is assigned to the real user
     [ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}
@@ -190,7 +185,7 @@ function _run_juju_with_proot(){
 
     if [ "$1" != "" ]
     then
-        insert_quotes "${@}" | _run_proot "${proot_args}" "${SH[@]}"
+       _run_proot "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
         _run_proot "${proot_args}" "${SH[@]}"
     fi
