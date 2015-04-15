@@ -50,6 +50,8 @@ CURL="curl -L -J -O -k"
 
 TAR=tar
 
+DEFAULT_MIRROR='https://mirrors.kernel.org/archlinux/$repo/os/$arch'
+
 HOST_ARCH=$(uname -m)
 
 if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
@@ -111,8 +113,10 @@ function _setup_juju(){
     imagepath=$1
     $TAR -zxpf ${imagepath} -C ${JUJU_HOME}
     mkdir -p ${JUJU_HOME}/run/lock
-    warn "Warn: Change the mirrorlist file according to your location:"
+    warn "Warn: The default mirror URL is ${DEFAULT_MIRROR}."
+    warn "To change it:"
     info "    nano /etc/pacman.d/mirrorlist"
+    info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
     info "JuJu installed successfully"
 }
@@ -267,6 +271,7 @@ function build_image_juju(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # yaourt requires sed
     sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano archlinux-keyring sed
+    sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
     # sed command is required for locale-gen
