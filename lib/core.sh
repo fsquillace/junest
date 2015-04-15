@@ -322,7 +322,8 @@ function build_image_juju(){
     info "Compressing image to ${imagefile}..."
     sudo $TAR -zcpf ${imagefile} -C ${maindir}/root .
 
-    $disable_validation || validate_image "${maindir}" "${imagefile}"
+    mkdir -p ${maindir}/root_test
+    $disable_validation || validate_image "${maindir}/root_test" "${imagefile}"
 
     sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
 
@@ -332,34 +333,34 @@ function build_image_juju(){
 }
 
 function validate_image(){
-    local maindir=$1
+    local testdir=$1
     local imagefile=$2
     info "Validating JuJu image..."
-    mkdir -p ${maindir}/root_test
-    $TAR -zxpf ${imagefile} -C ${maindir}/root_test
-    mkdir -p ${maindir}/root_test/run/lock
-    sed -i -e "s/#Server/Server/" ${maindir}/root_test/etc/pacman.d/mirrorlist
-    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -Syy
+    $TAR -zxpf ${imagefile} -C ${testdir}
+    mkdir -p ${testdir}/run/lock
+    sed -i -e "s/#Server/Server/" ${testdir}/etc/pacman.d/mirrorlist
+    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -Syy
 
-    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test pacman -Qi pacman 1> /dev/null
-    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test yaourt -V 1> /dev/null
-    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test /opt/proot/proot-$ARCH --help 1> /dev/null
-    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test arch-chroot --help 1> /dev/null
+    # Check most basic executables work
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r pacman -Qi pacman 1> /dev/null
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r yaourt -V 1> /dev/null
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r /opt/proot/proot-$ARCH --help 1> /dev/null
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r arch-chroot --help 1> /dev/null
 
-    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -S base-devel
+    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -S base-devel
     local yaourt_package=tcptraceroute
     info "Installing ${yaourt_package} package from AUR repo using proot..."
-    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
-    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test tcptraceroute localhost
+    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r tcptraceroute localhost
 
     local repo_package=sysstat
     info "Installing ${repo_package} package from official repo using proot..."
-    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -S ${repo_package}
-    ${maindir}/root/opt/proot/proot-$ARCH -R ${maindir}/root_test iostat
-    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test iostat
+    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -S ${repo_package}
+    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju iostat
+    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f iostat
 
     local repo_package=iftop
     info "Installing ${repo_package} package from official repo using root..."
-    ${maindir}/root/opt/proot/proot-$ARCH -S ${maindir}/root_test pacman --noconfirm -S ${repo_package}
-    sudo ${maindir}/root/usr/bin/arch-chroot ${maindir}/root_test iftop -t -s 5
+    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -S ${repo_package}
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r iftop -t -s 5
 }
