@@ -75,9 +75,10 @@ PROOT_LINK=http://static.proot.me/proot-${ARCH}
 
 SH=("/bin/sh" "--login")
 CHROOT=${JUJU_HOME}/usr/bin/arch-chroot
+CLASSIC_CHROOT=${JUJU_HOME}/usr/bin/chroot
 TRUE=/usr/bin/true
 ID="/usr/bin/id -u"
-CHOWN="/usr/bin/chown"
+CHOWN="${JUJU_HOME}/usr/bin/chown"
 
 ################################# MAIN FUNCTIONS ##############################
 
@@ -164,8 +165,18 @@ function run_juju_as_root(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}" EXIT QUIT ABRT KILL TERM INT
 
-    JUJU_ENV=1 ${CHROOT} $JUJU_HOME "${SH[@]}" "-c" "${cmd}"
-    local ret=$?
+    if ${CHROOT} $JUJU_HOME ${TRUE} &> /dev/null
+    then
+        JUJU_ENV=1 ${CHROOT} $JUJU_HOME "${SH[@]}" "-c" "${cmd}"
+        local ret=$?
+    elif ${CLASSIC_CHROOT} $JUJU_HOME ${TRUE} &> /dev/null
+    then
+        warn "Warning: The executable arch-chroot does not work, falling back to classic chroot"
+        JUJU_ENV=1 ${CLASSIC_CHROOT} $JUJU_HOME "${SH[@]}" "-c" "${cmd}"
+        local ret=$?
+    else
+        die "Error: Chroot does not work"
+    fi
 
     # The ownership of the files in JuJu is assigned to the real user
     [ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}
@@ -270,7 +281,8 @@ function build_image_juju(){
     info "Installing pacman and its dependencies..."
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # yaourt requires sed
-    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts binutils libunistring nano archlinux-keyring sed
+    # coreutils is needed for chown
+    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring nano archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
