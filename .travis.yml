@@ -1,5 +1,7 @@
 language: bash
 
+sudo: required
+
 install:
     - PATH=$PWD/bin:$PATH
     - juju -f echo 'Installing juju'
@@ -8,13 +10,14 @@ install:
     - juju -f pacman --noconfirm -S base-devel
 
 script:
-    - SKIP_ROOT_TESTS=1 ./tests/test_all.sh
+    - ./tests/test_all.sh
 # Test on installing package from AUR
     - juju -f yaourt --noconfirm -S tcptraceroute
+    - sudo $PWD/bin/juju -r tcptraceroute localhost
 # Test on installing package from official repo
-    - juju -f pacman --noconfirm -S sysstat
-    - juju -f iostat
-# Test on installing package from official repo with root access (TODO: may not work in ubuntu)
-    #- juju -f pacman --noconfirm -S iftop
-    #- sudo bin/juju -r iftop -t -s 5
+    - juju -f pacman --noconfirm -S tree
+    - juju -f tree
+# Test on installing package from official repo with root access
+    - juju -f pacman --noconfirm -S iftop
+    - sudo bin/juju -r iftop -t -s 5
     - yes | juju -d

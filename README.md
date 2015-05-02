@@ -96,6 +96,10 @@ Check out the proot options with:
 
     juju -p "--help"
 
+###Automatic fallback to classic chroot###
+Since the [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) may not work
+on some distros, JuJu automatically tries to fallback to the classic chroot.
+
 ### JuJu as a container ###
 Although JuJu has not been designed to be a complete container, it is even possible to
 virtualize the process tree thanks to the [systemd container](https://wiki.archlinux.org/index.php/Systemd-nspawn).
