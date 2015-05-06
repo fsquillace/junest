@@ -165,11 +165,11 @@ function run_juju_as_root(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}" EXIT QUIT ABRT KILL TERM INT
 
-    if ${CHROOT} $JUJU_HOME ${TRUE} &> /dev/null
+    if ${CHROOT} $JUJU_HOME ${TRUE} 1> /dev/null
     then
         JUJU_ENV=1 ${CHROOT} $JUJU_HOME "${SH[@]}" "-c" "${cmd}"
         local ret=$?
-    elif ${CLASSIC_CHROOT} $JUJU_HOME ${TRUE} &> /dev/null
+    elif ${CLASSIC_CHROOT} $JUJU_HOME ${TRUE} 1> /dev/null
     then
         warn "Warning: The executable arch-chroot does not work, falling back to classic chroot"
         JUJU_ENV=1 ${CLASSIC_CHROOT} $JUJU_HOME "${SH[@]}" "-c" "${cmd}"
@@ -188,10 +188,10 @@ function run_juju_as_root(){
 function _run_proot(){
     local proot_args="$1"
     shift
-    if ${PROOT_COMPAT} $proot_args ${TRUE} &> /dev/null
+    if ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
     then
         JUJU_ENV=1 ${PROOT_COMPAT} $proot_args "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args ${TRUE} &> /dev/null
+    elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
     then
         warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
         JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args "${@}"
@@ -215,7 +215,7 @@ function _run_juju_with_proot(){
 
 
 function run_juju_as_fakeroot(){
-    local proot_args="$1"
+    local proot_args="$1 -b /etc/mtab"
     shift
     [ "$(_run_proot "-R ${JUJU_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
@@ -283,6 +283,7 @@ function build_image_juju(){
     # yaourt requires sed
     # coreutils is needed for chown
     sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring nano archlinux-keyring sed
+    sudo rm ${maindir}/root/etc/mtab
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
