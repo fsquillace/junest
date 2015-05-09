@@ -158,6 +158,25 @@ function test_run_juju_as_user(){
     assertTrue "[ -e $JUJU_HOME/newdir ]"
 }
 
+function test_run_juju_as_proot_mtab(){
+    install_mini_juju
+    $(run_juju_as_fakeroot "-k 3.10" "echo")
+    assertTrue "[ -e $JUJU_HOME/etc/mtab ]"
+    $(run_juju_as_user "-k 3.10" "echo")
+    assertTrue "[ ! -e $JUJU_HOME/etc/mtab ]"
+}
+
+function test_run_juju_as_root_mtab(){
+    [ $SKIP_ROOT_TESTS -eq 1 ] && return
+
+    install_mini_juju
+    CHROOT="sudo $CHROOT"
+    CLASSIC_CHROOT="sudo $CLASSIC_CHROOT"
+    CHOWN="sudo $CHOWN"
+    $(run_juju_as_root "echo")
+    assertTrue "[ ! -e $JUJU_HOME/etc/mtab ]"
+}
+
 function test_run_juju_with_quotes(){
     install_mini_juju
     local output=$(run_juju_as_user "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2" | awk -F: '{print $1}')

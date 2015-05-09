@@ -123,6 +123,7 @@ of GNU/Linux distributions. The needed executables in the host OS are:
 - wget or curl
 - tar
 - mkdir
+- ln
 - chown (for root access only)
 
 The minimum recommended linux kernel is 2.6.0+

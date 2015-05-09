@@ -79,6 +79,7 @@ CLASSIC_CHROOT=${JUJU_HOME}/usr/bin/chroot
 TRUE=/usr/bin/true
 ID="/usr/bin/id -u"
 CHOWN="${JUJU_HOME}/usr/bin/chown"
+LN="ln"
 
 ################################# MAIN FUNCTIONS ##############################
 
@@ -163,7 +164,9 @@ function run_juju_as_root(){
     local cmd="mkdir -p ${JUJU_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
 
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}" EXIT QUIT ABRT KILL TERM INT
+    trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}; rm -r ${JUJU_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
+
+    [ ! -e ${JUJU_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUJU_HOME}/etc/mtab
 
     if ${CHROOT} $JUJU_HOME ${TRUE} 1> /dev/null
     then
@@ -180,6 +183,8 @@ function run_juju_as_root(){
 
     # The ownership of the files in JuJu is assigned to the real user
     [ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}
+
+    [ -e ${JUJU_HOME}/etc/mtab ] && rm -r ${JUJU_HOME}/etc/mtab
 
     trap - QUIT EXIT ABRT KILL TERM INT
     return $?
@@ -215,10 +220,12 @@ function _run_juju_with_proot(){
 
 
 function run_juju_as_fakeroot(){
-    local proot_args="$1 -b /etc/mtab"
+    local proot_args="$1"
     shift
     [ "$(_run_proot "-R ${JUJU_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
+
+    [ ! -e ${JUJU_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUJU_HOME}/etc/mtab
     _run_juju_with_proot "-S ${JUJU_HOME} $proot_args" "${@}"
 }
 
@@ -228,6 +235,8 @@ function run_juju_as_user(){
     shift
     [ "$(_run_proot "-R ${JUJU_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
+
+    [ -e ${JUJU_HOME}/etc/mtab ] && rm -f ${JUJU_HOME}/etc/mtab
     _run_juju_with_proot "-R ${JUJU_HOME} $proot_args" "${@}"
 }
 
@@ -283,7 +292,6 @@ function build_image_juju(){
     # yaourt requires sed
     # coreutils is needed for chown
     sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring nano archlinux-keyring sed
-    sudo rm ${maindir}/root/etc/mtab
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
