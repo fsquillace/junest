@@ -233,6 +233,13 @@ function run_juju_as_user(){
 
 
 function delete_juju(){
+    if [ ! -e "${JUJU_HOME}" ]; then
+        info "No JuJu install found in ${JUJU_HOME}."
+        return
+    elif [ ! -d "${JUJU_HOME}" ]; then
+        info "${JUJU_HOME} is not a JuJu install."
+        return
+    fi
     ! ask "Are you sure to delete JuJu located in ${JUJU_HOME}" "N" && return
     if mountpoint -q ${JUJU_HOME}
     then
@@ -245,7 +252,7 @@ function delete_juju(){
     fi
     # the CA directories are read only and can be deleted only by changing the mod
     chmod -R +w ${JUJU_HOME}/etc/ca-certificates
-    if rm -rf ${JUJU_HOME}/*
+    if rm -rf "${JUJU_HOME}"
     then
         info "JuJu deleted in ${JUJU_HOME}"
     else
