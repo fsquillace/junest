@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 #
-# This file is part of JuJu (https://github.com/fsquillace/juju).
-#
 # Copyright (c) 2012-2015
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -29,20 +27,31 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
 
+NAME='JuJu'
+CMD='juju'
+VERSION='3.6.9'
+CODE_NAME='Snake'
+DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
+AUTHOR='Filippo Squillace <feel dot squally at gmail.com>'
+HOMEPAGE="https://github.com/fsquillace/${CMD}"
+COPYRIGHT='2012-2015'
+
+
 if [ "$JUJU_ENV" == "1" ]
 then
-    die "Error: Nested JuJu environments are not allowed"
+    die "Error: Nested ${NAME} environments are not allowed"
 elif [ ! -z $JUJU_ENV ] && [ "$JUJU_ENV" != "0" ]
 then
     die "The variable JUJU_ENV is not properly set"
 fi
 
-[ -z ${JUJU_HOME} ] && JUJU_HOME=~/.juju
+[ -z ${JUJU_HOME} ] && JUJU_HOME=~/.${CMD}
 if [ -z ${JUJU_TEMPDIR} ] || [ ! -d ${JUJU_TEMPDIR} ]
 then
     JUJU_TEMPDIR=/tmp
 fi
-JUJU_REPO=https://bitbucket.org/fsquillace/juju-repo/raw/master
+
+ENV_REPO=https://bitbucket.org/fsquillace/${CMD}-repo/raw/master
 ORIGIN_WD=$(pwd)
 
 WGET="wget --no-check-certificate"
@@ -88,7 +97,7 @@ function download(){
         die "Error: Both wget and curl commands have failed on downloading $1"
 }
 
-function is_juju_installed(){
+function is_env_installed(){
     [ -d "$JUJU_HOME" ] && [ "$(ls -A $JUJU_HOME)" ] && return 0
     return 1
 }
@@ -105,12 +114,12 @@ function _cleanup_build_directory(){
 
 function _prepare_build_directory(){
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "rm -rf ${maindir}; die \"Error occurred when installing JuJu\"" EXIT QUIT ABRT KILL TERM INT
+    trap "rm -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
 }
 
 
-function _setup_juju(){
-    is_juju_installed && die "Error: JuJu has been already installed in $JUJU_HOME"
+function _setup_env(){
+    is_env_installed && die "Error: ${NAME} has been already installed in $JUJU_HOME"
     mkdir -p "${JUJU_HOME}"
     imagepath=$1
     $TAR -zxpf ${imagepath} -C ${JUJU_HOME}
@@ -120,42 +129,38 @@ function _setup_juju(){
     info "    nano /etc/pacman.d/mirrorlist"
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
-    info "JuJu installed successfully"
+    info "${NAME} installed successfully"
 }
 
 
-function setup_juju(){
-# Setup the JuJu environment
-
-    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
+function setup_env(){
+    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     _prepare_build_directory
 
-    info "Downloading JuJu..."
+    info "Downloading ${NAME}..."
     builtin cd ${maindir}
-    local imagefile=juju-${ARCH}.tar.gz
-    download ${JUJU_REPO}/${imagefile}
+    local imagefile=${CMD}-${ARCH}.tar.gz
+    download ${ENV_REPO}/${imagefile}
 
-    info "Installing JuJu..."
-    _setup_juju ${maindir}/${imagefile}
+    info "Installing ${NAME}..."
+    _setup_env ${maindir}/${imagefile}
 
     _cleanup_build_directory ${maindir}
 }
 
 
-function setup_from_file_juju(){
-# Setup from file the JuJu environment
-
+function setup_env_from_file(){
     local imagefile=$1
-    [ ! -e ${imagefile} ] && die "Error: The JuJu image file ${imagefile} does not exist"
+    [ ! -e ${imagefile} ] && die "Error: The ${NAME} image file ${imagefile} does not exist"
 
-    info "Installing JuJu from ${imagefile}..."
-    _setup_juju ${imagefile}
+    info "Installing ${NAME} from ${imagefile}..."
+    _setup_env ${imagefile}
 
     builtin cd $ORIGIN_WD
 }
 
 
-function run_juju_as_root(){
+function run_env_as_root(){
     local uid=$UID
     [ -z $SUDO_UID ] || uid=$SUDO_UID:$SUDO_GID
 
@@ -181,7 +186,7 @@ function run_juju_as_root(){
         die "Error: Chroot does not work"
     fi
 
-    # The ownership of the files in JuJu is assigned to the real user
+    # The ownership of the files is assigned to the real user
     [ -z $uid ] || ${CHOWN} -R ${uid} ${JUJU_HOME}
 
     [ -e ${JUJU_HOME}/etc/mtab ] && rm -r ${JUJU_HOME}/etc/mtab
@@ -201,12 +206,12 @@ function _run_proot(){
         warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
         JUJU_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args "${@}"
     else
-        die "Error: Check if the juju arguments are correct or use the option juju -p \"-k 3.10\""
+        die "Error: Check if the ${CMD} arguments are correct or use the option ${CMD} -p \"-k 3.10\""
     fi
 }
 
 
-function _run_juju_with_proot(){
+function _run_env_with_proot(){
     local proot_args="$1"
     shift
 
@@ -219,46 +224,46 @@ function _run_juju_with_proot(){
 }
 
 
-function run_juju_as_fakeroot(){
+function run_env_as_fakeroot(){
     local proot_args="$1"
     shift
     [ "$(_run_proot "-R ${JUJU_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
     [ ! -e ${JUJU_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUJU_HOME}/etc/mtab
-    _run_juju_with_proot "-S ${JUJU_HOME} $proot_args" "${@}"
+    _run_env_with_proot "-S ${JUJU_HOME} $proot_args" "${@}"
 }
 
 
-function run_juju_as_user(){
+function run_env_as_user(){
     local proot_args="$1"
     shift
     [ "$(_run_proot "-R ${JUJU_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
     [ -e ${JUJU_HOME}/etc/mtab ] && rm -f ${JUJU_HOME}/etc/mtab
-    _run_juju_with_proot "-R ${JUJU_HOME} $proot_args" "${@}"
+    _run_env_with_proot "-R ${JUJU_HOME} $proot_args" "${@}"
 }
 
 
-function delete_juju(){
-    ! ask "Are you sure to delete JuJu located in ${JUJU_HOME}" "N" && return
+function delete_env(){
+    ! ask "Are you sure to delete ${NAME} located in ${JUJU_HOME}" "N" && return
     if mountpoint -q ${JUJU_HOME}
     then
         info "There are mounted directories inside ${JUJU_HOME}"
         if ! umount --force ${JUJU_HOME}
         then
             error "Cannot umount directories in ${JUJU_HOME}"
-            die "Try to delete juju using root permissions"
+            die "Try to delete ${NAME} using root permissions"
         fi
     fi
     # the CA directories are read only and can be deleted only by changing the mod
     chmod -R +w ${JUJU_HOME}/etc/ca-certificates
     if rm -rf ${JUJU_HOME}/*
     then
-        info "JuJu deleted in ${JUJU_HOME}"
+        info "${NAME} deleted in ${JUJU_HOME}"
     else
-        error "Error: Cannot delete JuJu in ${JUJU_HOME}"
+        error "Error: Cannot delete ${NAME} in ${JUJU_HOME}"
     fi
 }
 
@@ -271,7 +276,7 @@ function _check_package(){
 }
 
 
-function build_image_juju(){
+function build_image_env(){
 # The function must runs on ArchLinux with non-root privileges.
     [ "$(${ID})" == "0" ] && \
         die "You cannot build with root privileges."
@@ -283,10 +288,10 @@ function build_image_juju(){
 
     local disable_validation=$1
 
-    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t juju.XXXXXXXXXX)
+    local maindir=$(TMPDIR=$JUJU_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     sudo mkdir -p ${maindir}/root
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "sudo rm -rf ${maindir}; die \"Error occurred when installing JuJu\"" EXIT QUIT ABRT KILL TERM INT
+    trap "sudo rm -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
     info "Installing pacman and its dependencies..."
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # yaourt requires sed
@@ -326,11 +331,11 @@ function build_image_juju(){
     sudo sed -i -e 's/"--asroot"//' ${maindir}/root/opt/yaourt/bin/yaourt
     sudo cp ${maindir}/root/usr/bin/makepkg ${maindir}/root/opt/yaourt/bin/
     sudo sed -i -e 's/EUID\s==\s0/false/' ${maindir}/root/opt/yaourt/bin/makepkg
-    sudo bash -c "echo 'export PATH=/opt/yaourt/bin:$PATH' > ${maindir}/root/etc/profile.d/juju.sh"
-    sudo chmod +x ${maindir}/root/etc/profile.d/juju.sh
+    sudo bash -c "echo 'export PATH=/opt/yaourt/bin:$PATH' > ${maindir}/root/etc/profile.d/${CMD}.sh"
+    sudo chmod +x ${maindir}/root/etc/profile.d/${CMD}.sh
 
-    info "Copying JuJu scripts..."
-    sudo git clone https://github.com/fsquillace/juju.git ${maindir}/root/opt/juju
+    info "Copying ${NAME} scripts..."
+    sudo git clone https://github.com/fsquillace/${CMD}.git ${maindir}/root/opt/${CMD}
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
@@ -339,7 +344,7 @@ function build_image_juju(){
 
     mkdir -p ${maindir}/output
     builtin cd ${maindir}/output
-    local imagefile="juju-${ARCH}.tar.gz"
+    local imagefile="${CMD}-${ARCH}.tar.gz"
     info "Compressing image to ${imagefile}..."
     sudo $TAR -zcpf ${imagefile} -C ${maindir}/root .
 
@@ -356,32 +361,32 @@ function build_image_juju(){
 function validate_image(){
     local testdir=$1
     local imagefile=$2
-    info "Validating JuJu image..."
+    info "Validating ${NAME} image..."
     $TAR -zxpf ${imagefile} -C ${testdir}
     mkdir -p ${testdir}/run/lock
     sed -i -e "s/#Server/Server/" ${testdir}/etc/pacman.d/mirrorlist
-    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -Syy
+    JUJU_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -Syy
 
     # Check most basic executables work
-    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r pacman -Qi pacman 1> /dev/null
-    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r yaourt -V 1> /dev/null
-    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r /opt/proot/proot-$ARCH --help 1> /dev/null
-    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r arch-chroot --help 1> /dev/null
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r arch-chroot --help 1> /dev/null
 
-    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -S base-devel
+    JUJU_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S base-devel
     local yaourt_package=tcptraceroute
     info "Installing ${yaourt_package} package from AUR repo using proot..."
-    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
-    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r tcptraceroute localhost
+    JUJU_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r tcptraceroute localhost
 
     local repo_package=sysstat
     info "Installing ${repo_package} package from official repo using proot..."
-    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -S ${repo_package}
-    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju iostat
-    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f iostat
+    JUJU_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
+    JUJU_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} iostat
+    JUJU_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f iostat
 
     local repo_package=iftop
     info "Installing ${repo_package} package from official repo using root..."
-    JUJU_HOME=${testdir} ${testdir}/opt/juju/bin/juju -f pacman --noconfirm -S ${repo_package}
-    JUJU_HOME=${testdir} sudo ${testdir}/opt/juju/bin/juju -r iftop -t -s 5
+    JUJU_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
+    JUJU_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r iftop -t -s 5
 }
