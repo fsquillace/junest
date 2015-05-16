@@ -4,20 +4,20 @@ sudo: required
 
 install:
     - PATH=$PWD/bin:$PATH
-    - juju -f echo 'Installing juju'
-    - sed -i -e "s/#Server/Server/" ~/.juju/etc/pacman.d/mirrorlist
-    - juju -f pacman --noconfirm -Syy
-    - juju -f pacman --noconfirm -S base-devel
+    - jujube -f echo 'Installing jujube'
+    - sed -i -e "s/#Server/Server/" ~/.jujube/etc/pacman.d/mirrorlist
+    - jujube -f pacman --noconfirm -Syy
+    - jujube -f pacman --noconfirm -S base-devel
 
 script:
     - ./tests/test_all.sh
 # Test on installing package from AUR
-    - juju -f yaourt --noconfirm -S tcptraceroute
-    - sudo $PWD/bin/juju -r tcptraceroute localhost
+    - jujube -f yaourt --noconfirm -S tcptraceroute
+    - sudo $PWD/bin/jujube -r tcptraceroute localhost
 # Test on installing package from official repo
-    - juju -f pacman --noconfirm -S tree
-    - juju -f tree
+    - jujube -f pacman --noconfirm -S tree
+    - jujube -f tree
 # Test on installing package from official repo with root access
-    - juju -f pacman --noconfirm -S iftop
-    - sudo bin/juju -r iftop -t -s 5
-    - yes | juju -d
+    - jujube -f pacman --noconfirm -S iftop
+    - sudo bin/jujube -r iftop -t -s 5
+    - yes | jujube -d
