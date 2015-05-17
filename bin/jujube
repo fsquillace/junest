@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# This file is part of JuJu (https://github.com/fsquillace/juju).
+# This file is part of JuJube (https://github.com/fsquillace/jujube).
 #
 # Copyright (c) 2012-2015
 #
@@ -18,15 +18,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-NAME='JuJu'
-CMD='juju'
-VERSION='3.6.9'
-CODE_NAME='Snake'
-DESCRIPTION='The GNU/Linux distribution container for non-root users'
-AUTHOR='Filippo Squillace <feel dot squally at gmail.com>'
-HOMEPAGE='https://github.com/fsquillace/juju'
-COPYRIGHT='2012-2014'
-
 source "$(dirname $0)/../lib/core.sh"
 
 ###################################
@@ -35,15 +26,15 @@ source "$(dirname $0)/../lib/core.sh"
 
 usage() {
     echo -e "$NAME: $DESCRIPTION"
-    echo -e "Usage: $CMD [options] [command]"
+    echo -e "Usage: $CMD [options] [--] [command]"
     echo -e "Options:"
-    echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUJU_HOME}"
+    echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUJUBE_HOME}"
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
     echo -e "-r, --root                     Run $NAME with root privileges"
     echo -e "-p, --proot-args               Proot arguments"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
     echo -e "-n, --disable-validation       Disable the $NAME image validation"
-    echo -e "-d, --delete                   Delete $NAME from ${JUJU_HOME}"
+    echo -e "-d, --delete                   Delete $NAME from ${JUJUBE_HOME}"
     echo -e "-h, --help                     Show this help message"
     echo -e "-v, --version                  Show the $NAME version"
 }
@@ -162,30 +153,30 @@ function execute_operation(){
 	$OPT_VERSION && version && return
 
 	if $OPT_BUILD_IMAGE; then
-		build_image_juju $OPT_DISABLE_VALIDATION
+		build_image_env $OPT_DISABLE_VALIDATION
 		return
 	elif $OPT_DELETE; then
-		delete_juju
+		delete_env
 		return
 	fi
 
-	if ! is_juju_installed
+	if ! is_env_installed
 	then
 		if $OPT_SETUP_FROM_FILE; then
-			setup_from_file_juju $IMAGE_FILE
+			setup_env_from_file $IMAGE_FILE
 		else
-			setup_juju
+			setup_env
 		fi
 	elif $OPT_SETUP_FROM_FILE; then
-		die "Error: The image cannot be installed since $JUJU_HOME is not empty."
+		die "Error: The image cannot be installed since $JUJUBE_HOME is not empty."
 	fi
 
 	if $OPT_FAKEROOT; then
-		run_juju_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
+		run_env_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
 	elif $OPT_ROOT; then
-		run_juju_as_root "${ARGS[@]}"
+		run_env_as_root "${ARGS[@]}"
 	else
-		run_juju_as_user "${PROOT_ARGS}" "${ARGS[@]}"
+		run_env_as_user "${PROOT_ARGS}" "${ARGS[@]}"
 	fi
 }
 

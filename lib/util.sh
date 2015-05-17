@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# This file is part of JuJu (https://github.com/fsquillace/juju)
+# This file is part of JuJube (https://github.com/fsquillace/jujube)
 #
 # Copyright (c) 2012-2015
 #
