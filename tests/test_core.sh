@@ -5,35 +5,35 @@ function oneTimeSetUp(){
 
     CURRPWD=$PWD
     ENV_MAIN_HOME=/tmp/envtesthome
-    [ -e $ENV_MAIN_HOME ] || JUJUBE_HOME=$ENV_MAIN_HOME bash --rcfile "$(dirname $0)/../lib/core.sh" -ic "setup_env"
-    JUJUBE_HOME=""
+    [ -e $ENV_MAIN_HOME ] || JUNEST_HOME=$ENV_MAIN_HOME bash --rcfile "$(dirname $0)/../lib/core.sh" -ic "setup_env"
+    JUNEST_HOME=""
 }
 
 function install_mini_env(){
-    cp -rfa $ENV_MAIN_HOME/* $JUJUBE_HOME
+    cp -rfa $ENV_MAIN_HOME/* $JUNEST_HOME
 }
 
 function setUp(){
     cd $CURRPWD
-    JUJUBE_HOME=$(TMPDIR=/tmp mktemp -d -t envhome.XXXXXXXXXX)
+    JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t envhome.XXXXXXXXXX)
     source "$(dirname $0)/../lib/core.sh"
     ORIGIN_WD=$(TMPDIR=/tmp mktemp -d -t envowd.XXXXXXXXXX)
     cd $ORIGIN_WD
-    JUJUBE_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t envtemp.XXXXXXXXXX)
+    JUNEST_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t envtemp.XXXXXXXXXX)
 
     set +e
 
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "rm -rf ${JUJUBE_HOME}; rm -rf ${ORIGIN_WD}; rm -rf ${JUJUBE_TEMPDIR}" EXIT QUIT ABRT KILL TERM INT
+    trap "rm -rf ${JUNEST_HOME}; rm -rf ${ORIGIN_WD}; rm -rf ${JUNEST_TEMPDIR}" EXIT QUIT ABRT KILL TERM INT
 }
 
 
 function tearDown(){
     # the CA directories are read only and can be deleted only by changing the mod
-    [ -d ${JUJUBE_HOME}/etc/ca-certificates ] && chmod -R +w ${JUJUBE_HOME}/etc/ca-certificates
-    rm -rf $JUJUBE_HOME
+    [ -d ${JUNEST_HOME}/etc/ca-certificates ] && chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
+    rm -rf $JUNEST_HOME
     rm -rf $ORIGIN_WD
-    rm -rf $JUJUBE_TEMPDIR
+    rm -rf $JUNEST_TEMPDIR
     trap - QUIT EXIT ABRT KILL TERM INT
 }
 
@@ -41,7 +41,7 @@ function tearDown(){
 function test_is_env_installed(){
     is_env_installed
     assertEquals $? 1
-    touch $JUJUBE_HOME/just_file
+    touch $JUNEST_HOME/just_file
     is_env_installed
     assertEquals $? 0
 }
@@ -66,17 +66,17 @@ function test_download(){
 function test_setup_env(){
     wget_mock(){
         # Proof that the setup is happening
-        # inside $JUJUBE_TEMPDIR
-        local cwd=${PWD#${JUJUBE_TEMPDIR}}
+        # inside $JUNEST_TEMPDIR
+        local cwd=${PWD#${JUNEST_TEMPDIR}}
         local parent_dir=${PWD%${cwd}}
-        assertEquals "$JUJUBE_TEMPDIR" "${parent_dir}"
+        assertEquals "$JUNEST_TEMPDIR" "${parent_dir}"
         touch file
         tar -czvf ${CMD}-${ARCH}.tar.gz file
     }
     WGET=wget_mock
-    setup_env &> /dev/null
-    assertTrue "[ -e $JUJUBE_HOME/file ]"
-    assertTrue "[ -e $JUJUBE_HOME/run/lock ]"
+    setup_env 1> /dev/null
+    assertTrue "[ -e $JUNEST_HOME/file ]"
+    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
 }
 
 
@@ -84,8 +84,8 @@ function test_setup_env_from_file(){
     touch file
     tar -czvf ${CMD}-${ARCH}.tar.gz file 1> /dev/null
     setup_env_from_file ${CMD}-${ARCH}.tar.gz &> /dev/null
-    assertTrue "[ -e $JUJUBE_HOME/file ]"
-    assertTrue "[ -e $JUJUBE_HOME/run/lock ]"
+    assertTrue "[ -e $JUNEST_HOME/file ]"
+    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
 
     $(setup_env_from_file noexist.tar.gz 2> /dev/null)
     assertEquals $? 1
@@ -95,8 +95,8 @@ function test_setup_env_from_file_with_absolute_path(){
     touch file
     tar -czvf ${CMD}-${ARCH}.tar.gz file 1> /dev/null
     setup_env_from_file ${ORIGIN_WD}/${CMD}-${ARCH}.tar.gz &> /dev/null
-    assertTrue "[ -e $JUJUBE_HOME/file ]"
-    assertTrue "[ -e $JUJUBE_HOME/run/lock ]"
+    assertTrue "[ -e $JUNEST_HOME/file ]"
+    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
 }
 
 function test_run_env_as_root(){
@@ -150,20 +150,20 @@ function test_run_env_as_user(){
     install_mini_env
     local output=$(run_env_as_user "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2" | awk -F: '{print $1}')
     assertEquals "$output" "/usr/bin/mkdir"
-    assertTrue "[ -e $JUJUBE_HOME/newdir2 ]"
+    assertTrue "[ -e $JUNEST_HOME/newdir2 ]"
 
     SH=("/usr/bin/mkdir" "-v" "/newdir")
     local output=$(run_env_as_user "-k 3.10" | awk -F: '{print $1}')
     assertEquals "$output" "/usr/bin/mkdir"
-    assertTrue "[ -e $JUJUBE_HOME/newdir ]"
+    assertTrue "[ -e $JUNEST_HOME/newdir ]"
 }
 
 function test_run_env_as_proot_mtab(){
     install_mini_env
     $(run_env_as_fakeroot "-k 3.10" "echo")
-    assertTrue "[ -e $JUJUBE_HOME/etc/mtab ]"
+    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
     $(run_env_as_user "-k 3.10" "echo")
-    assertTrue "[ ! -e $JUJUBE_HOME/etc/mtab ]"
+    assertTrue "[ ! -e $JUNEST_HOME/etc/mtab ]"
 }
 
 function test_run_env_as_root_mtab(){
@@ -174,14 +174,14 @@ function test_run_env_as_root_mtab(){
     CLASSIC_CHROOT="sudo $CLASSIC_CHROOT"
     CHOWN="sudo $CHOWN"
     $(run_env_as_root "echo")
-    assertTrue "[ ! -e $JUJUBE_HOME/etc/mtab ]"
+    assertTrue "[ ! -e $JUNEST_HOME/etc/mtab ]"
 }
 
 function test_run_env_with_quotes(){
     install_mini_env
     local output=$(run_env_as_user "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2" | awk -F: '{print $1}')
     assertEquals "$output" "/usr/bin/mkdir"
-    assertTrue "[ -e $JUJUBE_HOME/newdir2 ]"
+    assertTrue "[ -e $JUNEST_HOME/newdir2 ]"
 }
 
 function test_run_env_as_user_proot_args(){
@@ -189,9 +189,9 @@ function test_run_env_as_user_proot_args(){
     run_env_as_user "--help" "" &> /dev/null
     assertEquals $? 0
 
-    mkdir $JUJUBE_TEMPDIR/newdir
-    touch $JUJUBE_TEMPDIR/newdir/newfile
-    run_env_as_user "-b $JUJUBE_TEMPDIR/newdir:/newdir -k 3.10" "ls" "-l" "/newdir/newfile" &> /dev/null
+    mkdir $JUNEST_TEMPDIR/newdir
+    touch $JUNEST_TEMPDIR/newdir/newfile
+    run_env_as_user "-b $JUNEST_TEMPDIR/newdir:/newdir -k 3.10" "ls" "-l" "/newdir/newfile" &> /dev/null
     assertEquals $? 0
 
     $(_run_env_with_proot --helps 2> /dev/null)
@@ -248,7 +248,7 @@ function test_delete_env(){
 
 function test_nested_env(){
     install_mini_env
-    JUJUBE_ENV=1 bash -ic "source $CURRPWD/$(dirname $0)/../lib/core.sh" &> /dev/null
+    JUNEST_ENV=1 bash -ic "source $CURRPWD/$(dirname $0)/../lib/core.sh" &> /dev/null
     assertEquals $? 1
 }
 

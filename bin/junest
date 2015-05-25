@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# This file is part of JuJube (https://github.com/fsquillace/jujube).
+# This file is part of JuNest (https://github.com/fsquillace/junest).
 #
 # Copyright (c) 2012-2015
 #
@@ -28,13 +28,13 @@ usage() {
     echo -e "$NAME: $DESCRIPTION"
     echo -e "Usage: $CMD [options] [--] [command]"
     echo -e "Options:"
-    echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUJUBE_HOME}"
+    echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUNEST_HOME}"
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
     echo -e "-r, --root                     Run $NAME with root privileges"
     echo -e "-p, --proot-args               Proot arguments"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
     echo -e "-n, --disable-validation       Disable the $NAME image validation"
-    echo -e "-d, --delete                   Delete $NAME from ${JUJUBE_HOME}"
+    echo -e "-d, --delete                   Delete $NAME from ${JUNEST_HOME}"
     echo -e "-h, --help                     Show this help message"
     echo -e "-v, --version                  Show the $NAME version"
 }
@@ -168,7 +168,7 @@ function execute_operation(){
 			setup_env
 		fi
 	elif $OPT_SETUP_FROM_FILE; then
-		die "Error: The image cannot be installed since $JUJUBE_HOME is not empty."
+		die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
 	fi
 
 	if $OPT_FAKEROOT; then
