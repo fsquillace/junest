@@ -27,8 +27,8 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 ################################# VARIABLES ##############################
 
-NAME='JuJube'
-CMD='jujube'
+NAME='JuNest'
+CMD='junest'
 VERSION='4.7.4'
 CODE_NAME='Mairei'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
@@ -37,18 +37,18 @@ HOMEPAGE="https://github.com/fsquillace/${CMD}"
 COPYRIGHT='2012-2015'
 
 
-if [ "$JUJUBE_ENV" == "1" ]
+if [ "$JUNEST_ENV" == "1" ]
 then
     die "Error: Nested ${NAME} environments are not allowed"
-elif [ ! -z $JUJUBE_ENV ] && [ "$JUJUBE_ENV" != "0" ]
+elif [ ! -z $JUNEST_ENV ] && [ "$JUNEST_ENV" != "0" ]
 then
-    die "The variable JUJUBE_ENV is not properly set"
+    die "The variable JUNEST_ENV is not properly set"
 fi
 
-[ -z ${JUJUBE_HOME} ] && JUJUBE_HOME=~/.${CMD}
-if [ -z ${JUJUBE_TEMPDIR} ] || [ ! -d ${JUJUBE_TEMPDIR} ]
+[ -z ${JUNEST_HOME} ] && JUNEST_HOME=~/.${CMD}
+if [ -z ${JUNEST_TEMPDIR} ] || [ ! -d ${JUNEST_TEMPDIR} ]
 then
-    JUJUBE_TEMPDIR=/tmp
+    JUNEST_TEMPDIR=/tmp
 fi
 
 ENV_REPO=https://dl.dropboxusercontent.com/u/42449030/${CMD}
@@ -66,28 +66,28 @@ HOST_ARCH=$(uname -m)
 if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
 then
     ARCH="x86"
-    LD_LIB="${JUJUBE_HOME}/lib/ld-linux.so.2"
+    LD_LIB="${JUNEST_HOME}/lib/ld-linux.so.2"
 elif [ $HOST_ARCH == "x86_64" ]
 then
     ARCH="x86_64"
-    LD_LIB="${JUJUBE_HOME}/lib64/ld-linux-x86-64.so.2"
+    LD_LIB="${JUNEST_HOME}/lib64/ld-linux-x86-64.so.2"
 elif [[ $HOST_ARCH =~ .*(arm).* ]]
 then
     ARCH="arm"
-    LD_LIB="${JUJUBE_HOME}/lib/ld-linux-armhf.so.3"
+    LD_LIB="${JUNEST_HOME}/lib/ld-linux-armhf.so.3"
 else
     die "Unknown architecture ${ARCH}"
 fi
 
-PROOT_COMPAT="${JUJUBE_HOME}/opt/proot/proot-${ARCH}"
+PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
 PROOT_LINK=http://static.proot.me/proot-${ARCH}
 
 SH=("/bin/sh" "--login")
-CHROOT=${JUJUBE_HOME}/usr/bin/arch-chroot
-CLASSIC_CHROOT=${JUJUBE_HOME}/usr/bin/chroot
+CHROOT=${JUNEST_HOME}/usr/bin/arch-chroot
+CLASSIC_CHROOT=${JUNEST_HOME}/usr/bin/chroot
 TRUE=/usr/bin/true
 ID="/usr/bin/id -u"
-CHOWN="${JUJUBE_HOME}/usr/bin/chown"
+CHOWN="${JUNEST_HOME}/usr/bin/chown"
 LN="ln"
 
 ################################# MAIN FUNCTIONS ##############################
@@ -98,7 +98,7 @@ function download(){
 }
 
 function is_env_installed(){
-    [ -d "$JUJUBE_HOME" ] && [ "$(ls -A $JUJUBE_HOME)" ] && return 0
+    [ -d "$JUNEST_HOME" ] && [ "$(ls -A $JUNEST_HOME)" ] && return 0
     return 1
 }
 
@@ -119,11 +119,11 @@ function _prepare_build_directory(){
 
 
 function _setup_env(){
-    is_env_installed && die "Error: ${NAME} has been already installed in $JUJUBE_HOME"
-    mkdir -p "${JUJUBE_HOME}"
+    is_env_installed && die "Error: ${NAME} has been already installed in $JUNEST_HOME"
+    mkdir -p "${JUNEST_HOME}"
     imagepath=$1
-    $TAR -zxpf ${imagepath} -C ${JUJUBE_HOME}
-    mkdir -p ${JUJUBE_HOME}/run/lock
+    $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
+    mkdir -p ${JUNEST_HOME}/run/lock
     warn "Warn: The default mirror URL is ${DEFAULT_MIRROR}."
     warn "To change it:"
     info "    nano /etc/pacman.d/mirrorlist"
@@ -134,7 +134,7 @@ function _setup_env(){
 
 
 function setup_env(){
-    local maindir=$(TMPDIR=$JUJUBE_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
+    local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     _prepare_build_directory
 
     info "Downloading ${NAME}..."
@@ -166,30 +166,30 @@ function run_env_as_root(){
 
     local main_cmd="${SH[@]}"
     [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
-    local cmd="mkdir -p ${JUJUBE_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
+    local cmd="mkdir -p ${JUNEST_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
 
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUJUBE_HOME}; rm -r ${JUJUBE_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
+    trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUNEST_HOME}; rm -r ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
 
-    [ ! -e ${JUJUBE_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUJUBE_HOME}/etc/mtab
+    [ ! -e ${JUNEST_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
 
-    if ${CHROOT} $JUJUBE_HOME ${TRUE} 1> /dev/null
+    if ${CHROOT} $JUNEST_HOME ${TRUE} 1> /dev/null
     then
-        JUJUBE_ENV=1 ${CHROOT} $JUJUBE_HOME "${SH[@]}" "-c" "${cmd}"
+        JUNEST_ENV=1 ${CHROOT} $JUNEST_HOME "${SH[@]}" "-c" "${cmd}"
         local ret=$?
-    elif ${CLASSIC_CHROOT} $JUJUBE_HOME ${TRUE} 1> /dev/null
+    elif ${CLASSIC_CHROOT} $JUNEST_HOME ${TRUE} 1> /dev/null
     then
         warn "Warning: The executable arch-chroot does not work, falling back to classic chroot"
-        JUJUBE_ENV=1 ${CLASSIC_CHROOT} $JUJUBE_HOME "${SH[@]}" "-c" "${cmd}"
+        JUNEST_ENV=1 ${CLASSIC_CHROOT} $JUNEST_HOME "${SH[@]}" "-c" "${cmd}"
         local ret=$?
     else
         die "Error: Chroot does not work"
     fi
 
     # The ownership of the files is assigned to the real user
-    [ -z $uid ] || ${CHOWN} -R ${uid} ${JUJUBE_HOME}
+    [ -z $uid ] || ${CHOWN} -R ${uid} ${JUNEST_HOME}
 
-    [ -e ${JUJUBE_HOME}/etc/mtab ] && rm -r ${JUJUBE_HOME}/etc/mtab
+    [ -e ${JUNEST_HOME}/etc/mtab ] && rm -r ${JUNEST_HOME}/etc/mtab
 
     trap - QUIT EXIT ABRT KILL TERM INT
     return $?
@@ -200,11 +200,11 @@ function _run_proot(){
     shift
     if ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
     then
-        JUJUBE_ENV=1 ${PROOT_COMPAT} $proot_args "${@}"
+        JUNEST_ENV=1 ${PROOT_COMPAT} $proot_args "${@}"
     elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
     then
         warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
-        JUJUBE_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args "${@}"
+        JUNEST_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args "${@}"
     else
         die "Error: Check if the ${CMD} arguments are correct or use the option ${CMD} -p \"-k 3.10\""
     fi
@@ -227,43 +227,43 @@ function _run_env_with_proot(){
 function run_env_as_fakeroot(){
     local proot_args="$1"
     shift
-    [ "$(_run_proot "-R ${JUJUBE_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    [ ! -e ${JUJUBE_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUJUBE_HOME}/etc/mtab
-    _run_env_with_proot "-S ${JUJUBE_HOME} $proot_args" "${@}"
+    [ ! -e ${JUNEST_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
+    _run_env_with_proot "-S ${JUNEST_HOME} $proot_args" "${@}"
 }
 
 
 function run_env_as_user(){
     local proot_args="$1"
     shift
-    [ "$(_run_proot "-R ${JUJUBE_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    [ -e ${JUJUBE_HOME}/etc/mtab ] && rm -f ${JUJUBE_HOME}/etc/mtab
-    _run_env_with_proot "-R ${JUJUBE_HOME} $proot_args" "${@}"
+    [ -e ${JUNEST_HOME}/etc/mtab ] && rm -f ${JUNEST_HOME}/etc/mtab
+    _run_env_with_proot "-R ${JUNEST_HOME} $proot_args" "${@}"
 }
 
 
 function delete_env(){
-    ! ask "Are you sure to delete ${NAME} located in ${JUJUBE_HOME}" "N" && return
-    if mountpoint -q ${JUJUBE_HOME}
+    ! ask "Are you sure to delete ${NAME} located in ${JUNEST_HOME}" "N" && return
+    if mountpoint -q ${JUNEST_HOME}
     then
-        info "There are mounted directories inside ${JUJUBE_HOME}"
-        if ! umount --force ${JUJUBE_HOME}
+        info "There are mounted directories inside ${JUNEST_HOME}"
+        if ! umount --force ${JUNEST_HOME}
         then
-            error "Cannot umount directories in ${JUJUBE_HOME}"
+            error "Cannot umount directories in ${JUNEST_HOME}"
             die "Try to delete ${NAME} using root permissions"
         fi
     fi
     # the CA directories are read only and can be deleted only by changing the mod
-    chmod -R +w ${JUJUBE_HOME}/etc/ca-certificates
-    if rm -rf ${JUJUBE_HOME}/*
+    chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
+    if rm -rf ${JUNEST_HOME}/*
     then
-        info "${NAME} deleted in ${JUJUBE_HOME}"
+        info "${NAME} deleted in ${JUNEST_HOME}"
     else
-        error "Error: Cannot delete ${NAME} in ${JUJUBE_HOME}"
+        error "Error: Cannot delete ${NAME} in ${JUNEST_HOME}"
     fi
 }
 
@@ -288,7 +288,7 @@ function build_image_env(){
 
     local disable_validation=$1
 
-    local maindir=$(TMPDIR=$JUJUBE_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
+    local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     sudo mkdir -p ${maindir}/root
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "sudo rm -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
@@ -365,28 +365,28 @@ function validate_image(){
     $TAR -zxpf ${imagefile} -C ${testdir}
     mkdir -p ${testdir}/run/lock
     sed -i -e "s/#Server/Server/" ${testdir}/etc/pacman.d/mirrorlist
-    JUJUBE_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -Syy
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -Syy
 
     # Check most basic executables work
-    JUJUBE_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
-    JUJUBE_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
-    JUJUBE_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
-    JUJUBE_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r arch-chroot --help 1> /dev/null
+    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
+    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
+    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
+    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r arch-chroot --help 1> /dev/null
 
-    JUJUBE_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S base-devel
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S base-devel
     local yaourt_package=tcptraceroute
     info "Installing ${yaourt_package} package from AUR repo using proot..."
-    JUJUBE_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
-    JUJUBE_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r tcptraceroute localhost
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
+    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r tcptraceroute localhost
 
     local repo_package=sysstat
     info "Installing ${repo_package} package from official repo using proot..."
-    JUJUBE_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
-    JUJUBE_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} iostat
-    JUJUBE_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f iostat
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} iostat
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f iostat
 
     local repo_package=iftop
     info "Installing ${repo_package} package from official repo using root..."
-    JUJUBE_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
-    JUJUBE_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r iftop -t -s 5
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
+    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r iftop -t -s 5
 }
