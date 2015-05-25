@@ -254,26 +254,3 @@ Filippo Squillace <feel.squally@gmail.com>
 WWW
 ===
 https://github.com/fsquillace/junest
-
-Last words
-==========
-Quote of the [lotus](http://en.wikipedia.org/wiki/Ziziphus_lotus) (a selvatic junest plant)
-
-> Per nove infausti dì sul mar pescoso  
-> i venti rei mi trasportaro. Al fine  
-> nel decimo sbarcammo in su le rive  
-> de’ Lotofági, un popolo, a cui cibo  
-> È d’una pianta il florido germoglio.  
-> ...  
-> ...  
-> Partiro e s’affrontaro a quella gente,  
-> che, lunge dal voler la vita loro,  
-> il dolce loto a savorar lor porse.  
-> chiunque l’esca dilettosa, e nuova  
-> gustato avea, con le novelle indietro  
-> non bramava tornar: colà bramava  
-> starsi, e, mangiando del soave loto,  
-> la contrada natia sbandir dal petto.  
-
-verse 105-123, Homer, from [Odyssey Book IX](http://it.wikisource.org/wiki/Odissea/Libro_IX)
-([en](http://en.wikisource.org/wiki/The_Odyssey_(Butler)/Book_IX))
