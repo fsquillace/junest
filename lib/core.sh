@@ -368,16 +368,10 @@ function validate_image(){
     JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -Syy
 
     # Check most basic executables work
-    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
-    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
-    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
-    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r arch-chroot --help 1> /dev/null
-
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S base-devel
-    local yaourt_package=tcptraceroute
-    info "Installing ${yaourt_package} package from AUR repo using proot..."
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f sh --login -c "yaourt --noconfirm -S ${yaourt_package}"
-    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r tcptraceroute localhost
+    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
+    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
+    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
+    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r arch-chroot --help 1> /dev/null
 
     local repo_package=sysstat
     info "Installing ${repo_package} package from official repo using proot..."
@@ -388,5 +382,12 @@ function validate_image(){
     local repo_package=iftop
     info "Installing ${repo_package} package from official repo using root..."
     JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
-    JUNEST_HOME=${testdir} sudo ${testdir}/opt/${CMD}/bin/${CMD} -r iftop -t -s 5
+    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r iftop -t -s 5
+
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S base-devel
+    local yaourt_package=tcptraceroute
+    info "Installing ${yaourt_package} package from AUR repo using proot..."
+    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f sh --login -c "yaourt -A --noconfirm -S ${yaourt_package}"
+    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r tcptraceroute localhost
+
 }
