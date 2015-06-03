@@ -124,9 +124,7 @@ function _setup_env(){
     imagepath=$1
     $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
     mkdir -p ${JUNEST_HOME}/run/lock
-    warn "Warn: The default mirror URL is ${DEFAULT_MIRROR}."
-    warn "To change it:"
-    info "    nano /etc/pacman.d/mirrorlist"
+    info "The default mirror URL is ${DEFAULT_MIRROR}."
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
     info "${NAME} installed successfully"
@@ -296,7 +294,7 @@ function build_image_env(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # yaourt requires sed
     # coreutils is needed for chown
-    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring nano archlinux-keyring sed
+    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
