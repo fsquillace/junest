@@ -1,6 +1,6 @@
 JuNest
 ======
-The Arch Linux based distro that runs upon any Linux distros without root access
+The Arch Linux based distro that runs upon any Linux distros without root access.
 
 [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest)
 
@@ -10,7 +10,7 @@ Description
 an isolated GNU/Linux environment inside any generic host GNU/Linux OS
 and without the need to have root privileges for installing packages.
 
-JuNest contains mainly the package managers (called pacman and yaourt) that allows to access
+JuNest contains mainly the package managers (called [pacman](https://wiki.archlinux.org/index.php/Pacman) and [yaourt](https://wiki.archlinux.org/index.php/Yaourt)) that allows to access
 to a wide range of packages from the Arch Linux repositories.
 
 The main advantages on using JuNest are:
@@ -27,14 +27,14 @@ Quickstart
 ==========
 There are three different ways you can run JuNest:
 
-- As normal user - Allow to make basic operations using [proot](https://wiki.archlinux.org/index.php/Proot): ```junest```
+- As normal user - Allow to make basic operations: ```junest```
 
-- As fakeroot - Allow to install/remove packages using [proot](https://wiki.archlinux.org/index.php/Proot): ```junest -f```
+- As fakeroot - Allow to install/remove packages: ```junest -f```
 
-- As root - Allow to have fully root privileges inside JuNest environment using [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) (you need to be root for executing this): ```junest -r```
+- As root - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -r```
 
 If the JuNest image has not been downloaded yet, the script will download
-the JuNest image and will place it to the default directory ~/.junest.
+the image and will place it to the default directory ~/.junest.
 You can change the default directory by changing the environment variable *JUNEST\_HOME*.
 
 If you are new on Archlinux and you are not familiar with *pacman* package manager
@@ -74,7 +74,7 @@ of GNU/Linux distributions. The needed executables in the host OS are:
 The minimum recommended linux kernel is 2.6.0+
 
 Advanced usage
-============
+==============
 
 ## Build image ##
 You can build a new JuNest image from scratch by running the following command:
@@ -105,10 +105,6 @@ Check out the proot options with:
 
     junest -p "--help"
 
-##Automatic fallback to classic chroot##
-Since the [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) may not work
-on some distros, JuNest automatically tries to fallback to the classic chroot.
-
 ## JuNest as a container ##
 Although JuNest has not been designed to be a complete container, it is even possible to
 virtualize the process tree thanks to the [systemd container](https://wiki.archlinux.org/index.php/Systemd-nspawn).
@@ -124,6 +120,25 @@ To boot a JuNest container:
 Related wiki page:
 
 - [How to run junest as a container](https://github.com/fsquillace/junest/wiki/How-to-run-JuNest-as-a-container)
+
+Internals
+=========
+
+There are two main chroot jail used in JuNest.
+The main one is [proot](https://wiki.archlinux.org/index.php/Proot) which
+allows unprivileged users to execute programs inside a sandbox and
+[arch-chroot](https://wiki.archlinux.org/index.php/Chroot) which is an
+enhanced chroot for privileged users that mounts the primary directories
+(i.e. /proc, /sys, /dev and /run) before executing any programs inside
+the sandbox.
+
+##Automatic fallback to classic chroot##
+Since the [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) may not work
+on some distros, JuNest automatically tries to fallback to the classic chroot.
+
+##Automatic building of the JuNest images##
+The JuNest images are built every week so that you can always get the most
+updated package versions.
 
 Troubleshooting
 ===============
