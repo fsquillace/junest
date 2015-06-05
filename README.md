@@ -1,5 +1,7 @@
 JuNest
 ======
+
+[![Join the chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 The Arch Linux based distro that runs upon any Linux distros without root access.
 
 [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest)
