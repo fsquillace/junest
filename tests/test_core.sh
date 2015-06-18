@@ -50,15 +50,15 @@ function test_is_env_installed(){
 function test_download(){
     WGET=/bin/true
     CURL=/bin/false
-    download
+    download_cmd
     assertEquals $? 0
 
     WGET=/bin/false
     CURL=/bin/true
-    download
+    download_cmd
     assertEquals $? 0
 
-    $(WGET=/bin/false CURL=/bin/false download something 2> /dev/null)
+    $(WGET=/bin/false CURL=/bin/false download_cmd something 2> /dev/null)
     assertEquals $? 1
 }
 

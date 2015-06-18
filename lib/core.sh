@@ -51,18 +51,7 @@ then
     JUNEST_TEMPDIR=/tmp
 fi
 
-ENV_REPO=https://dl.dropboxusercontent.com/u/42449030/${CMD}
-ORIGIN_WD=$(pwd)
-
-WGET="wget --no-check-certificate"
-CURL="curl -L -J -O -k"
-
-TAR=tar
-
-DEFAULT_MIRROR='https://mirrors.kernel.org/archlinux/$repo/os/$arch'
-
 HOST_ARCH=$(uname -m)
-
 if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
 then
     ARCH="x86"
@@ -79,23 +68,57 @@ else
     die "Unknown architecture ${ARCH}"
 fi
 
-PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
 PROOT_LINK=http://static.proot.me/proot-${ARCH}
+ENV_REPO=https://dl.dropboxusercontent.com/u/42449030/${CMD}
+DEFAULT_MIRROR='https://mirrors.kernel.org/archlinux/$repo/os/$arch'
 
+ORIGIN_WD=$(pwd)
+
+################################ EXECUTABLES ##################################
+# This section contains all the executables needed for JuNest to run properly.
+# They are based on a fallback mechanism that tries to use the executable in
+# different locations in the host OS.
+
+# List of executables that are run inside JuNest:
 SH=("/bin/sh" "--login")
+TRUE=true
+ID="id -u"
+
+# List of executables that are run in the host OS:
+PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
 CHROOT=${JUNEST_HOME}/usr/bin/arch-chroot
 CLASSIC_CHROOT=${JUNEST_HOME}/usr/bin/chroot
-TRUE=/usr/bin/true
-ID="/usr/bin/id -u"
+WGET="wget --no-check-certificate"
+CURL="curl -L -J -O -k"
+TAR=tar
 CHOWN="${JUNEST_HOME}/usr/bin/chown"
 LN="ln"
+MKDIR="mkdir"
+
+PATH=/usr/bin:/bin:/sbin:$PATH
+LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
+
+function ln_cmd(){
+    ln $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/ln $@
+}
+
+function rm_cmd(){
+    rm $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/rm $@
+}
+
+function chown_cmd(){
+    chown $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/chown $@
+}
+
+function mkdir_cmd(){
+    mkdir $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/mkdir $@
+}
+
+function download_cmd(){
+    $WGET $@ || $CURL $@
+}
 
 ################################# MAIN FUNCTIONS ##############################
-
-function download(){
-    $WGET $1 || $CURL $1 || \
-        die "Error: Both wget and curl commands have failed on downloading $1"
-}
 
 function is_env_installed(){
     [ -d "$JUNEST_HOME" ] && [ "$(ls -A $JUNEST_HOME)" ] && return 0
@@ -120,10 +143,10 @@ function _prepare_build_directory(){
 
 function _setup_env(){
     is_env_installed && die "Error: ${NAME} has been already installed in $JUNEST_HOME"
-    mkdir -p "${JUNEST_HOME}"
+    mkdir_cmd -p "${JUNEST_HOME}"
     imagepath=$1
     $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
-    mkdir -p ${JUNEST_HOME}/run/lock
+    mkdir_cmd -p ${JUNEST_HOME}/run/lock
     info "The default mirror URL is ${DEFAULT_MIRROR}."
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
@@ -138,7 +161,7 @@ function setup_env(){
     info "Downloading ${NAME}..."
     builtin cd ${maindir}
     local imagefile=${CMD}-${ARCH}.tar.gz
-    download ${ENV_REPO}/${imagefile}
+    download_cmd ${ENV_REPO}/${imagefile}
 
     info "Installing ${NAME}..."
     _setup_env ${maindir}/${imagefile}
@@ -315,12 +338,12 @@ function build_image_env(){
     mkdir -p ${maindir}/packages/{package-query,yaourt}
 
     builtin cd ${maindir}/packages/package-query
-    download https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
+    download_cmd https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
     makepkg -sfc
     sudo pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
 
     builtin cd ${maindir}/packages/yaourt
-    download https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
+    download_cmd https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
     makepkg -sfc
     sudo pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
     # Apply patches for yaourt and makepkg
