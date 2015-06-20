@@ -91,9 +91,7 @@ CLASSIC_CHROOT=${JUNEST_HOME}/usr/bin/chroot
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR=tar
-CHOWN="${JUNEST_HOME}/usr/bin/chown"
-LN="ln"
-MKDIR="mkdir"
+CHOWN="chown"
 
 PATH=/usr/bin:/bin:/sbin:$PATH
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
@@ -111,7 +109,7 @@ function rm_cmd(){
 }
 
 function chown_cmd(){
-    chown $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/chown $@
+    $CHOWN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/chown $@
 }
 
 function mkdir_cmd(){
@@ -135,13 +133,13 @@ function _cleanup_build_directory(){
     local maindir=$1
     builtin cd $ORIGIN_WD
     trap - QUIT EXIT ABRT KILL TERM INT
-    rm -fr "$maindir"
+    rm_cmd -fr "$maindir"
 }
 
 
 function _prepare_build_directory(){
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "rm -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
+    trap "rm_cmd -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
 }
 
 
@@ -194,9 +192,9 @@ function run_env_as_root(){
     local cmd="mkdir -p ${JUNEST_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
 
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "[ -z $uid ] || ${CHOWN} -R ${uid} ${JUNEST_HOME}; rm -r ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
+    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -r ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
 
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
+    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
 
     if ${CHROOT} $JUNEST_HOME ${TRUE} 1> /dev/null
     then
@@ -212,9 +210,9 @@ function run_env_as_root(){
     fi
 
     # The ownership of the files is assigned to the real user
-    [ -z $uid ] || ${CHOWN} -R ${uid} ${JUNEST_HOME}
+    [ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}
 
-    [ -e ${JUNEST_HOME}/etc/mtab ] && rm -r ${JUNEST_HOME}/etc/mtab
+    [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -r ${JUNEST_HOME}/etc/mtab
 
     trap - QUIT EXIT ABRT KILL TERM INT
     return $?
@@ -255,7 +253,7 @@ function run_env_as_fakeroot(){
     [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && $LN -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
+    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
     _run_env_with_proot "-S ${JUNEST_HOME} $proot_args" "${@}"
 }
 
@@ -266,7 +264,7 @@ function run_env_as_user(){
     [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
-    [ -e ${JUNEST_HOME}/etc/mtab ] && rm -f ${JUNEST_HOME}/etc/mtab
+    [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -f ${JUNEST_HOME}/etc/mtab
     _run_env_with_proot "-R ${JUNEST_HOME} $proot_args" "${@}"
 }
 
@@ -284,7 +282,7 @@ function delete_env(){
     fi
     # the CA directories are read only and can be deleted only by changing the mod
     chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
-    if rm -rf ${JUNEST_HOME}/*
+    if rm_cmd -rf ${JUNEST_HOME}/*
     then
         info "${NAME} deleted in ${JUNEST_HOME}"
     else
@@ -319,8 +317,8 @@ function build_image_env(){
     trap "sudo rm -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
     info "Installing pacman and its dependencies..."
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
+    # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # yaourt requires sed
-    # coreutils is needed for chown
     sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
@@ -356,7 +354,7 @@ function build_image_env(){
     sudo sed -i -e 's/"--asroot"//' ${maindir}/root/opt/yaourt/bin/yaourt
     sudo cp ${maindir}/root/usr/bin/makepkg ${maindir}/root/opt/yaourt/bin/
     sudo sed -i -e 's/EUID\s==\s0/false/' ${maindir}/root/opt/yaourt/bin/makepkg
-    sudo bash -c "echo 'export PATH=/opt/yaourt/bin:$PATH' > ${maindir}/root/etc/profile.d/${CMD}.sh"
+    sudo bash -c "echo 'export PATH=/opt/yaourt/bin:\$PATH' > ${maindir}/root/etc/profile.d/${CMD}.sh"
     sudo chmod +x ${maindir}/root/etc/profile.d/${CMD}.sh
 
     info "Copying ${NAME} scripts..."

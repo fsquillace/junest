@@ -69,11 +69,12 @@ JuNest comes with a very short list of dependencies in order to be installed in 
 of GNU/Linux distributions. The needed executables in the host OS are:
 
 - bash
-- wget or curl
-- tar
-- mkdir
-- ln
 - chown (for root access only)
+- ln
+- mkdir
+- rm
+- tar
+- wget or curl
 
 The minimum recommended linux kernel is 2.6.0+
 
@@ -139,6 +140,12 @@ the sandbox.
 ##Automatic fallback to classic chroot##
 Since the [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) may not work
 on some distros, JuNest automatically tries to fallback to the classic chroot.
+
+##Automatic fallback for all the dependent host OS executables##
+JuNest attempt first to run the executables in the host OS located in different
+positions (/usr/bin, /bin and /sbin).
+As a fallback it tries to run the same executable if it is available in the JuNest
+image.
 
 ##Automatic building of the JuNest images##
 The JuNest images are built every week so that you can always get the most
