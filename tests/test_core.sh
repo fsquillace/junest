@@ -62,6 +62,77 @@ function test_download(){
     assertEquals $? 1
 }
 
+function test_ln(){
+    install_mini_env
+
+    touch ln_file
+    ln_cmd -s ln_file new_file
+    assertEquals $? 0
+    assertTrue "[ -e new_file ]"
+    rm new_file
+
+    touch ln_file
+    OLDPATH="$PATH"
+    PATH=""
+    ln_cmd -s ln_file new_file 2> /dev/null
+    local ret=$?
+    PATH="$OLDPATH"
+    assertEquals $ret 0
+    assertTrue "[ -e new_file ]"
+}
+
+function test_rm(){
+    install_mini_env
+
+    touch rm_file
+    rm_cmd rm_file
+    assertEquals $? 0
+    assertTrue "[ ! -e rm_file ]"
+
+    touch rm_file
+    OLDPATH="$PATH"
+    PATH=""
+    rm_cmd rm_file 2> /dev/null
+    local ret=$?
+    PATH="$OLDPATH"
+    assertEquals $ret 0
+    assertTrue "[ ! -e rm_file ]"
+}
+
+function test_chown(){
+    install_mini_env
+
+    local id=$(id -u)
+
+    touch chown_file
+    chown_cmd $id chown_file
+    assertEquals $? 0
+
+    touch chown_file
+    OLDPATH="$PATH"
+    PATH=""
+    chown_cmd $id chown_file 2> /dev/null
+    local ret=$?
+    PATH="$OLDPATH"
+    assertEquals $ret 0
+}
+
+function test_mkdir(){
+    install_mini_env
+
+    mkdir_cmd -p new_dir/new_dir
+    assertEquals $? 0
+    assertTrue "[ -d new_dir/new_dir ]"
+    rm -rf new_dir
+
+    OLDPATH="$PATH"
+    PATH=""
+    mkdir_cmd -p new_dir/new_dir 2> /dev/null
+    local ret=$?
+    PATH="$OLDPATH"
+    assertEquals $ret 0
+    assertTrue "[ -d new_dir/new_dir ]"
+}
 
 function test_setup_env(){
     wget_mock(){

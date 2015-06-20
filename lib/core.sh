@@ -98,6 +98,10 @@ MKDIR="mkdir"
 PATH=/usr/bin:/bin:/sbin:$PATH
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
+# The following functions attempt first to run the executable in the host OS.
+# As a last hope they try to run the same executable available in the JuNest
+# image.
+
 function ln_cmd(){
     ln $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/ln $@
 }
