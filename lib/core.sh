@@ -52,6 +52,7 @@ then
     JUNEST_TEMPDIR=/tmp
 fi
 
+ARCH_LIST=('x86_64' 'x86' 'arm')
 HOST_ARCH=$(uname -m)
 if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
 then
@@ -69,8 +70,9 @@ else
     die "Unknown architecture ${ARCH}"
 fi
 
-PROOT_LINK=http://static.proot.me/proot-${ARCH}
-ENV_REPO=https://dl.dropboxusercontent.com/u/42449030/${CMD}
+PROOT_LINK=http://static.proot.me/
+MAIN_REPO=https://dl.dropboxusercontent.com/u/42449030
+ENV_REPO=${MAIN_REPO}/${CMD}
 DEFAULT_MIRROR='https://mirrors.kernel.org/archlinux/$repo/os/$arch'
 
 ORIGIN_WD=$(pwd)
@@ -313,11 +315,24 @@ function build_image_env(){
     sudo arch-chroot ${maindir}/root locale-gen
     sudo bash -c "echo 'LANG = \"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
 
-    info "Installing compatibility binary proot"
+    info "Installing compatibility binaries proot"
     sudo mkdir -p ${maindir}/root/opt/proot
     builtin cd ${maindir}/root/opt/proot
-    sudo $CURL $PROOT_LINK
-    sudo chmod +x proot-$ARCH
+    for arch in ${ARCH_LIST[@]}
+    do
+        sudo $CURL $PROOT_LINK/proot-$arch
+        sudo chmod +x proot-$arch
+    done
+
+    info "Installing qemu static binaries"
+    sudo mkdir -p ${maindir}/root/opt/qemu
+    builtin cd ${maindir}/root/opt/qemu
+    NEW_ARCH_LIST=( "${ARCH_LIST[@]/$ARCH}" )
+    for arch in ${NEW_ARCH_LIST[@]}
+    do
+        sudo $CURL ${MAIN_REPO}/qemu/$ARCH/qemu-$ARCH-static-$arch
+        sudo chmod +x qemu-$ARCH-static-$arch
+    done
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
     info "Compiling and installing yaourt..."
