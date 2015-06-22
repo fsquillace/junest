@@ -82,7 +82,7 @@ ORIGIN_WD=$(pwd)
 
 # List of executables that are run inside JuNest:
 SH=("/bin/sh" "--login")
-TRUE=true
+TRUE="true"
 ID="id -u"
 
 # List of executables that are run in the host OS:
@@ -115,6 +115,11 @@ function chown_cmd(){
 
 function mkdir_cmd(){
     mkdir $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/mkdir $@
+}
+
+function proot_cmd(){
+     ${PROOT_COMPAT} "${@}" || PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} "${@}" || \
+        die "Error: Check if the ${CMD} arguments are correct or use the option ${CMD} -p \"-k 3.10\""
 }
 
 function download_cmd(){
@@ -214,16 +219,7 @@ function run_env_as_root(){
 function _run_proot(){
     local proot_args="$1"
     shift
-    if ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
-    then
-        JUNEST_ENV=1 ${PROOT_COMPAT} $proot_args "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
-    then
-        warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
-        JUNEST_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args "${@}"
-    else
-        die "Error: Check if the ${CMD} arguments are correct or use the option ${CMD} -p \"-k 3.10\""
-    fi
+    JUNEST_ENV=1 proot_cmd $proot_args "${@}"
 }
 
 
