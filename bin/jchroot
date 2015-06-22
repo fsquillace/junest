@@ -16,6 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# This script is the simplified and portable version of arch-chroot
+# (https://wiki.archlinux.org/index.php/Change_root#Using_arch-chroot)
+
 set -e
 
 ################################ IMPORTS ##################################
@@ -39,14 +42,14 @@ chroot_setup() {
   [[ $(trap -p EXIT) ]] && die '(BUG): attempting to overwrite existing EXIT trap'
   trap 'chroot_teardown' EXIT
 
-  #chroot_maybe_add_mount "! mountpoint -q '$1'" "$1" "$1" --bind &&
+  chroot_maybe_add_mount "! mountpoint -q '$1'" "$1" "$1" --bind &&
   chroot_add_mount proc "$1/proc" -t proc -o nosuid,noexec,nodev &&
   chroot_add_mount sys "$1/sys" -t sysfs -o nosuid,noexec,nodev,ro &&
   chroot_add_mount udev "$1/dev" -t devtmpfs -o mode=0755,nosuid &&
   chroot_add_mount devpts "$1/dev/pts" -t devpts -o mode=0620,gid=5,nosuid,noexec &&
   chroot_add_mount shm "$1/dev/shm" -t tmpfs -o mode=1777,nosuid,nodev &&
   chroot_add_mount run "$1/run" -t tmpfs -o nosuid,nodev,mode=0755 &&
-  chroot_add_mount tmp "$1/tmp" -t tmpfs -o mode=1777,strictatime,nodev,nosuid &&
+  chroot_add_mount tmp "$1/tmp" -t tmpfs -o mode=1777,atime,nodev,nosuid &&
   mkdir -p "$1/$HOME" &&
   chroot_add_mount $HOME "$1/$HOME" --bind
 }
@@ -90,7 +93,7 @@ chroot_add_resolv_conf() {
   chroot_add_mount /etc/resolv.conf "$resolv_conf" --bind
 }
 
-if [[ -z $1 || $1 = @(-h|--help) ]]; then
+if [[ -z $1 || $1 == -h || $1 == --help ]]; then
   usage
   exit $(( $# ? 0 : 1 ))
 fi

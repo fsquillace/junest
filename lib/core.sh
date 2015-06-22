@@ -46,6 +46,7 @@ then
 fi
 
 [ -z ${JUNEST_HOME} ] && JUNEST_HOME=~/.${CMD}
+[ -z ${JUNEST_BASE} ] && JUNEST_BASE=${JUNEST_HOME}/opt/junest
 if [ -z ${JUNEST_TEMPDIR} ] || [ ! -d ${JUNEST_TEMPDIR} ]
 then
     JUNEST_TEMPDIR=/tmp
@@ -86,14 +87,14 @@ ID="id -u"
 
 # List of executables that are run in the host OS:
 PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
-CHROOT=${JUNEST_HOME}/usr/bin/arch-chroot
+CHROOT=${JUNEST_BASE}/bin/jchroot
 CLASSIC_CHROOT=${JUNEST_HOME}/usr/bin/chroot
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR=tar
 CHOWN="chown"
 
-PATH=/usr/bin:/bin:/sbin:$PATH
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
 # The following functions attempt first to run the executable in the host OS.
@@ -118,6 +119,10 @@ function mkdir_cmd(){
 
 function download_cmd(){
     $WGET $@ || $CURL $@
+}
+
+function chroot_cmd(){
+    $CHROOT $@ || chroot $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/chroot $@
 }
 
 ################################# MAIN FUNCTIONS ##############################

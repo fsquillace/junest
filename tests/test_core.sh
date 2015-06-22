@@ -16,7 +16,8 @@ function install_mini_env(){
 function setUp(){
     cd $CURRPWD
     JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t envhome.XXXXXXXXXX)
-    source "$(dirname $0)/../lib/core.sh"
+    JUNEST_BASE="$CURRPWD/$(dirname $0)/.."
+    source "${JUNEST_BASE}/lib/core.sh"
     ORIGIN_WD=$(TMPDIR=/tmp mktemp -d -t envowd.XXXXXXXXXX)
     cd $ORIGIN_WD
     JUNEST_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t envtemp.XXXXXXXXXX)
