@@ -312,7 +312,7 @@ function build_image_env(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # yaourt requires sed
-    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring archlinux-keyring sed
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils binutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
@@ -387,7 +387,6 @@ function validate_image(){
     JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
     JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
     JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
-    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r arch-chroot --help 1> /dev/null
 
     local repo_package=sysstat
     info "Installing ${repo_package} package from official repo using proot..."
