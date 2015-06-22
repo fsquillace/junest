@@ -88,7 +88,7 @@ ID="id -u"
 # List of executables that are run in the host OS:
 PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
 CHROOT=${JUNEST_BASE}/bin/jchroot
-CLASSIC_CHROOT=${JUNEST_HOME}/usr/bin/chroot
+CLASSIC_CHROOT="chroot"
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR=tar
@@ -122,7 +122,7 @@ function download_cmd(){
 }
 
 function chroot_cmd(){
-    $CHROOT $@ || chroot $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/chroot $@
+    $CHROOT "$@" || $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/chroot "$@"
 }
 
 ################################# MAIN FUNCTIONS ##############################
@@ -187,32 +187,20 @@ function setup_env_from_file(){
     builtin cd $ORIGIN_WD
 }
 
-
 function run_env_as_root(){
     local uid=$UID
     [ -z $SUDO_UID ] || uid=$SUDO_UID:$SUDO_GID
 
     local main_cmd="${SH[@]}"
     [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
-    local cmd="mkdir -p ${JUNEST_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
 
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -r ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
 
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
 
-    if ${CHROOT} $JUNEST_HOME ${TRUE} 1> /dev/null
-    then
-        JUNEST_ENV=1 ${CHROOT} $JUNEST_HOME "${SH[@]}" "-c" "${cmd}"
-        local ret=$?
-    elif ${CLASSIC_CHROOT} $JUNEST_HOME ${TRUE} 1> /dev/null
-    then
-        warn "Warning: The executable arch-chroot does not work, falling back to classic chroot"
-        JUNEST_ENV=1 ${CLASSIC_CHROOT} $JUNEST_HOME "${SH[@]}" "-c" "${cmd}"
-        local ret=$?
-    else
-        die "Error: Chroot does not work"
-    fi
+    JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
+    local ret=$?
 
     # The ownership of the files is assigned to the real user
     [ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}

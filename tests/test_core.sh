@@ -218,6 +218,23 @@ function test_run_env_as_classic_root(){
     assertEquals 0 $?
 }
 
+function test_run_env_as_junest_root(){
+    [ $SKIP_ROOT_TESTS -eq 1 ] && return
+
+    install_mini_env
+    CHROOT="sudo unknowncommand"
+    CLASSIC_CHROOT="sudo unknowncommand"
+    LD_EXEC="sudo $LD_EXEC"
+    CHOWN="sudo $CHOWN"
+
+    local output=$(run_env_as_root pwd 2> /dev/null)
+    assertEquals "/" "$output"
+    run_env_as_root [ -e /run/lock ] 2> /dev/null
+    assertEquals 0 $?
+    run_env_as_root [ -e $HOME ] 2> /dev/null
+    assertEquals 0 $?
+}
+
 function test_run_env_as_user(){
     install_mini_env
     local output=$(run_env_as_user "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2" | awk -F: '{print $1}')

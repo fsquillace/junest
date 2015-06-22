@@ -52,6 +52,8 @@ chroot_setup() {
   chroot_add_mount tmp "$1/tmp" -t tmpfs -o mode=1777,atime,nodev,nosuid &&
   mkdir -p "$1/$HOME" &&
   chroot_add_mount $HOME "$1/$HOME" --bind
+
+  mkdir -p "$1/run/lock"
 }
 
 chroot_teardown() {
