@@ -46,6 +46,7 @@ then
 fi
 
 [ -z ${JUNEST_HOME} ] && JUNEST_HOME=~/.${CMD}
+[ -z ${JUNEST_BASE} ] && JUNEST_BASE=${JUNEST_HOME}/opt/junest
 if [ -z ${JUNEST_TEMPDIR} ] || [ ! -d ${JUNEST_TEMPDIR} ]
 then
     JUNEST_TEMPDIR=/tmp
@@ -86,14 +87,14 @@ ID="id -u"
 
 # List of executables that are run in the host OS:
 PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
-CHROOT=${JUNEST_HOME}/usr/bin/arch-chroot
-CLASSIC_CHROOT=${JUNEST_HOME}/usr/bin/chroot
+CHROOT=${JUNEST_BASE}/bin/jchroot
+CLASSIC_CHROOT="chroot"
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR=tar
 CHOWN="chown"
 
-PATH=/usr/bin:/bin:/sbin:$PATH
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
 # The following functions attempt first to run the executable in the host OS.
@@ -118,6 +119,10 @@ function mkdir_cmd(){
 
 function download_cmd(){
     $WGET $@ || $CURL $@
+}
+
+function chroot_cmd(){
+    $CHROOT "$@" || $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/chroot "$@"
 }
 
 ################################# MAIN FUNCTIONS ##############################
@@ -182,32 +187,20 @@ function setup_env_from_file(){
     builtin cd $ORIGIN_WD
 }
 
-
 function run_env_as_root(){
     local uid=$UID
     [ -z $SUDO_UID ] || uid=$SUDO_UID:$SUDO_GID
 
     local main_cmd="${SH[@]}"
     [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
-    local cmd="mkdir -p ${JUNEST_HOME}/${HOME} && mkdir -p /run/lock && ${main_cmd}"
 
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -r ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
 
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
 
-    if ${CHROOT} $JUNEST_HOME ${TRUE} 1> /dev/null
-    then
-        JUNEST_ENV=1 ${CHROOT} $JUNEST_HOME "${SH[@]}" "-c" "${cmd}"
-        local ret=$?
-    elif ${CLASSIC_CHROOT} $JUNEST_HOME ${TRUE} 1> /dev/null
-    then
-        warn "Warning: The executable arch-chroot does not work, falling back to classic chroot"
-        JUNEST_ENV=1 ${CLASSIC_CHROOT} $JUNEST_HOME "${SH[@]}" "-c" "${cmd}"
-        local ret=$?
-    else
-        die "Error: Chroot does not work"
-    fi
+    JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
+    local ret=$?
 
     # The ownership of the files is assigned to the real user
     [ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}
@@ -319,7 +312,7 @@ function build_image_env(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # yaourt requires sed
-    sudo pacstrap -G -M -d ${maindir}/root pacman arch-install-scripts coreutils binutils libunistring archlinux-keyring sed
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils binutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
@@ -394,7 +387,6 @@ function validate_image(){
     JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
     JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
     JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
-    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r arch-chroot --help 1> /dev/null
 
     local repo_package=sysstat
     info "Installing ${repo_package} package from official repo using proot..."

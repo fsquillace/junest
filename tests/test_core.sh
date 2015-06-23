@@ -16,7 +16,8 @@ function install_mini_env(){
 function setUp(){
     cd $CURRPWD
     JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t envhome.XXXXXXXXXX)
-    source "$(dirname $0)/../lib/core.sh"
+    JUNEST_BASE="$CURRPWD/$(dirname $0)/.."
+    source "${JUNEST_BASE}/lib/core.sh"
     ORIGIN_WD=$(TMPDIR=/tmp mktemp -d -t envowd.XXXXXXXXXX)
     cd $ORIGIN_WD
     JUNEST_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t envtemp.XXXXXXXXXX)
@@ -207,6 +208,23 @@ function test_run_env_as_classic_root(){
     install_mini_env
     CHROOT="sudo unknowncommand"
     CLASSIC_CHROOT="sudo $CLASSIC_CHROOT"
+    CHOWN="sudo $CHOWN"
+
+    local output=$(run_env_as_root pwd 2> /dev/null)
+    assertEquals "/" "$output"
+    run_env_as_root [ -e /run/lock ] 2> /dev/null
+    assertEquals 0 $?
+    run_env_as_root [ -e $HOME ] 2> /dev/null
+    assertEquals 0 $?
+}
+
+function test_run_env_as_junest_root(){
+    [ $SKIP_ROOT_TESTS -eq 1 ] && return
+
+    install_mini_env
+    CHROOT="sudo unknowncommand"
+    CLASSIC_CHROOT="sudo unknowncommand"
+    LD_EXEC="sudo $LD_EXEC"
     CHOWN="sudo $CHOWN"
 
     local output=$(run_env_as_root pwd 2> /dev/null)

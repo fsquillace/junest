@@ -87,7 +87,7 @@ You can build a new JuNest image from scratch by running the following command:
     junest -b [-n]
 
 The script will create a directory containing all the essentials
-files in order to make JuNest working properly (such as pacman, yaourt, arch-chroot and proot).
+files in order to make JuNest working properly (such as pacman, yaourt and proot).
 The option **-n** will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
 arch-install-scripts, package-query, git and the base-devel packages installed.
@@ -132,18 +132,20 @@ Internals
 There are two main chroot jail used in JuNest.
 The main one is [proot](https://wiki.archlinux.org/index.php/Proot) which
 allows unprivileged users to execute programs inside a sandbox and
+jchroot, a small and portable version of
 [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) which is an
 enhanced chroot for privileged users that mounts the primary directories
 (i.e. /proc, /sys, /dev and /run) before executing any programs inside
 the sandbox.
 
 ##Automatic fallback to classic chroot##
-Since the [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) may not work
-on some distros, JuNest automatically tries to fallback to the classic chroot.
+If jchroot fails for some reasons in the host system (i.e. it is not able to
+mount one of the directories),
+JuNest automatically tries to fallback to the classic chroot.
 
 ##Automatic fallback for all the dependent host OS executables##
 JuNest attempt first to run the executables in the host OS located in different
-positions (/usr/bin, /bin and /sbin).
+positions (/usr/bin, /bin, /usr/sbin and /sbin).
 As a fallback it tries to run the same executable if it is available in the JuNest
 image.
 
