@@ -306,16 +306,15 @@ function test_run_env_with_proot_as_root(){
 }
 
 function test_run_proot_seccomp(){
-    TRUE=""
     PROOT_COMPAT=env
-    local output=$(_run_proot | grep "^PROOT_NO_SECCOMP")
+    local output=$(proot_cmd | grep "^PROOT_NO_SECCOMP")
     assertEquals "$output" ""
 
     envv(){
         env | grep "^PROOT_NO_SECCOMP"
     }
     PROOT_COMPAT=envv
-    local output=$(_run_proot 2> /dev/null | grep "^PROOT_NO_SECCOMP")
+    local output=$(proot_cmd 2> /dev/null | grep "^PROOT_NO_SECCOMP")
     assertEquals "$output" "PROOT_NO_SECCOMP=1"
 }
 

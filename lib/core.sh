@@ -82,7 +82,6 @@ ORIGIN_WD=$(pwd)
 
 # List of executables that are run inside JuNest:
 SH=("/bin/sh" "--login")
-TRUE="true"
 ID="id -u"
 
 # List of executables that are run in the host OS:
