@@ -82,7 +82,6 @@ ORIGIN_WD=$(pwd)
 
 # List of executables that are run inside JuNest:
 SH=("/bin/sh" "--login")
-ID="id -u"
 
 # List of executables that are run in the host OS:
 PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
@@ -230,10 +229,11 @@ function _run_env_with_proot(){
 
 
 function run_env_as_fakeroot(){
+    (( EUID == 0 )) && \
+        die "You cannot access with root privileges. Use --root option instead."
+
     local proot_args="$1"
     shift
-    [ "$(proot_cmd -R ${JUNEST_HOME} $proot_args ${ID} 2> /dev/null )" == "0" ] && \
-        die "You cannot access with root privileges. Use --root option instead."
 
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
     _run_env_with_proot "-S ${JUNEST_HOME} $proot_args" "${@}"
@@ -241,10 +241,11 @@ function run_env_as_fakeroot(){
 
 
 function run_env_as_user(){
+    (( EUID == 0 )) && \
+        die "You cannot access with root privileges. Use --root option instead."
+
     local proot_args="$1"
     shift
-    [ "$(proot_cmd -R ${JUNEST_HOME} $proot_args ${ID} 2> /dev/null )" == "0" ] && \
-        die "You cannot access with root privileges. Use --root option instead."
 
     [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -f ${JUNEST_HOME}/etc/mtab
     _run_env_with_proot "-R ${JUNEST_HOME} $proot_args" "${@}"
@@ -283,7 +284,7 @@ function _check_package(){
 
 function build_image_env(){
 # The function must runs on ArchLinux with non-root privileges.
-    [ "$(${ID})" == "0" ] && \
+    (( EUID == 0 )) && \
         die "You cannot build with root privileges."
 
     _check_package arch-install-scripts

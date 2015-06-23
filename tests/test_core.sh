@@ -297,11 +297,13 @@ function test_run_env_with_proot_compat(){
 }
 
 function test_run_env_with_proot_as_root(){
+    [ $SKIP_ROOT_TESTS -eq 1 ] && return
+
     install_mini_env
 
-    $(ID="/bin/echo 0" run_env_as_user 2> /dev/null)
+    $(sudo run_env_as_user 2> /dev/null)
     assertEquals $? 1
-    $(ID="/bin/echo 0" run_env_as_fakeroot 2> /dev/null)
+    $(sudo run_env_as_fakeroot 2> /dev/null)
     assertEquals $? 1
 }
 
