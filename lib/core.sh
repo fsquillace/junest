@@ -215,22 +215,16 @@ function run_env_as_root(){
     return $?
 }
 
-function _run_proot(){
-    local proot_args="$1"
-    shift
-    JUNEST_ENV=1 proot_cmd $proot_args "${@}"
-}
-
-
 function _run_env_with_proot(){
+
     local proot_args="$1"
     shift
 
     if [ "$1" != "" ]
     then
-       _run_proot "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 proot_cmd ${proot_args} "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        _run_proot "${proot_args}" "${SH[@]}"
+        JUNEST_ENV=1 proot_cmd ${proot_args} "${SH[@]}"
     fi
 }
 
@@ -238,7 +232,7 @@ function _run_env_with_proot(){
 function run_env_as_fakeroot(){
     local proot_args="$1"
     shift
-    [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(proot_cmd -R ${JUNEST_HOME} $proot_args ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
@@ -249,7 +243,7 @@ function run_env_as_fakeroot(){
 function run_env_as_user(){
     local proot_args="$1"
     shift
-    [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
+    [ "$(proot_cmd -R ${JUNEST_HOME} $proot_args ${ID} 2> /dev/null )" == "0" ] && \
         die "You cannot access with root privileges. Use --root option instead."
 
     [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -f ${JUNEST_HOME}/etc/mtab
