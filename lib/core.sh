@@ -192,7 +192,8 @@ function setup_env_from_file(){
 
 function run_env_as_root(){
     local uid=$UID
-    [ -z $SUDO_UID ] || uid=$SUDO_UID:$SUDO_GID
+    # SUDO_USER is more reliable compared to SUDO_UID
+    [ -z $SUDO_USER ] || uid=$SUDO_USER:$SUDO_GID
 
     local main_cmd="${SH[@]}"
     [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
