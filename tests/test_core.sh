@@ -297,25 +297,26 @@ function test_run_env_with_proot_compat(){
 }
 
 function test_run_env_with_proot_as_root(){
+    [ $SKIP_ROOT_TESTS -eq 1 ] && return
+
     install_mini_env
 
-    $(ID="/bin/echo 0" run_env_as_user 2> /dev/null)
+    $(sudo run_env_as_user 2> /dev/null)
     assertEquals $? 1
-    $(ID="/bin/echo 0" run_env_as_fakeroot 2> /dev/null)
+    $(sudo run_env_as_fakeroot 2> /dev/null)
     assertEquals $? 1
 }
 
 function test_run_proot_seccomp(){
-    TRUE=""
     PROOT_COMPAT=env
-    local output=$(_run_proot | grep "^PROOT_NO_SECCOMP")
+    local output=$(proot_cmd | grep "^PROOT_NO_SECCOMP")
     assertEquals "$output" ""
 
     envv(){
         env | grep "^PROOT_NO_SECCOMP"
     }
     PROOT_COMPAT=envv
-    local output=$(_run_proot 2> /dev/null | grep "^PROOT_NO_SECCOMP")
+    local output=$(proot_cmd 2> /dev/null | grep "^PROOT_NO_SECCOMP")
     assertEquals "$output" "PROOT_NO_SECCOMP=1"
 }
 

@@ -82,8 +82,6 @@ ORIGIN_WD=$(pwd)
 
 # List of executables that are run inside JuNest:
 SH=("/bin/sh" "--login")
-TRUE=true
-ID="id -u"
 
 # List of executables that are run in the host OS:
 PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
@@ -115,6 +113,11 @@ function chown_cmd(){
 
 function mkdir_cmd(){
     mkdir $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/mkdir $@
+}
+
+function proot_cmd(){
+     ${PROOT_COMPAT} "${@}" || PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} "${@}" || \
+        die "Error: Check if the ${CMD} arguments are correct or use the option ${CMD} -p \"-k 3.10\""
 }
 
 function download_cmd(){
@@ -211,40 +214,26 @@ function run_env_as_root(){
     return $?
 }
 
-function _run_proot(){
-    local proot_args="$1"
-    shift
-    if ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
-    then
-        JUNEST_ENV=1 ${PROOT_COMPAT} $proot_args "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args ${TRUE} 1> /dev/null
-    then
-        warn "Proot error: Trying to execute proot with PROOT_NO_SECCOMP=1..."
-        JUNEST_ENV=1 PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} $proot_args "${@}"
-    else
-        die "Error: Check if the ${CMD} arguments are correct or use the option ${CMD} -p \"-k 3.10\""
-    fi
-}
-
-
 function _run_env_with_proot(){
+
     local proot_args="$1"
     shift
 
     if [ "$1" != "" ]
     then
-       _run_proot "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 proot_cmd ${proot_args} "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        _run_proot "${proot_args}" "${SH[@]}"
+        JUNEST_ENV=1 proot_cmd ${proot_args} "${SH[@]}"
     fi
 }
 
 
 function run_env_as_fakeroot(){
+    (( EUID == 0 )) && \
+        die "You cannot access with root privileges. Use --root option instead."
+
     local proot_args="$1"
     shift
-    [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
-        die "You cannot access with root privileges. Use --root option instead."
 
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
     _run_env_with_proot "-S ${JUNEST_HOME} $proot_args" "${@}"
@@ -252,10 +241,11 @@ function run_env_as_fakeroot(){
 
 
 function run_env_as_user(){
+    (( EUID == 0 )) && \
+        die "You cannot access with root privileges. Use --root option instead."
+
     local proot_args="$1"
     shift
-    [ "$(_run_proot "-R ${JUNEST_HOME} $proot_args" ${ID} 2> /dev/null )" == "0" ] && \
-        die "You cannot access with root privileges. Use --root option instead."
 
     [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -f ${JUNEST_HOME}/etc/mtab
     _run_env_with_proot "-R ${JUNEST_HOME} $proot_args" "${@}"
@@ -294,7 +284,7 @@ function _check_package(){
 
 function build_image_env(){
 # The function must runs on ArchLinux with non-root privileges.
-    [ "$(${ID})" == "0" ] && \
+    (( EUID == 0 )) && \
         die "You cannot build with root privileges."
 
     _check_package arch-install-scripts
@@ -312,7 +302,7 @@ function build_image_env(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # yaourt requires sed
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils binutils libunistring archlinux-keyring sed
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
     info "Generating the locales..."
