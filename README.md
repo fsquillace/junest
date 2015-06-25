@@ -23,6 +23,7 @@ The main advantages on using JuNest are:
 - Isolated environment in which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
 - Available for x86\_64, x86 and ARM architectures but you can build your own image from scratch too!
+- Run on a different architecture from the host OS via QEMU
 - All Arch Linux lovers can have their favourite distro everywhere!
 
 JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/The_Arch_Way).
@@ -101,6 +102,13 @@ Related wiki page:
 
 - [How to build a JuNest image using QEMU](https://github.com/fsquillace/junest/wiki/How-to-build-a-JuNest-image-using-QEMU)
 
+## Run JuNest using a different architecture via QEMU ##
+The following command will download the ARM JuNest image and will run QEMU in
+case the host OS runs on either x86\_64 or x86 architectures:
+
+    $> JUNEST_HOME=~/.junest-arm junest -a arm -- uname -m
+    armv7l
+
 ## Bind directories ##
 To bind a host directory to a guest location, you can use proot arguments:
 
@@ -152,6 +160,11 @@ image.
 ##Automatic building of the JuNest images##
 The JuNest images are built every week so that you can always get the most
 updated package versions.
+
+##Static QEMU binaries##
+There are static QEMU binaries included in JuNest image that allows to run JuNest
+in a different architecture from the host system. They are located in `/opt/qemu`
+directory.
 
 Troubleshooting
 ===============

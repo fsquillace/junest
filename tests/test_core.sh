@@ -149,6 +149,9 @@ function test_setup_env(){
     setup_env 1> /dev/null
     assertTrue "[ -e $JUNEST_HOME/file ]"
     assertTrue "[ -e $JUNEST_HOME/run/lock ]"
+
+    $(setup_env "noarch" 2> /dev/null)
+    assertEquals 1 $?
 }
 
 
@@ -237,21 +240,28 @@ function test_run_env_as_junest_root(){
 
 function test_run_env_as_user(){
     install_mini_env
-    local output=$(run_env_as_user "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2" | awk -F: '{print $1}')
+    local output=$(run_env_as_user "" "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2" | awk -F: '{print $1}')
     assertEquals "$output" "/usr/bin/mkdir"
     assertTrue "[ -e $JUNEST_HOME/newdir2 ]"
 
     SH=("/usr/bin/mkdir" "-v" "/newdir")
-    local output=$(run_env_as_user "-k 3.10" | awk -F: '{print $1}')
+    local output=$(run_env_as_user "" "-k 3.10" | awk -F: '{print $1}')
     assertEquals "$output" "/usr/bin/mkdir"
     assertTrue "[ -e $JUNEST_HOME/newdir ]"
+
+    $(run_env_as_user "noarch" "-k 3.10" "mycommand" 2> /dev/null)
+    assertEquals 1 $?
+
+    local different_arch=(${ARCH_LIST[@]/$ARCH})
+    $(run_env_as_user "${different_arch[0]}" "-k 3.10" "mycommand" 2> /dev/null)
+    assertEquals 1 $?
 }
 
 function test_run_env_as_proot_mtab(){
     install_mini_env
-    $(run_env_as_fakeroot "-k 3.10" "echo")
+    $(run_env_as_fakeroot "" "-k 3.10" "echo")
     assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
-    $(run_env_as_user "-k 3.10" "echo")
+    $(run_env_as_user "" "-k 3.10" "echo")
     assertTrue "[ ! -e $JUNEST_HOME/etc/mtab ]"
 }
 
@@ -268,32 +278,32 @@ function test_run_env_as_root_mtab(){
 
 function test_run_env_with_quotes(){
     install_mini_env
-    local output=$(run_env_as_user "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2" | awk -F: '{print $1}')
-    assertEquals "$output" "/usr/bin/mkdir"
+    local output=$(run_env_as_user "" "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2" | awk -F: '{print $1}')
+    assertEquals "/usr/bin/mkdir" "$output"
     assertTrue "[ -e $JUNEST_HOME/newdir2 ]"
 }
 
 function test_run_env_as_user_proot_args(){
     install_mini_env
-    run_env_as_user "--help" "" &> /dev/null
-    assertEquals $? 0
+    run_env_as_user "" "--help" "" &> /dev/null
+    assertEquals 0 $?
 
     mkdir $JUNEST_TEMPDIR/newdir
     touch $JUNEST_TEMPDIR/newdir/newfile
-    run_env_as_user "-b $JUNEST_TEMPDIR/newdir:/newdir -k 3.10" "ls" "-l" "/newdir/newfile" &> /dev/null
-    assertEquals $? 0
+    run_env_as_user "" "-b $JUNEST_TEMPDIR/newdir:/newdir -k 3.10" "ls" "-l" "/newdir/newfile" &> /dev/null
+    assertEquals 0 $?
 
     $(_run_env_with_proot --helps 2> /dev/null)
-    assertEquals $? 1
+    assertEquals 1 $?
 }
 
 function test_run_env_with_proot_compat(){
     PROOT_COMPAT="/bin/true"
     _run_env_with_proot "" "" &> /dev/null
-    assertEquals $? 0
+    assertEquals 0 $?
 
     $(PROOT_COMPAT="/bin/false" _run_env_with_proot --helps 2> /dev/null)
-    assertEquals $? 1
+    assertEquals 1 $?
 }
 
 function test_run_env_with_proot_as_root(){
@@ -302,44 +312,51 @@ function test_run_env_with_proot_as_root(){
     install_mini_env
 
     $(sudo run_env_as_user 2> /dev/null)
-    assertEquals $? 1
+    assertEquals 1 $?
     $(sudo run_env_as_fakeroot 2> /dev/null)
-    assertEquals $? 1
+    assertEquals 1 $?
 }
 
 function test_run_proot_seccomp(){
     PROOT_COMPAT=env
     local output=$(proot_cmd | grep "^PROOT_NO_SECCOMP")
-    assertEquals "$output" ""
+    assertEquals "" "$output"
 
     envv(){
         env | grep "^PROOT_NO_SECCOMP"
     }
     PROOT_COMPAT=envv
     local output=$(proot_cmd 2> /dev/null | grep "^PROOT_NO_SECCOMP")
-    assertEquals "$output" "PROOT_NO_SECCOMP=1"
+    assertEquals "PROOT_NO_SECCOMP=1" "$output"
 }
 
 function test_run_env_as_fakeroot(){
     install_mini_env
-    local output=$(run_env_as_fakeroot "-k 3.10" "id" | awk '{print $1}')
-    assertEquals "$output" "uid=0(root)"
+    local output=$(run_env_as_fakeroot "" "-k 3.10" "id" | awk '{print $1}')
+    assertEquals "uid=0(root)" "$output"
+
+    $(run_env_as_fakeroot "noarch" "-k 3.10" "mycommand" 2> /dev/null)
+    assertEquals 1 $?
+
+    local different_arch=(${ARCH_LIST[@]/$ARCH})
+    $(run_env_as_fakeroot "${different_arch[0]}" "-k 3.10" "mycommand" 2> /dev/null)
+    assertEquals 1 $?
 }
 
 function test_delete_env(){
     install_mini_env
     echo "N" | delete_env 1> /dev/null
     is_env_installed
-    assertEquals $? 0
+    assertEquals 0 $?
     echo "Y" | delete_env 1> /dev/null
     is_env_installed
-    assertEquals $? 1
+    assertEquals 1 $?
 }
 
 function test_nested_env(){
     install_mini_env
     JUNEST_ENV=1 bash -ic "source $CURRPWD/$(dirname $0)/../lib/core.sh" &> /dev/null
-    assertEquals $? 1
+    assertEquals 1 $?
 }
 
 source $(dirname $0)/shunit2

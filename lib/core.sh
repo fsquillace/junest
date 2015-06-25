@@ -167,12 +167,17 @@ function _setup_env(){
 
 
 function setup_env(){
+    local arch=$ARCH
+    [ -z $1 ] || arch="$1"
+    contains_element $arch "${ARCH_LIST[@]}" || \
+        die "The architecture is not one of: ${ARCH_LIST[@]}"
+
     local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     _prepare_build_directory
 
     info "Downloading ${NAME}..."
     builtin cd ${maindir}
-    local imagefile=${CMD}-${ARCH}.tar.gz
+    local imagefile=${CMD}-${arch}.tar.gz
     download_cmd ${ENV_REPO}/${imagefile}
 
     info "Installing ${NAME}..."
@@ -210,7 +215,6 @@ function run_env_as_root(){
 }
 
 function _run_env_with_proot(){
-
     local proot_args="$1"
     shift
 
@@ -222,28 +226,39 @@ function _run_env_with_proot(){
     fi
 }
 
+function _run_env_with_qemu(){
+    local proot_args="$2"
+    if [ "$1" != "" ] && [ "$1" != "$ARCH" ]
+    then
+        local qemu_bin="/tmp/qemu-$1-static-$ARCH-$RANDOM"
+        trap - QUIT EXIT ABRT KILL TERM INT
+        trap "[ -e ${qemu_bin} ] && rm_cmd -f ${qemu_bin}" EXIT QUIT ABRT KILL TERM INT
+
+        contains_element $1 "${ARCH_LIST[@]}" || \
+            die "The architecture is not one of: ${ARCH_LIST[@]}"
+        [ -e "${JUNEST_HOME}/opt/qemu/qemu-$1-static-$ARCH" ] || \
+            die "The JuNest image in ${JUNEST_HOME} is not an $1 architecture"
+        warn "Emulating $NAME via QEMU..."
+        [ -e ${qemu_bin} ] || \
+            ln_cmd -s ${JUNEST_HOME}/opt/qemu/qemu-$1-static-$ARCH ${qemu_bin}
+        proot_args="-q ${qemu_bin} $2"
+    fi
+    shift 2
+    _run_env_with_proot "$proot_args" "${@}"
+}
 
 function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die "You cannot access with root privileges. Use --root option instead."
-
-    local proot_args="$1"
-    shift
-
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
-    _run_env_with_proot "-S ${JUNEST_HOME} $proot_args" "${@}"
+    _run_env_with_qemu "$1" "-S ${JUNEST_HOME} $2" "${@:3}"
 }
-
 
 function run_env_as_user(){
     (( EUID == 0 )) && \
         die "You cannot access with root privileges. Use --root option instead."
-
-    local proot_args="$1"
-    shift
-
     [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -f ${JUNEST_HOME}/etc/mtab
-    _run_env_with_proot "-R ${JUNEST_HOME} $proot_args" "${@}"
+    _run_env_with_qemu "$1" "-R ${JUNEST_HOME} $2" "${@:3}"
 }
 
 
