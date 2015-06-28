@@ -200,21 +200,13 @@ function run_env_as_root(){
     local main_cmd="${SH[@]}"
     [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
 
+    # With chown the ownership of the files is assigned to the real user
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -r ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
+    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -f ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
 
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
 
     JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
-    local ret=$?
-
-    # The ownership of the files is assigned to the real user
-    [ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}
-
-    [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -r ${JUNEST_HOME}/etc/mtab
-
-    trap - QUIT EXIT ABRT KILL TERM INT
-    return $?
 }
 
 function _run_env_with_proot(){

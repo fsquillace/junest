@@ -188,6 +188,8 @@ function test_run_env_as_root(){
 
     # test that normal user has ownership of the files created by root
     run_env_as_root touch /a_root_file
+    # This ensure that the trap will be executed
+    kill -TERM $$
     local output=$(run_env_as_root stat -c '%u' /a_root_file)
     assertEquals "$UID" "$output"
 
@@ -214,8 +216,6 @@ function test_run_env_as_classic_root(){
     assertEquals "/" "$output"
     run_env_as_root [ -e /run/lock ] 2> /dev/null
     assertEquals 0 $?
-    run_env_as_root [ -e $HOME ] 2> /dev/null
-    assertEquals 0 $?
 }
 
 function test_run_env_as_junest_root(){
@@ -232,7 +232,7 @@ function test_run_env_as_junest_root(){
     run_env_as_root [ -e /run/lock ] 2> /dev/null
     assertEquals 0 $?
     run_env_as_root [ -e $HOME ] 2> /dev/null
-    assertEquals 0 $?
+    assertEquals 1 $?
 }
 
 function test_run_env_as_user(){
