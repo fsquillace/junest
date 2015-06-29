@@ -27,17 +27,21 @@ function setup_env(){
     echo "setup_env"
 }
 function run_env_as_fakeroot(){
-    local proot_args="$1"
+    local arch_arg="$1"
+    local proot_args="$2"
     shift
-    echo "run_env_as_fakeroot($proot_args,$@)"
+    shift
+    echo "run_env_as_fakeroot($arch_arg,$proot_args,$@)"
 }
 function run_env_as_root(){
     echo "run_env_as_root $@"
 }
 function run_env_as_user(){
-    local proot_args="$1"
+    local arch_arg="$1"
+    local proot_args="$2"
     shift
-    echo "run_env_as_user($proot_args,$@)"
+    shift
+    echo "run_env_as_user($arch_arg,$proot_args,$@)"
 }
 
 function wrap_env(){
@@ -72,27 +76,31 @@ function test_delete_env(){
 }
 function test_run_env_as_fakeroot(){
     local output=$(wrap_env -f)
-    assertEquals $output "run_env_as_fakeroot(,)"
+    assertEquals $output "run_env_as_fakeroot(,,)"
     local output=$(wrap_env --fakeroot)
-    assertEquals $output "run_env_as_fakeroot(,)"
+    assertEquals $output "run_env_as_fakeroot(,,)"
 
     local output=$(wrap_env -f -p "-b arg")
-    assertEquals "${output[@]}" "run_env_as_fakeroot(-b arg,)"
+    assertEquals "${output[@]}" "run_env_as_fakeroot(,-b arg,)"
     local output=$(wrap_env -f -p "-b arg" -- command -kv)
-    assertEquals "${output[@]}" "run_env_as_fakeroot(-b arg,command -kv)"
+    assertEquals "${output[@]}" "run_env_as_fakeroot(,-b arg,command -kv)"
     local output=$(wrap_env -f command --as)
-    assertEquals "${output[@]}" "run_env_as_fakeroot(,command --as)"
+    assertEquals "${output[@]}" "run_env_as_fakeroot(,,command --as)"
+    local output=$(wrap_env -a "myarch" -f command --as)
+    assertEquals "${output[@]}" "run_env_as_fakeroot(myarch,,command --as)"
 }
 function test_run_env_as_user(){
     local output=$(wrap_env)
-    assertEquals $output "run_env_as_user(,)"
+    assertEquals $output "run_env_as_user(,,)"
 
     local output=$(wrap_env -p "-b arg")
-    assertEquals "$output" "run_env_as_user(-b arg,)"
+    assertEquals "$output" "run_env_as_user(,-b arg,)"
     local output=$(wrap_env -p "-b arg" -- command -ll)
-    assertEquals "$output" "run_env_as_user(-b arg,command -ll)"
+    assertEquals "$output" "run_env_as_user(,-b arg,command -ll)"
     local output=$(wrap_env command -ls)
-    assertEquals "$output" "run_env_as_user(,command -ls)"
+    assertEquals "$output" "run_env_as_user(,,command -ls)"
+    local output=$(wrap_env -a "myarch" -- command -ls)
+    assertEquals "$output" "run_env_as_user(myarch,,command -ls)"
 }
 function test_run_env_as_root(){
     local output=$(wrap_env -r)
@@ -116,6 +124,8 @@ function test_check_cli(){
     $(wrap_env -f -r 2> /dev/null)
     assertEquals $? 1
     $(wrap_env -p args -v 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_env -a arch -v 2> /dev/null)
     assertEquals $? 1
     $(wrap_env -d args 2> /dev/null)
     assertEquals $? 1

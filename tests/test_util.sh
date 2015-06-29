@@ -60,4 +60,13 @@ function test_insert_quotes_on_spaces(){
     assertEquals "this is \"a test\"" "$actual"
 }
 
+function test_contains_element(){
+    array=("something to search for" "a string" "test2000")
+    contains_element "a string" "${array[@]}"
+    assertEquals "$?" "0"
+
+    contains_element "blabla" "${array[@]}"
+    assertEquals "$?" "1"
+}
+
 source $(dirname $0)/shunit2

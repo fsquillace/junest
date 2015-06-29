@@ -34,6 +34,8 @@ usage() {
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
     echo -e "-r, --root                     Run $NAME with root privileges"
     echo -e "-p, --proot-args               Proot arguments"
+    echo -e "-a, --arch                     $NAME architecture to use (x86_64, x86, arm)."
+    echo -e "                               Defaults to the host architecture ($ARCH)"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
     echo -e "-n, --disable-validation       Disable the $NAME image validation"
     echo -e "-d, --delete                   Delete $NAME from ${JUNEST_HOME}"
@@ -92,12 +94,12 @@ check_cli(){
     then
         die "You must access to $NAME with either fakeroot or root permissions"
     fi
-    if $OPT_PROOT_ARGS
+    if $OPT_PROOT_ARGS || $OPT_ARCH
     then
-        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
+        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || \
             $OPT_ROOT || $OPT_VERSION || $OPT_DISABLE_VALIDATION
         then
-            die "Invalid syntax: Proot args are not allowed with the other options"
+            die "Invalid syntax: Proot and arch args are not allowed with the other options"
         fi
     fi
     if [ "$ARGS" != "" ]
@@ -120,6 +122,8 @@ function parse_arguments(){
 	OPT_ROOT=false
 	OPT_PROOT_ARGS=false
 	PROOT_ARGS=""
+	OPT_ARCH=false
+	ARCH_ARG=""
 	OPT_BUILD_IMAGE=false
 	OPT_DISABLE_VALIDATION=false
 	OPT_DELETE=false
@@ -132,6 +136,7 @@ function parse_arguments(){
 			-f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
 			-r|--root) OPT_ROOT=true ; shift ;;
 			-p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
+			-a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
 			-b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
 			-n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
 			-d|--delete) OPT_DELETE=true ; shift ;;
@@ -167,18 +172,18 @@ function execute_operation(){
 		if $OPT_SETUP_FROM_FILE; then
 			setup_env_from_file $IMAGE_FILE
 		else
-			setup_env
+			setup_env $ARCH_ARG
 		fi
 	elif $OPT_SETUP_FROM_FILE; then
 		die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
 	fi
 
 	if $OPT_FAKEROOT; then
-		run_env_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
+		run_env_as_fakeroot "${ARCH_ARG}" "${PROOT_ARGS}" "${ARGS[@]}"
 	elif $OPT_ROOT; then
 		run_env_as_root "${ARGS[@]}"
 	else
-		run_env_as_user "${PROOT_ARGS}" "${ARGS[@]}"
+		run_env_as_user "${ARCH_ARG}" "${PROOT_ARGS}" "${ARGS[@]}"
 	fi
 }
 
