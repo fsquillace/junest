@@ -52,8 +52,16 @@ then
     JUNEST_TEMPDIR=/tmp
 fi
 
+# The update of the variable PATH ensures that the executables are
+# found on different locations
+PATH=/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+
+# The executable uname is essential in order to get the architecture
+# of the host system, so a fallback mechanism cannot be used for it.
+UNAME=uname
+
 ARCH_LIST=('x86_64' 'x86' 'arm')
-HOST_ARCH=$(uname -m)
+HOST_ARCH=$($UNAME -m)
 if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
 then
     ARCH="x86"
@@ -94,7 +102,6 @@ CURL="curl -L -J -O -k"
 TAR=tar
 CHOWN="chown"
 
-PATH=/usr/bin:/bin:/usr/sbin:/sbin:$PATH
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
 # The following functions attempt first to run the executable in the host OS.

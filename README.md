@@ -75,6 +75,7 @@ of GNU/Linux distributions. The needed executables in the host OS are:
 - mkdir
 - rm
 - tar
+- uname
 - wget or curl
 
 The minimum recommended linux kernel is 2.6.0+
