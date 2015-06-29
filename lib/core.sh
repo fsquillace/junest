@@ -312,6 +312,7 @@ function build_image_env(){
     builtin cd ${maindir}/root/opt/proot
     for arch in ${ARCH_LIST[@]}
     do
+        info "Downloading $PROOT_LINK/proot-$arch ..."
         sudo $CURL $PROOT_LINK/proot-$arch
         sudo chmod +x proot-$arch
     done
@@ -319,11 +320,14 @@ function build_image_env(){
     info "Installing qemu static binaries"
     sudo mkdir -p ${maindir}/root/opt/qemu
     builtin cd ${maindir}/root/opt/qemu
-    NEW_ARCH_LIST=( "${ARCH_LIST[@]/$ARCH}" )
-    for arch in ${NEW_ARCH_LIST[@]}
+    for arch in ${ARCH_LIST[@]}
     do
-        sudo $CURL ${MAIN_REPO}/qemu/$ARCH/qemu-$ARCH-static-$arch
-        sudo chmod +x qemu-$ARCH-static-$arch
+        if [ "$arch" != "$ARCH" ]
+        then
+            info "Downloading qemu-$ARCH-static-$arch ..."
+            sudo $CURL ${MAIN_REPO}/qemu/$ARCH/qemu-$ARCH-static-$arch
+            sudo chmod +x qemu-$ARCH-static-$arch
+        fi
     done
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
