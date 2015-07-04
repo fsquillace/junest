@@ -329,6 +329,10 @@ function build_image_env(){
     sudo arch-chroot ${maindir}/root locale-gen
     sudo bash -c "echo 'LANG = \"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
 
+    info "Generating the metadata info..."
+    sudo mkdir ${maindir}/root/etc/${CMD}
+    sudo bash -c "echo 'JUNEST_ARCH=$ARCH' > ${maindir}/root/etc/${CMD}/info"
+
     info "Installing compatibility binaries proot"
     sudo mkdir -p ${maindir}/root/opt/proot
     builtin cd ${maindir}/root/opt/proot
