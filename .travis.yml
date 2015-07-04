@@ -4,20 +4,9 @@ sudo: required
 
 install:
     - PATH=$PWD/bin:$PATH
-    - junest -f echo 'Installing junest'
-    - sed -i -e "s/#Server/Server/" ~/.junest/etc/pacman.d/mirrorlist
-    - junest -f pacman --noconfirm -Syy
-    - junest -f pacman --noconfirm -S base-devel
+    - junest --fakeroot echo 'Installing junest'
 
 script:
     - ./tests/test_all.sh
-# Test on installing package from AUR
-    - junest -f yaourt --noconfirm -S tcptraceroute
-    - sudo $PWD/bin/junest -r tcptraceroute localhost
-# Test on installing package from official repo
-    - junest -f pacman --noconfirm -S tree
-    - junest -f tree
-# Test on installing package from official repo with root access
-    - junest -f pacman --noconfirm -S iftop
-    - sudo bin/junest -r iftop -t -s 5
-    - yes | junest -d
+    - junest --check ./bin/junest
+    - yes | junest --delete

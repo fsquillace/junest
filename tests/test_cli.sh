@@ -14,6 +14,9 @@ function version(){
 function build_image_env(){
     echo "build_image_env"
 }
+function check_env(){
+    echo "check_env"
+}
 function delete_env(){
     echo "delete_env"
 }
@@ -64,6 +67,12 @@ function test_build_image_env(){
     local output=$(wrap_env --build-image)
     assertEquals $output "build_image_env"
 }
+function test_check_env(){
+    local output=$(wrap_env -c)
+    assertEquals $output "check_env"
+    local output=$(wrap_env --check)
+    assertEquals $output "check_env"
+}
 function test_delete_env(){
     local output=$(wrap_env -d)
     assertEquals $output "delete_env"
@@ -108,6 +117,8 @@ function test_run_env_as_root(){
 
 function test_check_cli(){
     $(wrap_env -b -h 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_env -b -c 2> /dev/null)
     assertEquals $? 1
     $(wrap_env -n -v 2> /dev/null)
     assertEquals $? 1
