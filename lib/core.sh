@@ -205,6 +205,10 @@ function setup_env_from_file(){
 }
 
 function run_env_as_root(){
+    source ${JUNEST_HOME}/etc/junest/info
+    [ "$JUNEST_ARCH" != "$ARCH" ] && \
+        die "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
+
     local uid=$UID
     # SUDO_USER is more reliable compared to SUDO_UID
     [ -z $SUDO_USER ] || uid=$SUDO_USER:$SUDO_GID
@@ -234,23 +238,22 @@ function _run_env_with_proot(){
 }
 
 function _run_env_with_qemu(){
-    local proot_args="$2"
-    if [ "$1" != "" ] && [ "$1" != "$ARCH" ]
-    then
-        local qemu_bin="/tmp/qemu-$1-static-$ARCH-$RANDOM"
-        trap - QUIT EXIT ABRT KILL TERM INT
-        trap "[ -e ${qemu_bin} ] && rm_cmd -f ${qemu_bin}" EXIT QUIT ABRT KILL TERM INT
+    local proot_args="$1"
+    source ${JUNEST_HOME}/etc/junest/info
 
-        contains_element $1 "${ARCH_LIST[@]}" || \
-            die "The architecture is not one of: ${ARCH_LIST[@]}"
-        [ -e "${JUNEST_HOME}/opt/qemu/qemu-$1-static-$ARCH" ] || \
-            die "The JuNest image in ${JUNEST_HOME} is not an $1 architecture"
+    if [ "$JUNEST_ARCH" != "$ARCH" ]
+    then
+        local qemu_bin="qemu-$JUNEST_ARCH-static-$ARCH"
+        local qemu_symlink="/tmp/${qemu_bin}-$RANDOM"
+        trap - QUIT EXIT ABRT KILL TERM INT
+        trap "[ -e ${qemu_symlink} ] && rm_cmd -f ${qemu_symlink}" EXIT QUIT ABRT KILL TERM INT
+
         warn "Emulating $NAME via QEMU..."
-        [ -e ${qemu_bin} ] || \
-            ln_cmd -s ${JUNEST_HOME}/opt/qemu/qemu-$1-static-$ARCH ${qemu_bin}
-        proot_args="-q ${qemu_bin} $2"
+        [ -e ${qemu_symlink} ] || \
+            ln_cmd -s ${JUNEST_HOME}/opt/qemu/${qemu_bin} ${qemu_symlink}
+        proot_args="-q ${qemu_symlink} $proot_args"
     fi
-    shift 2
+    shift
     _run_env_with_proot "$proot_args" "${@}"
 }
 
@@ -258,14 +261,14 @@ function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die "You cannot access with root privileges. Use --root option instead."
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
-    _run_env_with_qemu "$1" "-S ${JUNEST_HOME} $2" "${@:3}"
+    _run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
 }
 
 function run_env_as_user(){
     (( EUID == 0 )) && \
         die "You cannot access with root privileges. Use --root option instead."
     [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -f ${JUNEST_HOME}/etc/mtab
-    _run_env_with_qemu "$1" "-R ${JUNEST_HOME} $2" "${@:3}"
+    _run_env_with_qemu "-R ${JUNEST_HOME} $1" "${@:2}"
 }
 
 
