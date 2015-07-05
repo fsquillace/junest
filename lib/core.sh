@@ -205,6 +205,10 @@ function setup_env_from_file(){
 }
 
 function run_env_as_root(){
+    source ${JUNEST_HOME}/etc/junest/info
+    [ "$JUNEST_ARCH" != "$ARCH" ] && \
+        die "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
+
     local uid=$UID
     # SUDO_USER is more reliable compared to SUDO_UID
     [ -z $SUDO_USER ] || uid=$SUDO_USER:$SUDO_GID

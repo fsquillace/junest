@@ -207,6 +207,15 @@ function test_run_env_as_root(){
     assertEquals 0 $?
 }
 
+function test_run_env_as_root_different_arch(){
+    [ $SKIP_ROOT_TESTS -eq 1 ] && return
+
+    install_mini_env
+    echo "JUNEST_ARCH=XXX" > ${JUNEST_HOME}/etc/junest/info
+    $(run_env_as_root pwd 2> /dev/null)
+    assertEquals 1 $?
+}
+
 function test_run_env_as_classic_root(){
     [ $SKIP_ROOT_TESTS -eq 1 ] && return
 
