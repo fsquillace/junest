@@ -395,8 +395,12 @@ function build_image_env(){
     info "Compressing image to ${imagefile}..."
     sudo $TAR -zcpf ${imagefile} -C ${maindir}/root .
 
-    mkdir -p ${maindir}/root_test
-    $disable_validation || validate_image "${maindir}/root_test" "${imagefile}"
+    if ! $disable_validation
+    then
+        mkdir -p ${maindir}/root_test
+        $TAR -zxpf ${imagefile} -C "${maindir}/root_test"
+        check_env "${maindir}/root_test" "${maindir}/root_test/opt/${CMD}/bin/${CMD}"
+    fi
 
     sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
 
@@ -405,35 +409,36 @@ function build_image_env(){
     sudo rm -fr "$maindir"
 }
 
-function validate_image(){
+function check_env(){
     local testdir=$1
-    local imagefile=$2
-    info "Validating ${NAME} image..."
-    $TAR -zxpf ${imagefile} -C ${testdir}
-    mkdir -p ${testdir}/run/lock
-    sed -i -e "s/#Server/Server/" ${testdir}/etc/pacman.d/mirrorlist
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -Syy
+    local cmd=$2
+    info "Validating ${NAME} located in ${testdir} using the ${cmd} script..."
+    echo "Server = ${DEFAULT_MIRROR}" >> ${testdir}/etc/pacman.d/mirrorlist
+    JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -Syy
 
     # Check most basic executables work
-    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r pacman -Qi pacman 1> /dev/null
-    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r yaourt -V 1> /dev/null
-    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r /opt/proot/proot-$ARCH --help 1> /dev/null
+    JUNEST_HOME=${testdir} sudo -E ${cmd} -r pacman -Qi pacman 1> /dev/null
+    JUNEST_HOME=${testdir} sudo -E ${cmd} -r yaourt -V 1> /dev/null
+    JUNEST_HOME=${testdir} sudo -E ${cmd} -r /opt/proot/proot-$ARCH --help 1> /dev/null
 
-    local repo_package=sysstat
+    local repo_package=tree
     info "Installing ${repo_package} package from official repo using proot..."
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} iostat
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f iostat
+    JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -S ${repo_package}
+    JUNEST_HOME=${testdir} ${cmd} tree
+    JUNEST_HOME=${testdir} ${cmd} -f tree
 
     local repo_package=iftop
     info "Installing ${repo_package} package from official repo using root..."
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S ${repo_package}
-    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r iftop -t -s 5
+    JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -S ${repo_package}
+    JUNEST_HOME=${testdir} sudo -E ${cmd} -r iftop -t -s 5
 
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f pacman --noconfirm -S base-devel
+    JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -S base-devel
     local yaourt_package=tcptraceroute
     info "Installing ${yaourt_package} package from AUR repo using proot..."
-    JUNEST_HOME=${testdir} ${testdir}/opt/${CMD}/bin/${CMD} -f sh --login -c "yaourt -A --noconfirm -S ${yaourt_package}"
-    JUNEST_HOME=${testdir} sudo -E ${testdir}/opt/${CMD}/bin/${CMD} -r tcptraceroute localhost
+    JUNEST_HOME=${testdir} ${cmd} -f -- yaourt -A --noconfirm -S ${yaourt_package}
+    JUNEST_HOME=${testdir} sudo -E ${cmd} -r tcptraceroute localhost
+
+    info "Removing the previous packages..."
+    JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -Rsn tcptraceroute tree iftop
 
 }
