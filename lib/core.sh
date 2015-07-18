@@ -313,6 +313,7 @@ function build_image_env(){
     _check_package git
 
     local disable_validation=$1
+    local skip_root_tests=$2
 
     local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     sudo mkdir -p ${maindir}/root
@@ -399,7 +400,7 @@ function build_image_env(){
     then
         mkdir -p ${maindir}/root_test
         $TAR -zxpf ${imagefile} -C "${maindir}/root_test"
-        check_env "${maindir}/root_test" "${maindir}/root_test/opt/${CMD}/bin/${CMD}"
+        check_env "${maindir}/root_test" "${maindir}/root_test/opt/${CMD}/bin/${CMD}" $skip_root_tests
     fi
 
     sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
@@ -412,14 +413,21 @@ function build_image_env(){
 function check_env(){
     local testdir=$1
     local cmd=$2
+    local skip_root_tests=$3
     info "Validating ${NAME} located in ${testdir} using the ${cmd} script..."
     echo "Server = ${DEFAULT_MIRROR}" >> ${testdir}/etc/pacman.d/mirrorlist
     JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -Syy
 
     # Check most basic executables work
-    JUNEST_HOME=${testdir} sudo -E ${cmd} -r pacman -Qi pacman 1> /dev/null
-    JUNEST_HOME=${testdir} sudo -E ${cmd} -r yaourt -V 1> /dev/null
-    JUNEST_HOME=${testdir} sudo -E ${cmd} -r /opt/proot/proot-$ARCH --help 1> /dev/null
+    $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r pacman -Qi pacman 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -- pacman -Qi pacman 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -f -- pacman -Qi pacman 1> /dev/null
+    $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r yaourt -V 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -- yaourt -V 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -f -- yaourt -V 1> /dev/null
+    $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r /opt/proot/proot-$ARCH --help 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -- /opt/proot/proot-$ARCH --help 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -f -- /opt/proot/proot-$ARCH --help 1> /dev/null
 
     local repo_package=tree
     info "Installing ${repo_package} package from official repo using proot..."
@@ -430,13 +438,13 @@ function check_env(){
     local repo_package=iftop
     info "Installing ${repo_package} package from official repo using root..."
     JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -S ${repo_package}
-    JUNEST_HOME=${testdir} sudo -E ${cmd} -r iftop -t -s 5
+    $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r iftop -t -s 5
 
     JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -S base-devel
     local yaourt_package=tcptraceroute
     info "Installing ${yaourt_package} package from AUR repo using proot..."
     JUNEST_HOME=${testdir} ${cmd} -f -- yaourt -A --noconfirm -S ${yaourt_package}
-    JUNEST_HOME=${testdir} sudo -E ${cmd} -r tcptraceroute localhost
+    $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r tcptraceroute localhost
 
     info "Removing the previous packages..."
     JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -Rsn tcptraceroute tree iftop

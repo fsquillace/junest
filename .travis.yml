@@ -4,9 +4,14 @@ sudo: required
 
 install:
     - PATH=$PWD/bin:$PATH
-    - junest --fakeroot echo 'Installing junest'
+    - junest -- echo "Installing JuNest (\$(uname -m))"
+    - JUNEST_HOME=~/.junest-arm junest -a arm -- echo "Installing JuNest (\$(uname -m))"
+    # TODO: Remember to enable x86 tests when fixed
+    #- JUNEST_HOME=~/.junest-x86 junest -a x86 -- echo "Installing JuNest (\$(uname -m))"
 
 script:
     - ./tests/test_all.sh
     - junest --check ./bin/junest
     - yes | junest --delete
+    - JUNEST_HOME=~/.junest-arm junest --check ./bin/junest --skip-root-tests
+    - yes | JUNEST_HOME=~/.junest-arm junest --delete
