@@ -4,6 +4,12 @@ source $(dirname $0)/../bin/junest -h &> /dev/null
 # Disable the exiterr
 set +e
 
+function setUp(){
+    function is_env_installed(){
+        return 0
+    }
+}
+
 ## Mock functions ##
 function usage(){
     echo "usage"
@@ -12,22 +18,24 @@ function version(){
     echo "version"
 }
 function build_image_env(){
-    echo "build_image_env"
+    local disable_validation=$1
+    local skip_root_tests=$2
+    echo "build_image_env($disable_validation,$skip_root_tests)"
 }
 function check_env(){
-    echo "check_env"
+    local env_home=$1
+    local cmd_script=$2
+    local skip_root_tests=$3
+    echo "check_env($env_home,$cmd_script,$skip_root_tests)"
 }
 function delete_env(){
     echo "delete_env"
 }
-function is_env_installed(){
-    return 0
-}
 function setup_env_from_file(){
-    echo "setup_env_from_file $@"
+    echo "setup_env_from_file($1)"
 }
 function setup_env(){
-    echo "setup_env"
+    echo "setup_env($1)"
 }
 function run_env_as_fakeroot(){
     local proot_args="$1"
@@ -63,21 +71,72 @@ function test_version(){
 }
 function test_build_image_env(){
     local output=$(wrap_env -b)
-    assertEquals $output "build_image_env"
+    assertEquals $output "build_image_env(false,false)"
     local output=$(wrap_env --build-image)
-    assertEquals $output "build_image_env"
+    assertEquals $output "build_image_env(false,false)"
+    local output=$(wrap_env -b -s)
+    assertEquals $output "build_image_env(false,true)"
+    local output=$(wrap_env -b -n)
+    assertEquals $output "build_image_env(true,false)"
+    local output=$(wrap_env -b -n -s)
+    assertEquals $output "build_image_env(true,true)"
+    local output=$(wrap_env --build-image --disable-validation --skip-root-tests)
+    assertEquals $output "build_image_env(true,true)"
 }
 function test_check_env(){
-    local output=$(wrap_env -c)
-    assertEquals $output "check_env"
-    local output=$(wrap_env --check)
-    assertEquals $output "check_env"
+    local output=$(wrap_env -c myscript)
+    assertEquals $output "check_env(${JUNEST_HOME},myscript,false)"
+    local output=$(wrap_env --check myscript)
+    assertEquals $output "check_env(${JUNEST_HOME},myscript,false)"
+    local output=$(wrap_env -c myscript -s)
+    assertEquals $output "check_env(${JUNEST_HOME},myscript,true)"
+    local output=$(wrap_env --check myscript --skip-root-tests)
+    assertEquals $output "check_env(${JUNEST_HOME},myscript,true)"
 }
 function test_delete_env(){
     local output=$(wrap_env -d)
     assertEquals $output "delete_env"
     local output=$(wrap_env --delete)
     assertEquals $output "delete_env"
+}
+#function test_setup_env_from_file(){
+    #local output=$(wrap_env -i myimage)
+    #assertEquals $output "setup_env_from_file(myimage)"
+    #local output=$(wrap_env --setup-from-file myimage)
+    #assertEquals $output "setup_env_from_file(myimage)"
+#}
+function test_setup_env_from_file(){
+    is_env_installed(){
+        return 1
+    }
+    local output=$(wrap_env -i myimage)
+    assertEquals "$output" "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")"
+    local output=$(wrap_env --setup-from-file myimage)
+    assertEquals "$output" "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")"
+
+    is_env_installed(){
+        return 0
+    }
+    $(wrap_env -i myimage 2> /dev/null)
+    assertEquals 1 $?
+}
+
+function test_setup_env(){
+    is_env_installed(){
+        return 1
+    }
+    local output=$(wrap_env -a arm)
+    assertEquals "$output" "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")"
+    local output=$(wrap_env --arch arm)
+    assertEquals "$output" "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")"
+    local output=$(wrap_env)
+    assertEquals "$output" "$(echo -e "setup_env()\nrun_env_as_user(,)")"
+
+    is_env_installed(){
+        return 0
+    }
+    $(wrap_env -a arm 2> /dev/null)
+    assertEquals 1 $?
 }
 function test_run_env_as_fakeroot(){
     local output=$(wrap_env -f)
@@ -119,6 +178,8 @@ function test_check_cli(){
     $(wrap_env -b -h 2> /dev/null)
     assertEquals $? 1
     $(wrap_env -b -c 2> /dev/null)
+    assertEquals $? 1
+    $(wrap_env -d -s 2> /dev/null)
     assertEquals $? 1
     $(wrap_env -n -v 2> /dev/null)
     assertEquals $? 1
