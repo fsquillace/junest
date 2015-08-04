@@ -56,6 +56,12 @@ Just clone the JuNest repo somewhere (for example in ~/junest):
     git clone git://github.com/fsquillace/junest ~/junest
     export PATH=~/junest/bin:$PATH
 
+### Installation using AUR (Arch Linux only) ###
+If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/):
+
+    yaourt -S junest-git
+    export PATH=/opt/junest/bin:$PATH
+
 ## Method two ##
 Alternatively, another installation method would be to directly download the JuNest image and place it to the default directory ~/.junest:
 
