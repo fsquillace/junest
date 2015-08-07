@@ -301,6 +301,17 @@ function _check_package(){
     fi
 }
 
+function _install_from_aur(){
+    local maindir=$1
+    local pkgname=$2
+    local installname=$3
+    mkdir -p ${maindir}/packages/${pkgname}
+    builtin cd ${maindir}/packages/${pkgname}
+    $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}"
+    [ -z "${installname}" ] || $CURL "https://aur.archlinux.org/cgit/aur.git/plain/${installname}?h=${pkgname}"
+    makepkg -sfc
+    sudo pacman --noconfirm --root ${maindir}/root -U ${pkgname}*.pkg.tar.xz
+}
 
 function build_image_env(){
 # The function must runs on ArchLinux with non-root privileges.
@@ -362,17 +373,9 @@ function build_image_env(){
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
     info "Compiling and installing yaourt..."
-    mkdir -p ${maindir}/packages/{package-query,yaourt}
+    _install_from_aur ${maindir} "package-query"
 
-    builtin cd ${maindir}/packages/package-query
-    $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=package-query"
-    makepkg -sfc
-    sudo pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
-
-    builtin cd ${maindir}/packages/yaourt
-    $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=yaourt"
-    makepkg -sfc
-    sudo pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
+    _install_from_aur ${maindir} "yaourt"
     # Apply patches for yaourt and makepkg
     sudo mkdir -p ${maindir}/root/opt/yaourt/bin/
     sudo cp ${maindir}/root/usr/bin/yaourt ${maindir}/root/opt/yaourt/bin/
@@ -382,8 +385,10 @@ function build_image_env(){
     sudo bash -c "echo 'export PATH=/opt/yaourt/bin:\$PATH' > ${maindir}/root/etc/profile.d/${CMD}.sh"
     sudo chmod +x ${maindir}/root/etc/profile.d/${CMD}.sh
 
-    info "Copying ${NAME} scripts..."
-    sudo git clone https://github.com/fsquillace/${CMD}.git ${maindir}/root/opt/${CMD}
+    info "Install ${NAME} script..."
+    sudo pacman --noconfirm --root ${maindir}/root -S git
+    _install_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
+    sudo pacman --noconfirm --root ${maindir}/root -Rsn git
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
