@@ -365,12 +365,12 @@ function build_image_env(){
     mkdir -p ${maindir}/packages/{package-query,yaourt}
 
     builtin cd ${maindir}/packages/package-query
-    download_cmd https://aur.archlinux.org/packages/pa/package-query/PKGBUILD
+    $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=package-query"
     makepkg -sfc
     sudo pacman --noconfirm --root ${maindir}/root -U package-query*.pkg.tar.xz
 
     builtin cd ${maindir}/packages/yaourt
-    download_cmd https://aur.archlinux.org/packages/ya/yaourt/PKGBUILD
+    $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=yaourt"
     makepkg -sfc
     sudo pacman --noconfirm --root ${maindir}/root -U yaourt*.pkg.tar.xz
     # Apply patches for yaourt and makepkg
