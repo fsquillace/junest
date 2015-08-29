@@ -32,7 +32,7 @@ CMD='junest'
 VERSION='4.7.4'
 CODE_NAME='Mairei'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
-AUTHOR='Filippo Squillace <feel dot squally at gmail.com>'
+AUTHOR='Filippo Squillace <feel dot sqoox at gmail.com>'
 HOMEPAGE="https://github.com/fsquillace/${CMD}"
 COPYRIGHT='2012-2015'
 
