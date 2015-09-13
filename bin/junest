@@ -23,6 +23,17 @@ JUNEST_BASE="$(dirname $0)/.."
 source "${JUNEST_BASE}/lib/core.sh"
 
 ###################################
+### Prep environment            ###
+###################################
+
+# clear out environment variables that may affect builds done within
+# the Arch chroot; for example AUR builds with yaourt
+
+unset PKG_CONFIG_PATH LD_LIBRARY_PATH C_INCLUDE_PATH \
+      MODULEBUILDRC MODULEPATH MODULESHOME \
+      PERL_MM_OPT PERL5LIB
+
+###################################
 ### General functions           ###
 ###################################
 
