@@ -314,7 +314,7 @@ function _install_from_aur(){
 }
 
 function build_image_env(){
-# The function must runs on ArchLinux with non-root privileges.
+# The function must run on ArchLinux with non-root privileges.
     (( EUID == 0 )) && \
         die "You cannot build with root privileges."
 
@@ -324,7 +324,10 @@ function build_image_env(){
     _check_package git
 
     local disable_validation=$1
-    local skip_root_tests=$2
+    shift
+    local skip_root_tests=$1
+    shift
+    local extra_packages="$@"
 
     local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     sudo mkdir -p ${maindir}/root
@@ -389,6 +392,21 @@ function build_image_env(){
     sudo pacman --noconfirm --root ${maindir}/root -S git
     _install_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
     sudo pacman --noconfirm --root ${maindir}/root -Rsn git
+
+    local extra
+    for extra in $extra_packages
+    do
+        info "Installing $extra additional package..."
+        if package-query -Sq $extra
+        then
+            sudo pacman --noconfirm --root ${maindir}/root -S $extra
+        elif package-query -Aq $extra
+        then
+            _install_from_aur ${maindir} $extra
+        else
+            info "...package not found - skipping"
+        fi
+    done
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
