@@ -393,23 +393,15 @@ function build_image_env(){
     _install_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
     sudo pacman --noconfirm --root ${maindir}/root -Rsn git
 
+    info "Setting up the pacman keyring (this might take a while!)..."
+    sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
+
     local extra
     for extra in $extra_packages
     do
         info "Installing $extra additional package..."
-        if package-query -Sq $extra
-        then
-            sudo pacman --noconfirm --root ${maindir}/root -S $extra
-        elif package-query -Aq $extra
-        then
-            _install_from_aur ${maindir} $extra
-        else
-            info "...package not found - skipping"
-        fi
+        yaourt --root ${maindir}/root -A --noconfirm -S ${extra}
     done
-
-    info "Setting up the pacman keyring (this might take a while!)..."
-    sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
 
