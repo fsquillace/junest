@@ -42,7 +42,8 @@ usage() {
     echo -e "-p, --proot-args <args>        Proot arguments"
     echo
     echo -e "Building options:"
-    echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
+    echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux); a list of"
+    echo -e "                               extra-packages may follow"
     echo -e "-n, --disable-validation       Disable the $NAME image validation"
     echo -e "-c, --check <${CMD}_script>    Validate the env located in ${JUNEST_HOME}"
     echo -e "                               using ${CMD}_script. This will alterate the environment."
@@ -130,7 +131,7 @@ check_cli(){
     fi
     if [ "$ARGS" != "" ]
     then
-        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
+        if $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
             $OPT_VERSION || $OPT_DISABLE_VALIDATION || $OPT_CHECK
         then
             die "No arguments are needed. For the CLI syntax run: $CMD --help"
@@ -191,7 +192,7 @@ function execute_operation(){
 	$OPT_VERSION && version && return
 
 	if $OPT_BUILD_IMAGE; then
-		build_image_env $OPT_DISABLE_VALIDATION $OPT_SKIP_ROOT_TEST
+		build_image_env $OPT_DISABLE_VALIDATION $OPT_SKIP_ROOT_TEST $ARGS
 		return
 	elif $OPT_DELETE; then
 		delete_env
