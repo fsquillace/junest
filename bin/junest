@@ -130,7 +130,7 @@ check_cli(){
     fi
     if [ "$ARGS" != "" ]
     then
-        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
+        if $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
             $OPT_VERSION || $OPT_DISABLE_VALIDATION || $OPT_CHECK
         then
             die "No arguments are needed. For the CLI syntax run: $CMD --help"
@@ -191,7 +191,7 @@ function execute_operation(){
 	$OPT_VERSION && version && return
 
 	if $OPT_BUILD_IMAGE; then
-		build_image_env $OPT_DISABLE_VALIDATION $OPT_SKIP_ROOT_TEST
+		build_image_env $OPT_DISABLE_VALIDATION $OPT_SKIP_ROOT_TEST $ARGS
 		return
 	elif $OPT_DELETE; then
 		delete_env

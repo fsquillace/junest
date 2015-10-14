@@ -309,12 +309,12 @@ function _install_from_aur(){
     builtin cd ${maindir}/packages/${pkgname}
     $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}"
     [ -z "${installname}" ] || $CURL "https://aur.archlinux.org/cgit/aur.git/plain/${installname}?h=${pkgname}"
-    makepkg -sfc
+    makepkg -sfc --noconfirm
     sudo pacman --noconfirm --root ${maindir}/root -U ${pkgname}*.pkg.tar.xz
 }
 
 function build_image_env(){
-# The function must runs on ArchLinux with non-root privileges.
+# The function must run on ArchLinux with non-root privileges.
     (( EUID == 0 )) && \
         die "You cannot build with root privileges."
 
@@ -324,7 +324,10 @@ function build_image_env(){
     _check_package git
 
     local disable_validation=$1
-    local skip_root_tests=$2
+    shift
+    local skip_root_tests=$1
+    shift
+    local extra_packages="$@"
 
     local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
     sudo mkdir -p ${maindir}/root
@@ -392,6 +395,13 @@ function build_image_env(){
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
+
+    local extra
+    for extra in $extra_packages
+    do
+        info "Installing $extra additional package..."
+        yaourt --root ${maindir}/root -A --noconfirm -S ${extra}
+    done
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
 
