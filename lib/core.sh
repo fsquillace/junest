@@ -125,8 +125,17 @@ function mkdir_cmd(){
 }
 
 function proot_cmd(){
-     ${PROOT_COMPAT} "${@}" || PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} "${@}" || \
-        die "Error: Check if the ${CMD} arguments are correct or use the option ${CMD} -p \"-k 3.10\""
+    local proot_args="$1"
+    shift
+    if ${PROOT_COMPAT} ${proot_args} "${SH[@]}" "-c" ":"
+    then
+        ${PROOT_COMPAT} ${proot_args} "${@}"
+    elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} ${proot_args} "${SH[@]}" "-c" ":"
+    then
+        PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} ${proot_args} "${@}"
+    else
+        die "Error: Check if the ${CMD} arguments are correct and if the kernel is too old use the option ${CMD} -p \"-k 3.10\""
+    fi
 }
 
 function download_cmd(){
@@ -231,9 +240,9 @@ function _run_env_with_proot(){
 
     if [ "$1" != "" ]
     then
-        JUNEST_ENV=1 proot_cmd ${proot_args} "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        JUNEST_ENV=1 proot_cmd ${proot_args} "${SH[@]}"
+        JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}"
     fi
 }
 
