@@ -323,7 +323,9 @@ function _install_from_aur(){
 }
 
 function build_image_env(){
-# The function must runs on ArchLinux with non-root privileges.
+    umask 022
+
+    # The function must runs on ArchLinux with non-root privileges.
     (( EUID == 0 )) && \
         die "You cannot build with root privileges."
 
