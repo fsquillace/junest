@@ -348,11 +348,16 @@ function build_image_env(){
     sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
 
+    info "Install ${NAME} script..."
+    sudo pacman --noconfirm --root ${maindir}/root -S git
+    _install_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
+    sudo pacman --noconfirm --root ${maindir}/root -Rsn git
+
     info "Generating the locales..."
     # sed command is required for locale-gen
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
-    sudo arch-chroot ${maindir}/root locale-gen
+    sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root locale-gen
     sudo bash -c "echo 'LANG = \"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
 
     info "Generating the metadata info..."
@@ -396,13 +401,9 @@ function build_image_env(){
     sudo bash -c "echo 'export PATH=/opt/yaourt/bin:\$PATH' > ${maindir}/root/etc/profile.d/${CMD}.sh"
     sudo chmod +x ${maindir}/root/etc/profile.d/${CMD}.sh
 
-    info "Install ${NAME} script..."
-    sudo pacman --noconfirm --root ${maindir}/root -S git
-    _install_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
-    sudo pacman --noconfirm --root ${maindir}/root -Rsn git
-
     info "Setting up the pacman keyring (this might take a while!)..."
-    sudo arch-chroot ${maindir}/root bash -c "pacman-key --init; pacman-key --populate archlinux"
+    sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root bash -c \
+        "pacman-key --init; pacman-key --populate archlinux; [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye"
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
 
