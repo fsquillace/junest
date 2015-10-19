@@ -105,6 +105,11 @@ After creating the image junest-x86\_64.tar.gz you can install it by running:
 
     junest -i junest-x86_64.tar.gz
 
+For more details, you can also take a look at
+[junest-builder](https://github.com/fsquillace/junest-builder)
+that contains the script and systemd service used for the automatic building
+of the JuNest image.
+
 Related wiki page:
 
 - [How to build a JuNest image using QEMU](https://github.com/fsquillace/junest/wiki/How-to-build-a-JuNest-image-using-QEMU)
@@ -183,8 +188,8 @@ Troubleshooting
     Cannot find the gzip binary required for compressing man and info pages.
 
 > **A**: JuNest comes with a very basic number of packages.
-In order to install packages using yaourt you may need to install the package group **base-devel**
-that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
+> In order to install packages using yaourt you may need to install the package group **base-devel**
+> that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
 
     pacman -S base-devel
 
@@ -193,23 +198,21 @@ that contains all the essential packages for compiling source code (such as gcc,
 > **Q**: Why do I get the error: "FATAL: kernel too old"?
 
 > **A**: This is because the executable from the precompiled package cannot
-properly run if the kernel is old.
-JuNest contains two different PRoot binaries, and one of them is highly compatible
-with old linux kernel versions. JuNest will detect which PRoot binary need to be
-executed but you may need to specify the PRoot *-k* option if the guest rootfs
-requires a newer kernel version:
+> properly run if the kernel is old.
+> You may need to specify the PRoot *-k* option if the guest rootfs
+> requires a newer kernel version:
 
     junest -p "-k 3.10"
 
-In order to check if an executable inside JuNest environment can be compatible
-with the kernel of the host OS just use the *file* command, for instance:
+> In order to check if an executable inside JuNest environment can be compatible
+> with the kernel of the host OS just use the *file* command, for instance:
 
     file ~/.junest/usr/bin/bash
     ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked
     (uses shared libs), for GNU/Linux 2.6.32,
     BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
 
-From the output you can see what is the minimum recommended Linux kernel version.
+> From the output you can see what is the minimum recommended Linux kernel version.
 
 ##SUID permissions##
 > **Q**: Why I do not have permissions for ping?
@@ -218,10 +221,10 @@ From the output you can see what is the minimum recommended Linux kernel version
     ping: icmp open socket: Operation not permitted
 
 > **A**: The ping command uses *suid* permissions that allow to execute the command using
-root privileges. The fakeroot mode is not able to execute a command set with suid,
-and you may need to use root privileges. There are other few commands that
-have *suid* permission, you can list the commands from your JuNest environment
-with the following command:
+> root privileges. The fakeroot mode is not able to execute a command set with suid,
+> and you may need to use root privileges. There are other few commands that
+> have *suid* permission, you can list the commands from your JuNest environment
+> with the following command:
 
     find /usr/bin -perm +4000
 
@@ -230,10 +233,10 @@ with the following command:
 > **Q**: Why I do not see any characters in the application I have installed?
 
 > **A**: This is probably because there are no
-[fonts](https://wiki.archlinux.org/index.php/Font_Configuration) installed in
-the system.
+> [fonts](https://wiki.archlinux.org/index.php/Font_Configuration) installed in
+> the system.
 
-To quick fix this, you can just install a fonts package:
+> To quick fix this, you can just install a fonts package:
 
     pacman -S gnu-free-fonts
 
@@ -248,9 +251,9 @@ To quick fix this, you can just install a fonts package:
     ...
 
 > **A**: In these cases the package installation went smoothly anyway.
-This should happen every time you install package with root privileges
-since JuNest will try to preserve the JuNest environment by assigning ownership
-of the files to the real user.
+> This should happen every time you install package with root privileges
+> since JuNest will try to preserve the JuNest environment by assigning ownership
+> of the files to the real user.
 
 ##No servers configured for repository##
 
