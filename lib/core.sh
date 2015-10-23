@@ -29,8 +29,8 @@ source "$(dirname ${BASH_ARGV[0]})/util.sh"
 
 NAME='JuNest'
 CMD='junest'
-VERSION='4.7.4'
-CODE_NAME='Mairei'
+VERSION='5.6.7'
+CODE_NAME='Nitida'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
 AUTHOR='Filippo Squillace <feel dot sqoox at gmail.com>'
 HOMEPAGE="https://github.com/fsquillace/${CMD}"
