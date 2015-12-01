@@ -358,7 +358,7 @@ function build_image_env(){
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
     sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root locale-gen
-    sudo bash -c "echo 'LANG = \"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
+    sudo bash -c "echo 'LANG=\"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
 
     info "Generating the metadata info..."
     sudo mkdir ${maindir}/root/etc/${CMD}
