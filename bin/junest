@@ -39,7 +39,7 @@ usage() {
     echo -e "Access options:"
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
     echo -e "-r, --root                     Run $NAME with root privileges"
-    echo -e "-p, --proot-args <args>        Proot arguments"
+    echo -e "-p, --proot-args <args>        Proot arguments (use `junest -p \"--help\"` to check out the proot options)"
     echo
     echo -e "Building options:"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
