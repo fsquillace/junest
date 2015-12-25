@@ -263,7 +263,7 @@ function test_run_env_as_proot_mtab(){
     $(run_env_as_fakeroot "-k 3.10" "echo")
     assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
     $(run_env_as_user "-k 3.10" "echo")
-    assertTrue "[ ! -e $JUNEST_HOME/etc/mtab ]"
+    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
 }
 
 function test_run_env_as_root_mtab(){
