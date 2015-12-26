@@ -229,6 +229,8 @@ function run_env_as_root(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -f ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
 
+    # The mtab file should already be available in the image.
+    # This following instruction will be deleted
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
 
     JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
@@ -269,6 +271,8 @@ function _run_env_with_qemu(){
 function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die "You cannot access with root privileges. Use --root option instead."
+    # The mtab file should already be available in the image.
+    # This following instruction will be deleted
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
     _run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
 }
@@ -276,10 +280,23 @@ function run_env_as_fakeroot(){
 function run_env_as_user(){
     (( EUID == 0 )) && \
         die "You cannot access with root privileges. Use --root option instead."
-    [ -e ${JUNEST_HOME}/etc/mtab ] && rm_cmd -f ${JUNEST_HOME}/etc/mtab
-    _run_env_with_qemu "-R ${JUNEST_HOME} $1" "${@:2}"
+    # The mtab file should already be available in the image.
+    # This following instruction will be deleted
+    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
+    _run_env_with_qemu "$(_provide_bindings_as_user) -r ${JUNEST_HOME} $1" "${@:2}"
 }
 
+function _provide_bindings_as_user(){
+    # The list of bindings can be found in `proot --help`. This function excludes
+    # /etc/mtab file so that it will not give conflicts with the related
+    # symlink in the image.
+    local existing_bindings=""
+    for bind in "/etc/host.conf" "/etc/hosts" "/etc/hosts.equiv" "/etc/netgroup" "/etc/networks" "/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/resolv.conf" "/etc/localtime" "/dev" "/sys" "/proc" "/tmp" "$HOME"
+    do
+        [ -e "$bind" ] && existing_bindings="-b $bind $existing_bindings"
+    done
+    echo $existing_bindings
+}
 
 function delete_env(){
     ! ask "Are you sure to delete ${NAME} located in ${JUNEST_HOME}" "N" && return
