@@ -299,11 +299,11 @@ function test_run_env_as_user_proot_args(){
 }
 
 function test_run_env_with_proot_compat(){
-    PROOT_COMPAT="/bin/true"
+    PROOT="/bin/true"
     _run_env_with_proot "" "" &> /dev/null
     assertEquals 0 $?
 
-    $(PROOT_COMPAT="/bin/false" _run_env_with_proot --helps 2> /dev/null)
+    $(PROOT="/bin/false" _run_env_with_proot --helps 2> /dev/null)
     assertEquals 1 $?
 }
 
@@ -322,14 +322,14 @@ function test_run_proot_seccomp(){
     envv(){
         env
     }
-    PROOT_COMPAT=envv
+    PROOT=envv
     local output=$(proot_cmd | grep "^PROOT_NO_SECCOMP")
     assertEquals "" "$output"
 
     envv(){
         env | grep "^PROOT_NO_SECCOMP"
     }
-    PROOT_COMPAT=envv
+    PROOT=envv
     local output=$(proot_cmd | grep "^PROOT_NO_SECCOMP")
     # The variable PROOT_NO_SECCOMP will be produced
     # twice due to the fallback mechanism
