@@ -94,7 +94,7 @@ ORIGIN_WD=$(pwd)
 SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
-PROOT_COMPAT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
+PROOT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
 CHROOT=${JUNEST_BASE}/bin/jchroot
 CLASSIC_CHROOT="chroot"
 WGET="wget --no-check-certificate"
@@ -127,12 +127,12 @@ function mkdir_cmd(){
 function proot_cmd(){
     local proot_args="$1"
     shift
-    if ${PROOT_COMPAT} ${proot_args} "${SH[@]}" "-c" ":"
+    if ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
     then
-        ${PROOT_COMPAT} ${proot_args} "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} ${proot_args} "${SH[@]}" "-c" ":"
+        ${PROOT} ${proot_args} "${@}"
+    elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
     then
-        PROOT_NO_SECCOMP=1 ${PROOT_COMPAT} ${proot_args} "${@}"
+        PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${@}"
     else
         die "Error: Check if the ${CMD} arguments are correct and if the kernel is too old use the option ${CMD} -p \"-k 3.10\""
     fi
