@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2012-2015
+# Copyright (c) 2015
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Library General Public License as published
@@ -34,7 +34,7 @@ CODE_NAME='Nitida'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
 AUTHOR='Filippo Squillace <feel dot sqoox at gmail.com>'
 HOMEPAGE="https://github.com/fsquillace/${CMD}"
-COPYRIGHT='2012-2015'
+COPYRIGHT='2012-2016'
 
 
 if [ "$JUNEST_ENV" == "1" ]

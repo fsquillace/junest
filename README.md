@@ -204,75 +204,13 @@ Troubleshooting
 > In order to install packages using yaourt you may need to install the package group **base-devel**
 > that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
 
-    pacman -S base-devel
-
-##Kernel too old##
-
-> **Q**: Why do I get the error: "FATAL: kernel too old"?
-
-> **A**: This is because the executable from the precompiled package cannot
-> properly run if the kernel is old.
-> You may need to specify the PRoot *-k* option if the guest rootfs
-> requires a newer kernel version:
-
-    junest -p "-k 3.10"
-
-> In order to check if an executable inside JuNest environment can be compatible
-> with the kernel of the host OS just use the *file* command, for instance:
-
-    file ~/.junest/usr/bin/bash
-    ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked
-    (uses shared libs), for GNU/Linux 2.6.32,
-    BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
-
-> From the output you can see what is the minimum recommended Linux kernel version.
-
-##SUID permissions##
-> **Q**: Why I do not have permissions for ping?
-
-    ping www.google.com
-    ping: icmp open socket: Operation not permitted
-
-> **A**: The ping command uses *suid* permissions that allow to execute the command using
-> root privileges. The fakeroot mode is not able to execute a command set with suid,
-> and you may need to use root privileges. There are other few commands that
-> have *suid* permission, you can list the commands from your JuNest environment
-> with the following command:
-
-    find /usr/bin -perm +4000
-
-##No characters are visible on a graphic application##
-
-> **Q**: Why I do not see any characters in the application I have installed?
-
-> **A**: This is probably because there are no
-> [fonts](https://wiki.archlinux.org/index.php/Font_Configuration) installed in
-> the system.
-
-> To quick fix this, you can just install a fonts package:
-
-    pacman -S gnu-free-fonts
-
-##Differences between filesystem and package ownership##
-
-> **Q**: Why do I get warning when I install a package using root privileges?
-
-    pacman -S systat
-    ...
-    warning: directory ownership differs on /usr/
-    filesystem: 1000:100  package: 0:0
-    ...
-
-> **A**: In these cases the package installation went smoothly anyway.
-> This should happen every time you install package with root privileges
-> since JuNest will try to preserve the JuNest environment by assigning ownership
-> of the files to the real user.
+    #> pacman -S base-devel
 
 ##No servers configured for repository##
 
 > **Q**: Why I cannot install packages?
 
-    pacman -S lsof
+    #> pacman -S lsof
     Packages (1): lsof-4.88-2
 
     Total Download Size:    0.09 MiB
@@ -286,8 +224,84 @@ Troubleshooting
 > **A**: You need simply to update the mirrorlist file according to your location:
 
     # Uncomment the repository line according to your location
-    nano /etc/pacman.d/mirrorlist
-    pacman -Syy
+    #> nano /etc/pacman.d/mirrorlist
+    #> pacman -Syy
+
+## Locate the package for a given file ##
+
+> **Q**: How do I find which package a certain file belongs to?
+
+> **A**: JuNest is a really small distro, therefore you frequently need to find
+> the package name for a certain file. `pkgfile` is an extremely useful package
+> that allows you to detect the package of a given file.
+> For instance, if you want to find the package name for the command `getopt`:
+
+    #> pacman -S pkgfile
+    #> pkgfile --update
+    $> pkgfile getop
+    core/util-linux
+
+##Kernel too old##
+
+> **Q**: Why do I get the error: "FATAL: kernel too old"?
+
+> **A**: This is because the executable from the precompiled package cannot
+> properly run if the kernel is old.
+> You may need to specify the PRoot *-k* option if the guest rootfs
+> requires a newer kernel version:
+
+    $> junest -p "-k 3.10"
+
+> In order to check if an executable inside JuNest environment can be compatible
+> with the kernel of the host OS just use the *file* command, for instance:
+
+    $> file ~/.junest/usr/bin/bash
+    ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked
+    (uses shared libs), for GNU/Linux 2.6.32,
+    BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
+
+> From the output you can see what is the minimum recommended Linux kernel version.
+
+##SUID permissions##
+> **Q**: Why I do not have permissions for ping?
+
+    $> ping www.google.com
+    ping: icmp open socket: Operation not permitted
+
+> **A**: The ping command uses *suid* permissions that allow to execute the command using
+> root privileges. The fakeroot mode is not able to execute a command set with suid,
+> and you may need to use root privileges. There are other few commands that
+> have *suid* permission, you can list the commands from your JuNest environment
+> with the following command:
+
+    $> find /usr/bin -perm +4000
+
+##No characters are visible on a graphic application##
+
+> **Q**: Why I do not see any characters in the application I have installed?
+
+> **A**: This is probably because there are no
+> [fonts](https://wiki.archlinux.org/index.php/Font_Configuration) installed in
+> the system.
+
+> To quick fix this, you can just install a fonts package:
+
+    #> pacman -S gnu-free-fonts
+
+##Differences between filesystem and package ownership##
+
+> **Q**: Why do I get warning when I install a package using root privileges?
+
+    #> pacman -S systat
+    ...
+    warning: directory ownership differs on /usr/
+    filesystem: 1000:100  package: 0:0
+    ...
+
+> **A**: In these cases the package installation went smoothly anyway.
+> This should happen every time you install package with root privileges
+> since JuNest will try to preserve the JuNest environment by assigning ownership
+> of the files to the real user.
 
 More documentation
 ==================
@@ -296,7 +310,7 @@ There are additional tutorials in the
 
 License
 =======
-Copyright (c) 2012-2015
+Copyright (c) 2012-2016
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU Library General Public License as published
