@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Id: shunit2 335 2011-05-01 20:10:33Z kate.ward@forestent.com $
+# $Id$
 # vim:et:ft=sh:sts=2:sw=2
 #
 # Copyright 2008 Kate Ward. All Rights Reserved.
@@ -15,19 +15,30 @@
 
 # return if shunit already loaded
 [ -n "${SHUNIT_VERSION:-}" ] && exit 0
+SHUNIT_VERSION='2.1.7pre'
 
-SHUNIT_VERSION='2.1.6'
-
+# return values that scripts can use
 SHUNIT_TRUE=0
 SHUNIT_FALSE=1
 SHUNIT_ERROR=2
 
-# enable strict mode by default
-SHUNIT_STRICT=${SHUNIT_STRICT:-${SHUNIT_TRUE}}
-
+# logging functions
 _shunit_warn() { echo "shunit2:WARN $@" >&2; }
 _shunit_error() { echo "shunit2:ERROR $@" >&2; }
 _shunit_fatal() { echo "shunit2:FATAL $@" >&2; exit ${SHUNIT_ERROR}; }
+
+# determine some reasonable command defaults
+__SHUNIT_UNAME_S=`uname -s`
+case "${__SHUNIT_UNAME_S}" in
+  BSD) __SHUNIT_EXPR_CMD='gexpr' ;;
+  *) __SHUNIT_EXPR_CMD='expr' ;;
+esac
+
+# commands a user can override if needed
+SHUNIT_EXPR_CMD=${SHUNIT_EXPR_CMD:-${__SHUNIT_EXPR_CMD}}
+
+# enable strict mode by default
+SHUNIT_STRICT=${SHUNIT_STRICT:-${SHUNIT_TRUE}}
 
 # specific shell checks
 if [ -n "${ZSH_VERSION:-}" ]; then
@@ -51,19 +62,24 @@ __SHUNIT_MODE_STANDALONE='standalone'
 __SHUNIT_PARENT=${SHUNIT_PARENT:-$0}
 
 # set the constants readonly
-shunit_constants_=`set |grep '^__SHUNIT_' |cut -d= -f1`
-echo "${shunit_constants_}" |grep '^Binary file' >/dev/null && \
-    shunit_constants_=`set |grep -a '^__SHUNIT_' |cut -d= -f1`
-for shunit_constant_ in ${shunit_constants_}; do
-  shunit_ro_opts_=''
-  case ${ZSH_VERSION:-} in
-    '') ;;  # this isn't zsh
-    [123].*) ;;  # early versions (1.x, 2.x, 3.x)
-    *) shunit_ro_opts_='-g' ;;  # all later versions. declare readonly globally
-  esac
-  readonly ${shunit_ro_opts_} ${shunit_constant_}
+__shunit_constants=`set |grep '^__SHUNIT_' |cut -d= -f1`
+echo "${__shunit_constants}" |grep '^Binary file' >/dev/null && \
+    __shunit_constants=`set |grep -a '^__SHUNIT_' |cut -d= -f1`
+for __shunit_const in ${__shunit_constants}; do
+  if [ -z "${ZSH_VERSION:-}" ]; then
+    readonly ${__shunit_const}
+  else
+    case ${ZSH_VERSION} in
+      [123].*) readonly ${__shunit_const} ;;
+      *) readonly -g ${__shunit_const}  # declare readonly constants globally
+    esac
+  fi
 done
-unset shunit_constant_ shunit_constants_ shunit_ro_opts_
+unset __shunit_const __shunit_constants
+
+#
+# internal variables
+#
 
 # variables
 __shunit_lineno=''  # line number of executed test
@@ -87,6 +103,9 @@ __shunit_assertsSkipped=0
 
 # macros
 _SHUNIT_LINENO_='eval __shunit_lineno=""; if [ "${1:-}" = "--lineno" ]; then [ -n "$2" ] && __shunit_lineno="[$2] "; shift 2; fi'
+
+#-----------------------------------------------------------------------------
+# private functions
 
 #-----------------------------------------------------------------------------
 # assert functions
@@ -313,8 +332,8 @@ _ASSERT_NOT_SAME_='eval assertNotSame --lineno "${LINENO:-}"'
 assertTrue()
 {
   ${_SHUNIT_LINENO_}
-  if [ $# -gt 2 ]; then
-    _shunit_error "assertTrue() takes one two arguments; $# given"
+  if [ $# -lt 1 -o $# -gt 2 ]; then
+    _shunit_error "assertTrue() takes one or two arguments; $# given"
     return ${SHUNIT_ERROR}
   fi
   _shunit_shouldSkip && return ${SHUNIT_TRUE}

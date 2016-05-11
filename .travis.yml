@@ -10,7 +10,7 @@ install:
     #- JUNEST_HOME=~/.junest-x86 junest -a x86 -- echo "Installing JuNest (\$(uname -m))"
 
 script:
-    - ./tests/test_all.sh
+    - ./tests/unit-tests.sh
     - junest --check ./bin/junest
     - yes | junest --delete
     - JUNEST_HOME=~/.junest-arm junest --check ./bin/junest --skip-root-tests

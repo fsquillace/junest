@@ -1,4 +1,5 @@
-# Contributing to JuNest #
+Contributing to JuNest
+=====================
 
 First off, thanks for taking the time to contribute!
 
@@ -17,6 +18,8 @@ feel free to propose changes to this document in a pull request.
   - [Git Commit Messages](#git-commit-messages)
   - [Documentation Styleguide](#documentation-styleguide)
   - [Shell Styleguide](#shell-styleguide)
+
+- [Versioning](#versioning)
 
 ## How Can I Contribute? ##
 
@@ -135,6 +138,10 @@ All JuNest issues are tracked as [GitHub issues](https://guides.github.com/featu
 
 #### Pull Requests ####
 
+* Fork the repo and create your feature branch from ***dev***.
+* If you make significant changes, please add tests too.
+  Get familiar with [shunit](https://github.com/kward/shunit2).
+* If you've changed APIs, please update the documentation
 * Follow the [Shell styleguide](#shell-styleguide).
 * Document new code based on the
   [Documentation Styleguide](#documentation-styleguide).
@@ -143,15 +150,23 @@ All JuNest issues are tracked as [GitHub issues](https://guides.github.com/featu
 * Send a [GitHub Pull Request to JuNest](https://github.com/fsquillace/junest/compare/dev...) with a clear list of what you've done (read more about [pull requests](http://help.github.com/pull-requests/)).
 * Put **dev as the base branch** and NOT the master one.
 
+#### Unit Tests ####
+To run unit tests:
+```sh
+./tests/unit-tests.sh
+```
+
+#### Integration Tests ####
+Generally, there is no need to run integration tests locally
+since [Travis](https://travis-ci.org/fsquillace/junest) will run as
+soon as the pull request gets created.
+
 ## Styleguides ##
 
 ### Git Commit Messages ###
 
-* Use the present tense ("Add feature" not "Added feature")
-* Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-* Limit the first line to 72 characters or less
+* Follow the [seven rules](http://chris.beams.io/posts/git-commit/#seven-rules) of a great Git commit message
 * Reference issues and pull requests liberally
-* When only changing documentation, include `[ci skip]` in the commit description
 * Consider starting the commit message with an applicable emoji:
     * :art: `:art:` when improving the format/structure of the code
     * :racehorse: `:racehorse:` when improving performance
@@ -168,6 +183,7 @@ All JuNest issues are tracked as [GitHub issues](https://guides.github.com/featu
     * :arrow_up: `:arrow_up:` when upgrading dependencies
     * :arrow_down: `:arrow_down:` when downgrading dependencies
     * :shirt: `:shirt:` when removing linter warnings
+    * :package: `:package:` when bumping the version
 
 ### Documentation Styleguide ###
 
@@ -176,4 +192,69 @@ All JuNest issues are tracked as [GitHub issues](https://guides.github.com/featu
 ### Shell Styleguide ###
 
 * Use [google shell styleguide](https://google.github.io/styleguide/shell.xml)
+
+#### Function documentation ####
+For function documentation follows the example below:
+
+    #######################################
+    # Cleanup files from the backup dir.
+    #
+    # Globals:
+    #   VAR1 (RO,bool)    : `my_func` access to VAR1.
+    #   VAR2 (WO)         : `my_func` change the value of VAR2.
+    #   VAR3 (RW)         : `my_func` read and write to VAR3.
+    # Arguments:
+    #   arg1 ($1,int)     : Directory to cleanup.
+    #   arg2 ($2-)        : Command to execute for the cleanup.
+    # Returns:
+    #   0                 : Cleanup completed successfully.
+    #   101               : Backup directory is not readable.
+    #   $NOT_DIR_ERROR    : Backup directory is not a directory.
+    # Output:
+    #   None
+    #######################################
+    my_func() {
+        local arg1=$1
+        shift
+        local arg2=$@
+        ...
+    }
+
+The documentation is divided by a description of the function, a `Globals`,
+`Arguments`, `Returns` and `Output` sections. If a section does not need details
+use the word `None` inside of it.
+
+`Globals` section provides all global variables that interact with the function.
+
+`Arguments` section provides the list of arguments to pass to the function. Use
+the parenthesis to indicate the position of the arguments:
+
+- `$1`    : Argument is in position one.
+- `$2-`   : Argument takes all args from position two up to the end.
+- `$@`    : Argument takes all args.
+- `$3?`   : Argument is optional.
+
+Variables defined in `Globals` and `Arguments` sections can have the following
+types:
+
+- `int`   : Integer variable.
+- `str`   : String variable (default).
+- `bool`  : Bool variable.
+
+`Returns` section contains the exit status of the function.
+
+`Output` section describe the string printed to stdout.
+
+## Versioning ##
+
+* JuNest uses the following [semantic versioning](http://semver.org/)
+
+### Public API ###
+
+The public API refers to the following parts of JuNest system:
+
+- JuNest script CLI
+
+Any potential code change that cause backwards incompatible changes to the
+public API requires the major version to be incremented.
 
