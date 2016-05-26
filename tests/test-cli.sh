@@ -1,8 +1,14 @@
 #!/bin/bash
+source "$(dirname $0)/utils.sh"
+
 source $(dirname $0)/../bin/junest -h &> /dev/null
 
 # Disable the exiterr
 set +e
+
+function oneTimeSetUp(){
+    setUpUnitTests
+}
 
 function setUp(){
     function is_env_installed(){
@@ -51,152 +57,125 @@ function run_env_as_user(){
     echo "run_env_as_user($proot_args,$@)"
 }
 
-function wrap_env(){
-    parse_arguments "$@"
-    check_cli
-    execute_operation
-}
-
 function test_help(){
-    local output=$(wrap_env -h)
-    assertEquals $output "usage"
-    local output=$(wrap_env --help)
-    assertEquals $output "usage"
+    assertCommandSuccess cli -h
+    assertEquals "usage" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --help
+    assertEquals "usage" "$(cat $STDOUTF)"
 }
 function test_version(){
-    local output=$(wrap_env -v)
-    assertEquals $output "version"
-    local output=$(wrap_env --version)
-    assertEquals $output "version"
+    assertCommandSuccess cli -v
+    assertEquals "version" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --version
+    assertEquals "version" "$(cat $STDOUTF)"
 }
 function test_build_image_env(){
-    local output=$(wrap_env -b)
-    assertEquals $output "build_image_env(false,false)"
-    local output=$(wrap_env --build-image)
-    assertEquals $output "build_image_env(false,false)"
-    local output=$(wrap_env -b -s)
-    assertEquals $output "build_image_env(false,true)"
-    local output=$(wrap_env -b -n)
-    assertEquals $output "build_image_env(true,false)"
-    local output=$(wrap_env -b -n -s)
-    assertEquals $output "build_image_env(true,true)"
-    local output=$(wrap_env --build-image --disable-validation --skip-root-tests)
-    assertEquals $output "build_image_env(true,true)"
+    assertCommandSuccess cli -b
+    assertEquals "build_image_env(false,false)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --build-image
+    assertEquals "build_image_env(false,false)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -b -s
+    assertEquals "build_image_env(false,true)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -b -n
+    assertEquals "build_image_env(true,false)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -b -n -s
+    assertEquals "build_image_env(true,true)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --build-image --disable-validation --skip-root-tests
+    assertEquals "build_image_env(true,true)" "$(cat $STDOUTF)"
 }
 function test_check_env(){
-    local output=$(wrap_env -c myscript)
-    assertEquals $output "check_env(${JUNEST_HOME},myscript,false)"
-    local output=$(wrap_env --check myscript)
-    assertEquals $output "check_env(${JUNEST_HOME},myscript,false)"
-    local output=$(wrap_env -c myscript -s)
-    assertEquals $output "check_env(${JUNEST_HOME},myscript,true)"
-    local output=$(wrap_env --check myscript --skip-root-tests)
-    assertEquals $output "check_env(${JUNEST_HOME},myscript,true)"
+    assertCommandSuccess cli -c myscript
+    assertEquals "check_env(${JUNEST_HOME},myscript,false)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --check myscript
+    assertEquals "check_env(${JUNEST_HOME},myscript,false)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -c myscript -s
+    assertEquals "check_env(${JUNEST_HOME},myscript,true)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --check myscript --skip-root-tests
+    assertEquals "check_env(${JUNEST_HOME},myscript,true)" "$(cat $STDOUTF)"
 }
 function test_delete_env(){
-    local output=$(wrap_env -d)
-    assertEquals $output "delete_env"
-    local output=$(wrap_env --delete)
-    assertEquals $output "delete_env"
+    assertCommandSuccess cli -d
+    assertEquals "delete_env" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --delete
+    assertEquals "delete_env" "$(cat $STDOUTF)"
 }
-#function test_setup_env_from_file(){
-    #local output=$(wrap_env -i myimage)
-    #assertEquals $output "setup_env_from_file(myimage)"
-    #local output=$(wrap_env --setup-from-file myimage)
-    #assertEquals $output "setup_env_from_file(myimage)"
-#}
 function test_setup_env_from_file(){
     is_env_installed(){
         return 1
     }
-    local output=$(wrap_env -i myimage)
-    assertEquals "$output" "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")"
-    local output=$(wrap_env --setup-from-file myimage)
-    assertEquals "$output" "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")"
+    assertCommandSuccess cli -i myimage
+    assertEquals "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --setup-from-file myimage
+    assertEquals "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
 
     is_env_installed(){
         return 0
     }
-    $(wrap_env -i myimage 2> /dev/null)
-    assertEquals 1 $?
+    assertCommandFail cli -i myimage
 }
 
 function test_setup_env(){
     is_env_installed(){
         return 1
     }
-    local output=$(wrap_env -a arm)
-    assertEquals "$output" "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")"
-    local output=$(wrap_env --arch arm)
-    assertEquals "$output" "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")"
-    local output=$(wrap_env)
-    assertEquals "$output" "$(echo -e "setup_env()\nrun_env_as_user(,)")"
+    assertCommandSuccess cli -a arm
+    assertEquals "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --arch arm
+    assertEquals "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
+    assertCommandSuccess cli
+    assertEquals "$(echo -e "setup_env()\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
 
     is_env_installed(){
         return 0
     }
-    $(wrap_env -a arm 2> /dev/null)
-    assertEquals 1 $?
+    assertCommandFail cli -a arm
 }
 function test_run_env_as_fakeroot(){
-    local output=$(wrap_env -f)
-    assertEquals $output "run_env_as_fakeroot(,)"
-    local output=$(wrap_env --fakeroot)
-    assertEquals $output "run_env_as_fakeroot(,)"
+    assertCommandSuccess cli -f
+    assertEquals "run_env_as_fakeroot(,)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --fakeroot
+    assertEquals "run_env_as_fakeroot(,)" "$(cat $STDOUTF)"
 
-    local output=$(wrap_env -f -p "-b arg")
-    assertEquals "${output[@]}" "run_env_as_fakeroot(-b arg,)"
-    local output=$(wrap_env -f -p "-b arg" -- command -kv)
-    assertEquals "${output[@]}" "run_env_as_fakeroot(-b arg,command -kv)"
-    local output=$(wrap_env -f command --as)
-    assertEquals "${output[@]}" "run_env_as_fakeroot(,command --as)"
-    $(wrap_env -a "myarch" -f command --as 2> /dev/null)
-    assertEquals 1 $?
+    assertCommandSuccess cli -f -p "-b arg"
+    assertEquals "run_env_as_fakeroot(-b arg,)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -f -p "-b arg" -- command -kv
+    assertEquals "run_env_as_fakeroot(-b arg,command -kv)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -f command --as
+    assertEquals "run_env_as_fakeroot(,command --as)" "$(cat $STDOUTF)"
+    assertCommandFail cli -a "myarch" -f command --as
 }
 function test_run_env_as_user(){
-    local output=$(wrap_env)
-    assertEquals $output "run_env_as_user(,)"
+    assertCommandSuccess cli
+    assertEquals "run_env_as_user(,)" "$(cat $STDOUTF)"
 
-    local output=$(wrap_env -p "-b arg")
-    assertEquals "$output" "run_env_as_user(-b arg,)"
-    local output=$(wrap_env -p "-b arg" -- command -ll)
-    assertEquals "$output" "run_env_as_user(-b arg,command -ll)"
-    local output=$(wrap_env command -ls)
-    assertEquals "$output" "run_env_as_user(,command -ls)"
-    $(wrap_env -a "myarch" -- command -ls 2> /dev/null)
-    assertEquals 1 $?
+    assertCommandSuccess cli -p "-b arg"
+    assertEquals "run_env_as_user(-b arg,)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -p "-b arg" -- command -ll
+    assertEquals "run_env_as_user(-b arg,command -ll)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli command -ls
+    assertEquals "run_env_as_user(,command -ls)" "$(cat $STDOUTF)"
+
+    assertCommandFail cli -a "myarch" -- command -ls
 }
 function test_run_env_as_root(){
-    local output=$(wrap_env -r)
-    assertEquals $output "run_env_as_root"
-
-    local output=$(wrap_env -r command)
-    assertEquals "${output[@]}" "run_env_as_root command"
+    assertCommandSuccess cli -r
+    assertEquals "run_env_as_root " "$(cat $STDOUTF)"
+    assertCommandSuccess cli -r command
+    assertEquals "run_env_as_root command" "$(cat $STDOUTF)"
 }
 
 function test_check_cli(){
-    $(wrap_env -b -h 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -b -c 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -d -s 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -n -v 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -d -r 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -h -f 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -v -i fsd 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -f -r 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -p args -v 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -a arch -v 2> /dev/null)
-    assertEquals $? 1
-    $(wrap_env -d args 2> /dev/null)
-    assertEquals $? 1
+    assertCommandFail cli -b -h
+    assertCommandFail cli -b -c
+    assertCommandFail cli -d -s
+    assertCommandFail cli -n -v
+    assertCommandFail cli -d -r
+    assertCommandFail cli -h -f
+    assertCommandFail cli -v -i fsd
+    assertCommandFail cli -f -r
+    assertCommandFail cli -p args -v
+    assertCommandFail cli -a arch -v
+    assertCommandFail cli -d args
 }
 
 source $(dirname $0)/shunit2

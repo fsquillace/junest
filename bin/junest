@@ -2,24 +2,10 @@
 #
 # This file is part of JuNest (https://github.com/fsquillace/junest).
 #
-# Copyright (c) 2015
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU Library General Public License as published
-# by the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-JUNEST_BASE="$(dirname $0)/.."
+JUNEST_BASE="$(readlink -f $(dirname $(readlink -f "$0"))/..)"
 
+source "${JUNEST_BASE}/lib/utils.sh"
 source "${JUNEST_BASE}/lib/core.sh"
 
 ###################################
@@ -27,7 +13,8 @@ source "${JUNEST_BASE}/lib/core.sh"
 ###################################
 
 usage() {
-    echo -e "$NAME: $DESCRIPTION"
+    echo -e "$NAME (v$(cat $JUNEST_BASE/VERSION)): $DESCRIPTION"
+    echo
     echo -e "Usage: $CMD [options] [--] [command]"
 	echo
     echo -e "Setup options:"
@@ -54,9 +41,7 @@ usage() {
 }
 
 version() {
-	echo -e "$NAME $VERSION ($CODE_NAME): $DESCRIPTION"
-    echo -e "Copyright (c) $COPYRIGHT $AUTHOR"
-    echo -e "Homepage: $HOMEPAGE"
+    echo -e "$NAME $(cat $JUNEST_BASE/VERSION)"
 }
 
 check_cli(){
@@ -225,7 +210,11 @@ function execute_operation(){
 	fi
 }
 
-parse_arguments "$@"
-check_cli
-execute_operation
+function cli() {
+    parse_arguments "$@"
+    check_cli
+    execute_operation
+}
+
+cli "$@"
 # vim: set ts=4 sw=4 noet:
