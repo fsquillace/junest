@@ -178,7 +178,6 @@ function _setup_env(){
 
     mkdir_cmd -p "${JUNEST_HOME}"
     $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
-    mkdir_cmd -p ${JUNEST_HOME}/run/lock
     info "The default mirror URL is ${DEFAULT_MIRROR}."
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
@@ -282,10 +281,6 @@ function run_env_as_root(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME};" EXIT QUIT ABRT KILL TERM INT
 
-    # The mtab file should already be available in the image.
-    # This following instruction will be deleted
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
-
     JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
 }
 
@@ -339,9 +334,7 @@ function _run_env_with_qemu(){
 function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
-    # The mtab file should already be available in the image.
-    # This following instruction will be deleted
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
+
     _run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
 }
 
@@ -363,9 +356,6 @@ function run_env_as_fakeroot(){
 function run_env_as_user(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
-    # The mtab file should already be available in the image.
-    # This following instruction will be deleted
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
 
     _provide_bindings_as_user
     local bindings="$RESULT"
@@ -475,6 +465,7 @@ function build_image_env(){
     # yaourt requires sed
     sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
+    mkdir -p ${maindir}/root/run/lock
 
     info "Install ${NAME} script..."
     sudo pacman --noconfirm --root ${maindir}/root -S git
