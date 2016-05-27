@@ -153,7 +153,6 @@ function test_setup_env(){
     WGET=wget_mock
     setup_env 1> /dev/null
     assertTrue "[ -e $JUNEST_HOME/file ]"
-    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
 
     assertCommandFailOnStatus 102 setup_env "noarch"
 }
@@ -191,7 +190,6 @@ function _test_run_env_as_root() {
     }
 
     assertCommandSuccess run_env_as_root $@
-    assertEquals "/proc/self/mounts" "$(readlink ${JUNEST_HOME}/etc/mtab)"
 }
 
 function test_run_env_as_root_cmd(){
@@ -203,13 +201,6 @@ function test_run_env_as_classic_root_no_cmd(){
     _test_run_env_as_root
     assertEquals "$JUNEST_HOME /bin/sh --login -c /bin/sh --login" "$(cat $STDOUTF)"
 }
-
-#function test_run_env_with_proot_as_root(){
-    #[ $SKIP_ROOT_TESTS -eq 1 ] && return
-
-    #sudo run_env_as_user
-    #sudo run_env_as_fakeroot
-#}
 
 function test_run_env_as_user(){
     _run_env_with_qemu() {
@@ -235,16 +226,6 @@ function test_run_env_as_fakeroot(){
     SH=("/usr/bin/echo")
     assertCommandSuccess run_env_as_fakeroot "-k 3.10"
     assertEquals "-S ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
-}
-
-function test_run_env_as_proot_mtab(){
-    _run_env_with_qemu() {
-        echo $@
-    }
-    assertCommandSuccess run_env_as_fakeroot "-k 3.10" "echo"
-    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
-    assertCommandSuccess run_env_as_user "-k 3.10" "echo"
-    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
 }
 
 function test_run_env_with_quotes(){
