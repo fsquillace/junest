@@ -6,32 +6,27 @@ set +e
 
 function oneTimeSetUp(){
     [ -z "$SKIP_ROOT_TESTS" ] && SKIP_ROOT_TESTS=0
-
-    CURRPWD=$PWD
-    ENV_MAIN_HOME=/tmp/junest-test-home
-    [ -e $ENV_MAIN_HOME ] || JUNEST_HOME=$ENV_MAIN_HOME bash -ic "source $CURRPWD/$(dirname $0)/../lib/utils.sh; source $CURRPWD/$(dirname $0)/../lib/core.sh; setup_env"
-    JUNEST_HOME=""
     setUpUnitTests
 }
 
-function install_mini_env(){
-    cp -rfa $ENV_MAIN_HOME/* $JUNEST_HOME
-}
-
 function setUp(){
-    cd $CURRPWD
-    JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t envhome.XXXXXXXXXX)
-    JUNEST_BASE="$CURRPWD/$(dirname $0)/.."
-    source "${JUNEST_BASE}/lib/utils.sh"
-    source "${JUNEST_BASE}/lib/core.sh"
-    ORIGIN_WD=$(TMPDIR=/tmp mktemp -d -t envowd.XXXXXXXXXX)
-    cd $ORIGIN_WD
-    JUNEST_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t envtemp.XXXXXXXXXX)
+    JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t junest-home.XXXXXXXXXX)
+    mkdir -p ${JUNEST_HOME}/etc/junest
+    echo "JUNEST_ARCH=x86_64" > ${JUNEST_HOME}/etc/junest/info
+    mkdir -p ${JUNEST_HOME}/etc/ca-certificates
+    JUNEST_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t junest-temp.XXXXXXXXXX)
+    source "$(dirname $0)/../lib/utils.sh"
+    source "$(dirname $0)/../lib/core.sh"
 
     set +e
 
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "rm -rf ${JUNEST_HOME}; rm -rf ${ORIGIN_WD}; rm -rf ${JUNEST_TEMPDIR}" EXIT QUIT ABRT KILL TERM INT
+    trap "rm -rf ${JUNEST_HOME}; rm -rf ${JUNEST_TEMPDIR}" EXIT QUIT ABRT KILL TERM INT
+
+    ld_exec() {
+        echo "ld_exec $@"
+    }
+    LD_EXEC=ld_exec
 }
 
 
@@ -39,18 +34,20 @@ function tearDown(){
     # the CA directories are read only and can be deleted only by changing the mod
     [ -d ${JUNEST_HOME}/etc/ca-certificates ] && chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
     rm -rf $JUNEST_HOME
-    rm -rf $ORIGIN_WD
     rm -rf $JUNEST_TEMPDIR
     trap - QUIT EXIT ABRT KILL TERM INT
 }
 
 
-function test_is_env_installed(){
-    assertCommandFail is_env_installed
-    touch $JUNEST_HOME/just_file
-    assertCommandSuccess is_env_installed
-}
+function test_ln(){
+    LN=echo assertCommandSuccess ln_cmd -s ln_file new_file
+    assertEquals "-s ln_file new_file" "$(cat $STDOUTF)"
 
+    LN=false assertCommandSuccess ln_cmd -s ln_file new_file
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false -s ln_file new_file" "$(cat $STDOUTF)"
+
+    LN=false LD_EXEC=false assertCommandFail ln_cmd
+}
 
 function test_download(){
     WGET=/bin/true
@@ -64,236 +61,55 @@ function test_download(){
     WGET=/bin/false CURL=/bin/false assertCommandFail download_cmd
 }
 
-function test_ln(){
-    install_mini_env
-
-    touch ln_file
-    assertCommandSuccess ln_cmd -s ln_file new_file
-    assertTrue "[ -e new_file ]"
-    rm new_file
-
-    touch ln_file
-    OLDPATH="$PATH"
-    PATH=""
-    $(ln_cmd -s ln_file new_file 2> /dev/null)
-    local ret=$?
-    PATH="$OLDPATH"
-    assertEquals $ret 0
-    assertTrue "[ -e new_file ]"
-}
-
 function test_rm(){
-    install_mini_env
+    RM=echo assertCommandSuccess rm_cmd rm_file
+    assertEquals "rm_file" "$(cat $STDOUTF)"
 
-    touch rm_file
-    assertCommandSuccess rm_cmd rm_file
-    assertTrue "[ ! -e rm_file ]"
+    RM=false assertCommandSuccess rm_cmd rm_file
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false rm_file" "$(cat $STDOUTF)"
 
-    touch rm_file
-    OLDPATH="$PATH"
-    PATH=""
-    rm_cmd rm_file 2> /dev/null
-    local ret=$?
-    PATH="$OLDPATH"
-    assertEquals $ret 0
-    assertTrue "[ ! -e rm_file ]"
+    RM=false LD_EXEC=false assertCommandFail rm_cmd rm_file
 }
 
 function test_chown(){
-    install_mini_env
-
     local id=$(id -u)
 
-    touch chown_file
-    assertCommandSuccess chown_cmd $id chown_file
+    CHOWN=echo assertCommandSuccess chown_cmd $id chown_file
+    assertEquals "$id chown_file" "$(cat $STDOUTF)"
 
-    touch chown_file
-    OLDPATH="$PATH"
-    PATH=""
-    chown_cmd $id chown_file 2> /dev/null
-    local ret=$?
-    PATH="$OLDPATH"
-    assertEquals $ret 0
+    CHOWN=false assertCommandSuccess chown_cmd $id chown_file
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false $id chown_file" "$(cat $STDOUTF)"
+
+    CHOWN=false LD_EXEC=false assertCommandFail chown_cmd $id chown_file
 }
 
 function test_mkdir(){
-    install_mini_env
+    MKDIR=echo assertCommandSuccess mkdir_cmd -p new_dir/new_dir
+    assertEquals "-p new_dir/new_dir" "$(cat $STDOUTF)"
 
-    assertCommandSuccess mkdir_cmd -p new_dir/new_dir
-    assertTrue "[ -d new_dir/new_dir ]"
-    rm -rf new_dir
+    MKDIR=false assertCommandSuccess mkdir_cmd -p new_dir/new_dir
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false -p new_dir/new_dir" "$(cat $STDOUTF)"
 
-    OLDPATH="$PATH"
-    PATH=""
-    mkdir_cmd -p new_dir/new_dir 2> /dev/null
-    local ret=$?
-    PATH="$OLDPATH"
-    assertEquals $ret 0
-    assertTrue "[ -d new_dir/new_dir ]"
+    MKDIR=false LD_EXEC=false assertCommandFail mkdir_cmd -p new_dir/new_dir
 }
 
-function test_setup_env(){
-    wget_mock(){
-        # Proof that the setup is happening
-        # inside $JUNEST_TEMPDIR
-        local cwd=${PWD#${JUNEST_TEMPDIR}}
-        local parent_dir=${PWD%${cwd}}
-        assertEquals "$JUNEST_TEMPDIR" "${parent_dir}"
-        touch file
-        tar -czvf ${CMD}-${ARCH}.tar.gz file
-    }
-    WGET=wget_mock
-    setup_env 1> /dev/null
-    assertTrue "[ -e $JUNEST_HOME/file ]"
-    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
+function test_chroot(){
+    CHROOT=echo assertCommandSuccess chroot_cmd root
+    assertEquals "root" "$(cat $STDOUTF)"
 
-    assertCommandFailOnStatus 102 setup_env "noarch"
+    CHROOT=false CLASSIC_CHROOT=echo assertCommandSuccess chroot_cmd root
+    assertEquals "root" "$(cat $STDOUTF)"
+
+    CHROOT=false CLASSIC_CHROOT=false assertCommandSuccess chroot_cmd root
+    assertEquals "ld_exec $JUNEST_HOME/usr/bin/chroot root" "$(cat $STDOUTF)"
+
+    CHROOT=false CLASSIC_CHROOT=false LD_EXEC=false assertCommandFail chroot_cmd root
 }
 
+function test_proot_cmd_compat(){
+    PROOT="/bin/true" assertCommandSuccess proot_cmd "" ""
 
-function test_setup_env_from_file(){
-    touch file
-    tar -czvf ${CMD}-${ARCH}.tar.gz file 1> /dev/null
-    setup_env_from_file ${CMD}-${ARCH}.tar.gz &> /dev/null
-    assertTrue "[ -e $JUNEST_HOME/file ]"
-    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
-
-    assertCommandFailOnStatus 103 setup_env_from_file noexist.tar.gz
-}
-
-function test_setup_env_from_file_with_absolute_path(){
-    touch file
-    tar -czvf ${CMD}-${ARCH}.tar.gz file 1> /dev/null
-    setup_env_from_file ${ORIGIN_WD}/${CMD}-${ARCH}.tar.gz &> /dev/null
-    assertTrue "[ -e $JUNEST_HOME/file ]"
-    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
-}
-
-function test_run_env_as_root(){
-    [ $SKIP_ROOT_TESTS -eq 1 ] && return
-
-    install_mini_env
-    CHROOT="sudo $CHROOT"
-    CLASSIC_CHROOT="sudo $CLASSIC_CHROOT"
-    CHOWN="sudo $CHOWN"
-
-    assertCommandSuccess run_env_as_root pwd
-    assertEquals "/" "$(cat $STDOUTF)"
-    assertCommandSuccess run_env_as_root [ -e /run/lock ]
-    assertCommandSuccess run_env_as_root [ -e $HOME ]
-
-    # test that normal user has ownership of the files created by root
-    assertCommandSuccess run_env_as_root touch /a_root_file
-    assertCommandSuccess run_env_as_root stat -c '%u' /a_root_file
-    assertEquals "$UID" "$(cat $STDOUTF)"
-
-    SH=("sh" "--login" "-c" "type -t type")
-    assertCommandSuccess run_env_as_root
-    assertEquals "builtin" "$(cat $STDOUTF)"
-    SH=("sh" "--login" "-c" "[ -e /run/lock ]")
-    assertCommandSuccess run_env_as_root
-    SH=("sh" "--login" "-c" "[ -e $HOME ]")
-    assertCommandSuccess run_env_as_root
-}
-
-function test_run_env_as_root_different_arch(){
-    [ $SKIP_ROOT_TESTS -eq 1 ] && return
-
-    install_mini_env
-    echo "JUNEST_ARCH=XXX" > ${JUNEST_HOME}/etc/junest/info
-    assertCommandFailOnStatus 104 run_env_as_root pwd
-}
-
-function test_run_env_as_classic_root(){
-    [ $SKIP_ROOT_TESTS -eq 1 ] && return
-
-    install_mini_env
-    CHROOT="sudo unknowncommand"
-    CLASSIC_CHROOT="sudo $CLASSIC_CHROOT"
-    CHOWN="sudo $CHOWN"
-
-    assertCommandSuccess run_env_as_root pwd
-    assertEquals "/" "$(cat $STDOUTF)"
-    assertCommandSuccess run_env_as_root [ -e /run/lock ]
-}
-
-function test_run_env_as_junest_root(){
-    [ $SKIP_ROOT_TESTS -eq 1 ] && return
-
-    install_mini_env
-    CHROOT="sudo unknowncommand"
-    CLASSIC_CHROOT="sudo unknowncommand"
-    LD_EXEC="sudo $LD_EXEC"
-    CHOWN="sudo $CHOWN"
-
-    assertCommandSuccess run_env_as_root pwd
-    assertEquals "/" "$(cat $STDOUTF)"
-    assertCommandSuccess run_env_as_root [ -e /run/lock ]
-    assertCommandFail run_env_as_root [ -e $HOME ]
-}
-
-function test_run_env_as_user(){
-    install_mini_env
-    assertCommandSuccess run_env_as_user "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2"
-    assertEquals "/usr/bin/mkdir" "$(cat $STDOUTF| awk -F: '{print $1}')"
-    assertTrue "[ -e $JUNEST_HOME/newdir2 ]"
-
-    SH=("/usr/bin/echo")
-    assertCommandSuccess run_env_as_user "-k 3.10"
-    assertEquals "-c :" "$(cat $STDOUTF)"
-}
-
-function test_run_env_as_proot_mtab(){
-    install_mini_env
-    assertCommandSuccess run_env_as_fakeroot "-k 3.10" "echo"
-    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
-    assertCommandSuccess run_env_as_user "-k 3.10" "echo"
-    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
-}
-
-function test_run_env_as_root_mtab(){
-    [ $SKIP_ROOT_TESTS -eq 1 ] && return
-
-    install_mini_env
-    CHROOT="sudo $CHROOT"
-    CLASSIC_CHROOT="sudo $CLASSIC_CHROOT"
-    CHOWN="sudo $CHOWN"
-    assertCommandSuccess run_env_as_root "echo"
-    assertTrue "[ ! -e $JUNEST_HOME/etc/mtab ]"
-}
-
-function test_run_env_with_quotes(){
-    install_mini_env
-    assertCommandSuccess run_env_as_user "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2"
-    assertEquals "/usr/bin/mkdir" "$(cat $STDOUTF| awk -F: '{print $1}')"
-    assertTrue "[ -e $JUNEST_HOME/newdir2 ]"
-}
-
-function test_run_env_as_user_proot_args(){
-    install_mini_env
-    assertCommandSuccess run_env_as_user "--help" ""
-
-    mkdir $JUNEST_TEMPDIR/newdir
-    touch $JUNEST_TEMPDIR/newdir/newfile
-    assertCommandSuccess run_env_as_user "-b $JUNEST_TEMPDIR/newdir:/newdir -k 3.10" "ls" "-l" "/newdir/newfile"
-
-    assertCommandFail _run_env_with_proot --helps
-}
-
-function test_run_env_with_proot_compat(){
-    PROOT="/bin/true"
-    assertCommandSuccess _run_env_with_proot "" ""
-
-    PROOT="/bin/false" assertCommandFail _run_env_with_proot --helps
-}
-
-function test_run_env_with_proot_as_root(){
-    [ $SKIP_ROOT_TESTS -eq 1 ] && return
-
-    install_mini_env
-
-    assertCommandFail sudo run_env_as_user
-    assertCommandFail sudo run_env_as_fakeroot
+    PROOT="/bin/false" assertCommandFail proot_cmd --helps
 }
 
 function test_run_proot_seccomp(){
@@ -316,14 +132,146 @@ function test_run_proot_seccomp(){
 PROOT_NO_SECCOMP=1" "$(cat $STDOUTF | grep "^PROOT_NO_SECCOMP")"
 }
 
+function test_is_env_installed(){
+    rm -rf $JUNEST_HOME/*
+    assertCommandFail is_env_installed
+    touch $JUNEST_HOME/just_file
+    assertCommandSuccess is_env_installed
+}
+
+function test_setup_env(){
+    rm -rf $JUNEST_HOME/*
+    wget_mock(){
+        # Proof that the setup is happening
+        # inside $JUNEST_TEMPDIR
+        local cwd=${PWD#${JUNEST_TEMPDIR}}
+        local parent_dir=${PWD%${cwd}}
+        assertEquals "$JUNEST_TEMPDIR" "${parent_dir}"
+        touch file
+        tar -czvf ${CMD}-${ARCH}.tar.gz file
+    }
+    WGET=wget_mock
+    setup_env 1> /dev/null
+    assertTrue "[ -e $JUNEST_HOME/file ]"
+    assertTrue "[ -e $JUNEST_HOME/run/lock ]"
+
+    assertCommandFailOnStatus 102 setup_env "noarch"
+}
+
+
+function test_setup_env_from_file(){
+    rm -rf $JUNEST_HOME/*
+    touch file
+    tar -czvf ${CMD}-${ARCH}.tar.gz file 1> /dev/null
+    assertCommandSuccess setup_env_from_file ${CMD}-${ARCH}.tar.gz
+    assertTrue "[ -e $JUNEST_HOME/file ]"
+}
+
+function test_setup_env_from_file_not_existing_file(){
+    assertCommandFailOnStatus 103 setup_env_from_file noexist.tar.gz
+}
+
+function test_setup_env_from_file_with_absolute_path(){
+    rm -rf $JUNEST_HOME/*
+    touch file
+    tar -czvf ${CMD}-${ARCH}.tar.gz file 1> /dev/null
+    assertCommandSuccess setup_env_from_file ${ORIGIN_WD}/${CMD}-${ARCH}.tar.gz
+    assertTrue "[ -e $JUNEST_HOME/file ]"
+}
+
+function test_run_env_as_root_different_arch(){
+    echo "JUNEST_ARCH=XXX" > ${JUNEST_HOME}/etc/junest/info
+    assertCommandFailOnStatus 104 run_env_as_root pwd
+}
+
+function _test_run_env_as_root() {
+    chroot_cmd() {
+        [ "$JUNEST_ENV" != "1" ] && return 1
+        echo $@
+    }
+
+    assertCommandSuccess run_env_as_root $@
+    assertEquals "/proc/self/mounts" "$(readlink ${JUNEST_HOME}/etc/mtab)"
+}
+
+function test_run_env_as_root_cmd(){
+    _test_run_env_as_root pwd
+    assertEquals "$JUNEST_HOME /bin/sh --login -c pwd" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_classic_root_no_cmd(){
+    _test_run_env_as_root
+    assertEquals "$JUNEST_HOME /bin/sh --login -c /bin/sh --login" "$(cat $STDOUTF)"
+}
+
+#function test_run_env_with_proot_as_root(){
+    #[ $SKIP_ROOT_TESTS -eq 1 ] && return
+
+    #sudo run_env_as_user
+    #sudo run_env_as_fakeroot
+#}
+
+function test_run_env_as_user(){
+    _run_env_with_qemu() {
+        echo $@
+    }
+    assertCommandSuccess run_env_as_user "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2"
+    _provide_bindings_as_user
+    assertEquals "${RESULT}-r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
+
+    SH=("/usr/bin/echo")
+    assertCommandSuccess run_env_as_user "-k 3.10"
+    _provide_bindings_as_user
+    assertEquals "${RESULT}-r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
+}
+
 function test_run_env_as_fakeroot(){
-    install_mini_env
-    assertCommandSuccess run_env_as_fakeroot "-k 3.10" "id"
-    assertEquals "uid=0(root)" "$(cat $STDOUTF | awk '{print $1}')"
+    _run_env_with_qemu() {
+        echo $@
+    }
+    assertCommandSuccess run_env_as_fakeroot "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2"
+    assertEquals "-S ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
+
+    SH=("/usr/bin/echo")
+    assertCommandSuccess run_env_as_fakeroot "-k 3.10"
+    assertEquals "-S ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_proot_mtab(){
+    _run_env_with_qemu() {
+        echo $@
+    }
+    assertCommandSuccess run_env_as_fakeroot "-k 3.10" "echo"
+    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
+    assertCommandSuccess run_env_as_user "-k 3.10" "echo"
+    assertTrue "[ -e $JUNEST_HOME/etc/mtab ]"
+}
+
+function test_run_env_with_quotes(){
+    _run_env_with_qemu() {
+        echo $@
+    }
+    assertCommandSuccess run_env_as_user "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2"
+    _provide_bindings_as_user
+    assertEquals "${RESULT}-r ${JUNEST_HOME} -k 3.10 bash -c /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
+}
+
+function test_run_env_with_proot_args(){
+    proot_cmd() {
+        [ "$JUNEST_ENV" != "1" ] && return 1
+        echo $@
+    }
+
+    assertCommandSuccess _run_env_with_proot --help
+    assertEquals "--help /bin/sh --login" "$(cat $STDOUTF)"
+
+    assertCommandSuccess _run_env_with_proot --help mycommand
+    assertEquals "--help /bin/sh --login -c mycommand" "$(cat $STDOUTF)"
+
+    assertCommandFail _run_env_with_proot
 }
 
 function test_delete_env(){
-    install_mini_env
     echo "N" | delete_env 1> /dev/null
     assertCommandSuccess is_env_installed
     echo "Y" | delete_env 1> /dev/null
@@ -331,9 +279,27 @@ function test_delete_env(){
 }
 
 function test_nested_env(){
-    install_mini_env
-    JUNEST_ENV=1 bash -ic "source $CURRPWD/$(dirname $0)/../lib/utils.sh; source $CURRPWD/$(dirname $0)/../lib/core.sh" &> /dev/null
-    assertEquals 1 $?
+    JUNEST_ENV=1 assertCommandFailOnStatus 106 bash -ic "source $PWD/$(dirname $0)/../lib/utils.sh; source $PWD/$(dirname $0)/../lib/core.sh"
+}
+
+function test_nested_env_not_set_variable(){
+    JUNEST_ENV=aaa assertCommandFailOnStatus 107 bash -ic "source $PWD/$(dirname $0)/../lib/utils.sh; source $PWD/$(dirname $0)/../lib/core.sh"
+}
+
+function test_qemu() {
+    echo "JUNEST_ARCH=arm" > ${JUNEST_HOME}/etc/junest/info
+    rm_cmd() {
+        echo $@
+    }
+    ln_cmd() {
+        echo $@
+    }
+    _run_env_with_proot() {
+        echo $@
+    }
+
+    RANDOM=100 ARCH=x86_64 assertCommandSuccess _run_env_with_qemu ""
+    assertEquals "$(echo -e "-s $JUNEST_HOME/opt/qemu/qemu-arm-static-x86_64 /tmp/qemu-arm-static-x86_64-100\n-q /tmp/qemu-arm-static-x86_64-100")" "$(cat $STDOUTF)"
 }
 
 source $(dirname $0)/shunit2

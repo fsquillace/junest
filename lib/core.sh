@@ -13,12 +13,19 @@ NAME='JuNest'
 CMD='junest'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
 
+NOT_AVAILABLE_ARCH=102
+NOT_EXISTING_FILE=103
+ARCHITECTURE_MISMATCH=104
+ROOT_ACCESS_ERROR=105
+NESTED_ENVIRONMENT=106
+VARIABLE_NOT_SET=107
+
 if [ "$JUNEST_ENV" == "1" ]
 then
-    die "Error: Nested ${NAME} environments are not allowed"
+    die_on_status $NESTED_ENVIRONMENT "Error: Nested ${NAME} environments are not allowed"
 elif [ ! -z $JUNEST_ENV ] && [ "$JUNEST_ENV" != "0" ]
 then
-    die "The variable JUNEST_ENV is not properly set"
+    die_on_status $VARIABLE_NOT_SET "The variable JUNEST_ENV is not properly set"
 fi
 
 [ -z ${JUNEST_HOME} ] && JUNEST_HOME=~/.${CMD}
@@ -78,6 +85,8 @@ CURL="curl -L -J -O -k"
 TAR=tar
 CHOWN="chown"
 LN=ln
+RM=rm
+MKDIR=mkdir
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -90,15 +99,15 @@ function ln_cmd(){
 }
 
 function rm_cmd(){
-    rm $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/rm $@
+    $RM $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$RM $@
 }
 
 function chown_cmd(){
-    $CHOWN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/chown $@
+    $CHOWN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CHOWN $@
 }
 
 function mkdir_cmd(){
-    mkdir $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/mkdir $@
+    $MKDIR $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$MKDIR $@
 }
 
 function proot_cmd(){
@@ -124,11 +133,6 @@ function chroot_cmd(){
 }
 
 ################################# MAIN FUNCTIONS ##############################
-
-NOT_AVAILABLE_ARCH=102
-NOT_EXISTING_FILE=103
-ARCHITECTURE_MISMATCH=104
-ROOT_ACCESS_ERROR=105
 
 #######################################
 # Check if the JuNest system is installed in JUNEST_HOME.
@@ -276,7 +280,7 @@ function run_env_as_root(){
 
     # With chown the ownership of the files is assigned to the real user
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -f ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
+    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME};" EXIT QUIT ABRT KILL TERM INT
 
     # The mtab file should already be available in the image.
     # This following instruction will be deleted
@@ -362,19 +366,35 @@ function run_env_as_user(){
     # The mtab file should already be available in the image.
     # This following instruction will be deleted
     [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
-    _run_env_with_qemu "$(_provide_bindings_as_user) -r ${JUNEST_HOME} $1" "${@:2}"
+
+    _provide_bindings_as_user
+    local bindings="$RESULT"
+    unset RESULT
+    _run_env_with_qemu "$bindings -r ${JUNEST_HOME} $1" "${@:2}"
 }
 
+#######################################
+# Provide the proot binding options for the normal user.
+#
+# Globals:
+#   HOME (RO)       : The home directory.
+#   RESULT (WO)     : Contains the binding options.
+# Arguments:
+#   None
+# Returns:
+#   None
+# Output:
+#   None
+#######################################
 function _provide_bindings_as_user(){
     # The list of bindings can be found in `proot --help`. This function excludes
     # /etc/mtab file so that it will not give conflicts with the related
     # symlink in the image.
-    local existing_bindings=""
+    RESULT=""
     for bind in "/etc/host.conf" "/etc/hosts" "/etc/hosts.equiv" "/etc/netgroup" "/etc/networks" "/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/resolv.conf" "/etc/localtime" "/dev" "/sys" "/proc" "/tmp" "$HOME"
     do
-        [ -e "$bind" ] && existing_bindings="-b $bind $existing_bindings"
+        [ -e "$bind" ] && RESULT="-b $bind $RESULT"
     done
-    echo $existing_bindings
 }
 
 #######################################
