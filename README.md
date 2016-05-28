@@ -58,14 +58,22 @@ visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rose
 
 Installation
 ============
-JuNest can works on GNU/Linux OS with kernel version greater or equal
-2.6.0 (JuNest was not tested on kernel versions older than this) on 64 bit, 32 bit and ARM architectures.
+
+## Dependencies ##
+JuNest comes with a very short list of dependencies in order to be installed in most
+of GNU/Linux distributions.
+Before installing JuNest be sure that all dependencies are properly installed in your system:
+
+- [bash (>=4.0)](https://www.gnu.org/software/bash/)
+- [GNU coreutils](https://www.gnu.org/software/coreutils/)
+
+The minimum recommended Linux kernel is 2.6.0+ on x86 32 and 64 bit and ARM architectures.
 
 ## Method one (Recommended) ##
-Just clone the JuNest repo somewhere (for example in ~/junest):
+Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 
-    git clone git://github.com/fsquillace/junest ~/junest
-    export PATH=~/junest/bin:$PATH
+    git clone git://github.com/fsquillace/junest ~/.local/share/junest
+    export PATH=~/.local/share/junest/bin:$PATH
 
 ### Installation using AUR (Arch Linux only) ###
 If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/):
@@ -80,22 +88,6 @@ Alternatively, another installation method would be to directly download the JuN
     mkdir ~/.junest
     curl https://dl.dropboxusercontent.com/u/42449030/junest/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
     export PATH=~/.junest/opt/junest/bin:$PATH
-
-Dependencies
-============
-JuNest comes with a very short list of dependencies in order to be installed in most
-of GNU/Linux distributions. The needed executables in the host OS are:
-
-- bash
-- chown (for root access only)
-- ln
-- mkdir
-- rm
-- tar
-- uname
-- wget or curl
-
-The minimum recommended linux kernel is 2.6.0+
 
 Advanced usage
 ==============
