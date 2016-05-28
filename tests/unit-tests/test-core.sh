@@ -1,22 +1,27 @@
 #!/bin/bash
-source "$(dirname $0)/utils.sh"
+
+JUNEST_ROOT=$(readlink -f $(dirname $0)/../..)
+
+source "$JUNEST_ROOT/tests/unit-tests/utils.sh"
 
 # Disable the exiterr
 set +e
 
 function oneTimeSetUp(){
-    [ -z "$SKIP_ROOT_TESTS" ] && SKIP_ROOT_TESTS=0
+    SKIP_ROOT_TESTS=${SKIP_ROOT_TESTS:-0}
     setUpUnitTests
 }
 
 function setUp(){
+    ORIGIN_CWD=$(TMPDIR=/tmp mktemp -d -t junest-cwd.XXXXXXXXXX)
+    cd $ORIGIN_CWD
     JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t junest-home.XXXXXXXXXX)
     mkdir -p ${JUNEST_HOME}/etc/junest
     echo "JUNEST_ARCH=x86_64" > ${JUNEST_HOME}/etc/junest/info
     mkdir -p ${JUNEST_HOME}/etc/ca-certificates
     JUNEST_TEMPDIR=$(TMPDIR=/tmp mktemp -d -t junest-temp.XXXXXXXXXX)
-    source "$(dirname $0)/../lib/utils.sh"
-    source "$(dirname $0)/../lib/core.sh"
+    source "$JUNEST_ROOT/lib/utils.sh"
+    source "$JUNEST_ROOT/lib/core.sh"
 
     set +e
 
@@ -35,6 +40,7 @@ function tearDown(){
     [ -d ${JUNEST_HOME}/etc/ca-certificates ] && chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
     rm -rf $JUNEST_HOME
     rm -rf $JUNEST_TEMPDIR
+    rm -rf $ORIGIN_CWD
     trap - QUIT EXIT ABRT KILL TERM INT
 }
 
@@ -112,7 +118,7 @@ function test_proot_cmd_compat(){
     PROOT="/bin/false" assertCommandFail proot_cmd --helps
 }
 
-function test_run_proot_seccomp(){
+function test_proot_cmd_seccomp(){
     envv(){
         env
     }
@@ -260,11 +266,11 @@ function test_delete_env(){
 }
 
 function test_nested_env(){
-    JUNEST_ENV=1 assertCommandFailOnStatus 106 bash -ic "source $PWD/$(dirname $0)/../lib/utils.sh; source $PWD/$(dirname $0)/../lib/core.sh"
+    JUNEST_ENV=1 assertCommandFailOnStatus 106 bash -ic "source $JUNEST_ROOT/lib/utils.sh; source $JUNEST_ROOT/lib/core.sh"
 }
 
 function test_nested_env_not_set_variable(){
-    JUNEST_ENV=aaa assertCommandFailOnStatus 107 bash -ic "source $PWD/$(dirname $0)/../lib/utils.sh; source $PWD/$(dirname $0)/../lib/core.sh"
+    JUNEST_ENV=aaa assertCommandFailOnStatus 107 bash -ic "source $JUNEST_ROOT/lib/utils.sh; source $JUNEST_ROOT/lib/core.sh"
 }
 
 function test_qemu() {
@@ -283,4 +289,4 @@ function test_qemu() {
     assertEquals "$(echo -e "-s $JUNEST_HOME/opt/qemu/qemu-arm-static-x86_64 /tmp/qemu-arm-static-x86_64-100\n-q /tmp/qemu-arm-static-x86_64-100")" "$(cat $STDOUTF)"
 }
 
-source $(dirname $0)/shunit2
+source $JUNEST_ROOT/tests/unit-tests/shunit2

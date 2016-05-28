@@ -1,7 +1,7 @@
 #!/bin/bash
 source "$(dirname $0)/utils.sh"
 
-source $(dirname $0)/../bin/junest -h &> /dev/null
+source $(dirname $0)/../../bin/junest -h &> /dev/null
 
 # Disable the exiterr
 set +e

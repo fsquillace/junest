@@ -4,7 +4,7 @@ source "$(dirname $0)/utils.sh"
 unset HOME
 export HOME=$(TMPDIR=/tmp mktemp -d -t pearl-user-home.XXXXXXX)
 
-source "$(dirname $0)/../lib/utils.sh"
+source "$(dirname $0)/../../lib/utils.sh"
 
 # Disable the exiterr
 set +e
