@@ -2,16 +2,23 @@ language: bash
 
 sudo: required
 
+env:
+  - TRAVIS_BASH_VERSION="4.0"
+
+before_install:
+  - ./tests/integ-tests/install-bash.sh "$TRAVIS_BASH_VERSION"
+
 install:
-    - PATH=$PWD/bin:$PATH
-    - junest -- echo "Installing JuNest (\$(uname -m))"
-    - JUNEST_HOME=~/.junest-arm junest -a arm -- echo "Installing JuNest (\$(uname -m))"
-    # TODO: Remember to enable x86 tests when fixed
-    #- JUNEST_HOME=~/.junest-x86 junest -a x86 -- echo "Installing JuNest (\$(uname -m))"
+  - PATH=$PWD/bin:$PATH
+  - junest -- echo "Installing JuNest (\$(uname -m))"
+  - JUNEST_HOME=~/.junest-arm junest -a arm -- echo "Installing JuNest (\$(uname -m))"
+  # TODO: Remember to enable x86 tests when fixed
+  #- JUNEST_HOME=~/.junest-x86 junest -a x86 -- echo "Installing JuNest (\$(uname -m))"
 
 script:
-    - ./tests/unit-tests.sh
-    - junest --check ./bin/junest
-    - yes | junest --delete
-    - JUNEST_HOME=~/.junest-arm junest --check ./bin/junest --skip-root-tests
-    - yes | JUNEST_HOME=~/.junest-arm junest --delete
+  - bash --version
+  - ./tests/unit-tests/unit-tests.sh
+  - junest --check ./bin/junest
+  - yes | junest --delete
+  - JUNEST_HOME=~/.junest-arm junest --check ./bin/junest --skip-root-tests
+  - yes | JUNEST_HOME=~/.junest-arm junest --delete

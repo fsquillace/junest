@@ -1,48 +1,31 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2015
+# This module contains all core functionalities for JuNest.
 #
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU Library General Public License as published
-# by the Free Software Foundation; either version 2, or (at your option)
-# any later version.
+# Dependencies:
+# - lib/utils.sh
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-
-# References:
-# https://wiki.archlinux.org/index.php/PKGBUILD
-# https://wiki.archlinux.org/index.php/Creating_Packages
+# vim: ft=sh
 
 set -e
 
-################################ IMPORTS #################################
-source "$(dirname ${BASH_ARGV[0]})/util.sh"
-
-################################# VARIABLES ##############################
-
 NAME='JuNest'
 CMD='junest'
-VERSION='5.6.7'
-CODE_NAME='Nitida'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
-AUTHOR='Filippo Squillace <feel dot sqoox at gmail.com>'
-HOMEPAGE="https://github.com/fsquillace/${CMD}"
-COPYRIGHT='2012-2016'
 
+NOT_AVAILABLE_ARCH=102
+NOT_EXISTING_FILE=103
+ARCHITECTURE_MISMATCH=104
+ROOT_ACCESS_ERROR=105
+NESTED_ENVIRONMENT=106
+VARIABLE_NOT_SET=107
 
 if [ "$JUNEST_ENV" == "1" ]
 then
-    die "Error: Nested ${NAME} environments are not allowed"
+    die_on_status $NESTED_ENVIRONMENT "Error: Nested ${NAME} environments are not allowed"
 elif [ ! -z $JUNEST_ENV ] && [ "$JUNEST_ENV" != "0" ]
 then
-    die "The variable JUNEST_ENV is not properly set"
+    die_on_status $VARIABLE_NOT_SET "The variable JUNEST_ENV is not properly set"
 fi
 
 [ -z ${JUNEST_HOME} ] && JUNEST_HOME=~/.${CMD}
@@ -101,6 +84,9 @@ WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR=tar
 CHOWN="chown"
+LN=ln
+RM=rm
+MKDIR=mkdir
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -109,19 +95,19 @@ LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 # image.
 
 function ln_cmd(){
-    ln $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/ln $@
+    $LN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$LN $@
 }
 
 function rm_cmd(){
-    rm $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/rm $@
+    $RM $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$RM $@
 }
 
 function chown_cmd(){
-    $CHOWN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/chown $@
+    $CHOWN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CHOWN $@
 }
 
 function mkdir_cmd(){
-    mkdir $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/mkdir $@
+    $MKDIR $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$MKDIR $@
 }
 
 function proot_cmd(){
@@ -148,6 +134,19 @@ function chroot_cmd(){
 
 ################################# MAIN FUNCTIONS ##############################
 
+#######################################
+# Check if the JuNest system is installed in JUNEST_HOME.
+#
+# Globals:
+#   JUNEST_HOME (RO)  : Contains the JuNest home directory.
+# Arguments:
+#   None
+# Returns:
+#   0                 : If JuNest is installed
+#   1                 : If JuNest is not installed
+# Output:
+#   None
+#######################################
 function is_env_installed(){
     [ -d "$JUNEST_HOME" ] && [ "$(ls -A $JUNEST_HOME)" ] && return 0
     return 1
@@ -155,8 +154,8 @@ function is_env_installed(){
 
 
 function _cleanup_build_directory(){
-# $1: maindir (optional) - str: build directory to get rid
     local maindir=$1
+    check_not_null "$maindir"
     builtin cd $ORIGIN_WD
     trap - QUIT EXIT ABRT KILL TERM INT
     rm_cmd -fr "$maindir"
@@ -164,17 +163,21 @@ function _cleanup_build_directory(){
 
 
 function _prepare_build_directory(){
+    local maindir=$1
+    check_not_null "$maindir"
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "rm_cmd -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
 }
 
 
 function _setup_env(){
+    local imagepath=$1
+    check_not_null "$imagepath"
+
     is_env_installed && die "Error: ${NAME} has been already installed in $JUNEST_HOME"
+
     mkdir_cmd -p "${JUNEST_HOME}"
-    imagepath=$1
     $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
-    mkdir_cmd -p ${JUNEST_HOME}/run/lock
     info "The default mirror URL is ${DEFAULT_MIRROR}."
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
@@ -182,14 +185,33 @@ function _setup_env(){
 }
 
 
+#######################################
+# Setup JuNest.
+#
+# Globals:
+#   JUNEST_HOME (RO)      : The JuNest home directory in which JuNest needs
+#                           to be installed.
+#   ARCH (RO)             : The host architecture.
+#   JUNEST_TEMPDIR (RO)   : The JuNest temporary directory for building
+#                           the JuNest system from the image.
+#   ENV_REPO (RO)         : URL of the site containing JuNest images.
+#   NAME (RO)             : The JuNest name.
+#   DEFAULT_MIRROR (RO)   : Arch Linux URL mirror.
+# Arguments:
+#   arch ($1?)            : The JuNest architecture image to download.
+#                           Defaults to the host architecture
+# Returns:
+#   $NOT_AVAILABLE_ARCH   : If the architecture is not one of the available ones.
+# Output:
+#   None
+#######################################
 function setup_env(){
-    local arch=$ARCH
-    [ -z $1 ] || arch="$1"
+    local arch=${1:-$ARCH}
     contains_element $arch "${ARCH_LIST[@]}" || \
-        die "The architecture is not one of: ${ARCH_LIST[@]}"
+        die_on_status $NOT_AVAILABLE_ARCH "The architecture is not one of: ${ARCH_LIST[@]}"
 
     local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
-    _prepare_build_directory
+    _prepare_build_directory $maindir
 
     info "Downloading ${NAME}..."
     builtin cd ${maindir}
@@ -202,21 +224,51 @@ function setup_env(){
     _cleanup_build_directory ${maindir}
 }
 
-
+#######################################
+# Setup JuNest from file.
+#
+# Globals:
+#   JUNEST_HOME (RO)      : The JuNest home directory in which JuNest needs
+#                           to be installed.
+#   NAME (RO)             : The JuNest name.
+#   DEFAULT_MIRROR (RO)   : Arch Linux URL mirror.
+# Arguments:
+#   imagefile ($1)        : The JuNest image file.
+# Returns:
+#   $NOT_EXISTING_FILE    : If the image file does not exist.
+# Output:
+#   None
+#######################################
 function setup_env_from_file(){
     local imagefile=$1
-    [ ! -e ${imagefile} ] && die "Error: The ${NAME} image file ${imagefile} does not exist"
+    check_not_null "$imagefile"
+    [ ! -e ${imagefile} ] && die_on_status $NOT_EXISTING_FILE "Error: The ${NAME} image file ${imagefile} does not exist"
 
     info "Installing ${NAME} from ${imagefile}..."
     _setup_env ${imagefile}
-
-    builtin cd $ORIGIN_WD
 }
 
+#######################################
+# Run JuNest as real root.
+#
+# Globals:
+#   JUNEST_HOME (RO)         : The JuNest home directory.
+#   UID (RO)                 : The user ID.
+#   SUDO_USER (RO)           : The sudo user ID.
+#   SUDO_GID (RO)            : The sudo group ID.
+#   SH (RO)                  : Contains the default command to run in JuNest.
+# Arguments:
+#   cmd ($@?)                : The command to run inside JuNest environment.
+#                              Default command is defined by SH variable.
+# Returns:
+#   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
+# Output:
+#   -                        : The command output.
+#######################################
 function run_env_as_root(){
     source ${JUNEST_HOME}/etc/junest/info
     [ "$JUNEST_ARCH" != "$ARCH" ] && \
-        die "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
+        die_on_status $ARCHITECTURE_MISMATCH "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
 
     local uid=$UID
     # SUDO_USER is more reliable compared to SUDO_UID
@@ -227,11 +279,7 @@ function run_env_as_root(){
 
     # With chown the ownership of the files is assigned to the real user
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME}; rm_cmd -f ${JUNEST_HOME}/etc/mtab" EXIT QUIT ABRT KILL TERM INT
-
-    # The mtab file should already be available in the image.
-    # This following instruction will be deleted
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
+    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME};" EXIT QUIT ABRT KILL TERM INT
 
     JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
 }
@@ -268,36 +316,89 @@ function _run_env_with_qemu(){
     _run_env_with_proot "$proot_args" "${@}"
 }
 
+#######################################
+# Run JuNest as fakeroot.
+#
+# Globals:
+#   JUNEST_HOME (RO)         : The JuNest home directory.
+#   EUID (RO)                : The user ID.
+#   SH (RO)                  : Contains the default command to run in JuNest.
+# Arguments:
+#   cmd ($@?)                : The command to run inside JuNest environment.
+#                              Default command is defined by SH variable.
+# Returns:
+#   $ROOT_ACCESS_ERROR       : If the user is the real root.
+# Output:
+#   -                        : The command output.
+#######################################
 function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
-        die "You cannot access with root privileges. Use --root option instead."
-    # The mtab file should already be available in the image.
-    # This following instruction will be deleted
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
+        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+
     _run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
 }
 
+#######################################
+# Run JuNest as normal user.
+#
+# Globals:
+#   JUNEST_HOME (RO)         : The JuNest home directory.
+#   EUID (RO)                : The user ID.
+#   SH (RO)                  : Contains the default command to run in JuNest.
+# Arguments:
+#   cmd ($@?)                : The command to run inside JuNest environment.
+#                              Default command is defined by SH variable.
+# Returns:
+#   $ROOT_ACCESS_ERROR       : If the user is the real root.
+# Output:
+#   -                        : The command output.
+#######################################
 function run_env_as_user(){
     (( EUID == 0 )) && \
-        die "You cannot access with root privileges. Use --root option instead."
-    # The mtab file should already be available in the image.
-    # This following instruction will be deleted
-    [ ! -e ${JUNEST_HOME}/etc/mtab ] && ln_cmd -s /proc/self/mounts ${JUNEST_HOME}/etc/mtab
-    _run_env_with_qemu "$(_provide_bindings_as_user) -r ${JUNEST_HOME} $1" "${@:2}"
+        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+
+    _provide_bindings_as_user
+    local bindings="$RESULT"
+    unset RESULT
+    _run_env_with_qemu "$bindings -r ${JUNEST_HOME} $1" "${@:2}"
 }
 
+#######################################
+# Provide the proot binding options for the normal user.
+#
+# Globals:
+#   HOME (RO)       : The home directory.
+#   RESULT (WO)     : Contains the binding options.
+# Arguments:
+#   None
+# Returns:
+#   None
+# Output:
+#   None
+#######################################
 function _provide_bindings_as_user(){
     # The list of bindings can be found in `proot --help`. This function excludes
     # /etc/mtab file so that it will not give conflicts with the related
     # symlink in the image.
-    local existing_bindings=""
+    RESULT=""
     for bind in "/etc/host.conf" "/etc/hosts" "/etc/hosts.equiv" "/etc/netgroup" "/etc/networks" "/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/resolv.conf" "/etc/localtime" "/dev" "/sys" "/proc" "/tmp" "$HOME"
     do
-        [ -e "$bind" ] && existing_bindings="-b $bind $existing_bindings"
+        [ -e "$bind" ] && RESULT="-b $bind $RESULT"
     done
-    echo $existing_bindings
 }
 
+#######################################
+# Remove an existing JuNest system.
+#
+# Globals:
+#  JUNEST_HOME (RO)         : The JuNest home directory to remove.
+# Arguments:
+#  None
+# Returns:
+#  None
+# Output:
+#  None
+#######################################
 function delete_env(){
     ! ask "Are you sure to delete ${NAME} located in ${JUNEST_HOME}" "N" && return
     if mountpoint -q ${JUNEST_HOME}
@@ -364,6 +465,7 @@ function build_image_env(){
     # yaourt requires sed
     sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
+    mkdir -p ${maindir}/root/run/lock
 
     info "Install ${NAME} script..."
     sudo pacman --noconfirm --root ${maindir}/root -S git

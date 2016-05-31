@@ -2,24 +2,10 @@
 #
 # This file is part of JuNest (https://github.com/fsquillace/junest).
 #
-# Copyright (c) 2015
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU Library General Public License as published
-# by the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-JUNEST_BASE="$(dirname $0)/.."
+JUNEST_BASE="$(readlink -f $(dirname $(readlink -f "$0"))/..)"
 
+source "${JUNEST_BASE}/lib/utils.sh"
 source "${JUNEST_BASE}/lib/core.sh"
 
 ###################################
@@ -27,9 +13,10 @@ source "${JUNEST_BASE}/lib/core.sh"
 ###################################
 
 usage() {
-    echo -e "$NAME: $DESCRIPTION"
+    echo -e "$NAME (v$(cat $JUNEST_BASE/VERSION)): $DESCRIPTION"
+    echo
     echo -e "Usage: $CMD [options] [--] [command]"
-	echo
+    echo
     echo -e "Setup options:"
     echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUNEST_HOME}"
     echo -e "-a, --arch <arch>              $NAME architecture to download (x86_64, x86, arm)."
@@ -54,9 +41,7 @@ usage() {
 }
 
 version() {
-	echo -e "$NAME $VERSION ($CODE_NAME): $DESCRIPTION"
-    echo -e "Copyright (c) $COPYRIGHT $AUTHOR"
-    echo -e "Homepage: $HOMEPAGE"
+    echo -e "$NAME $(cat $JUNEST_BASE/VERSION)"
 }
 
 check_cli(){
@@ -142,90 +127,94 @@ check_cli(){
 
 
 function parse_arguments(){
-	OPT_SETUP_FROM_FILE=false
-	IMAGE_FILE=""
-	OPT_FAKEROOT=false
-	OPT_ROOT=false
-	OPT_PROOT_ARGS=false
-	PROOT_ARGS=""
-	OPT_ARCH=false
-	ARCH_ARG=""
-	OPT_BUILD_IMAGE=false
-	OPT_DISABLE_VALIDATION=false
-	OPT_CHECK=false
-	CHECK_ARG=""
-	OPT_SKIP_ROOT_TEST=false
-	OPT_DELETE=false
-	OPT_HELP=false
-	OPT_VERSION=false
-	for opt in "$@"
-	do
-		case "$1" in
-			-i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
-			-f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-			-r|--root) OPT_ROOT=true ; shift ;;
-			-p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
-			-a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
-			-b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
-			-n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
-			-c|--check) OPT_CHECK=true ; shift ; CHECK_ARG=$1; shift ;;
-			-s|--skip-root-tests) OPT_SKIP_ROOT_TEST=true ; shift ;;
-			-d|--delete) OPT_DELETE=true ; shift ;;
-			-h|--help) OPT_HELP=true ; shift ;;
-			-v|--version) OPT_VERSION=true ; shift ;;
-			--) shift ; break ;;
-			-*) die "Invalid option $1" ;;
-			*) break ;;
-		esac
-	done
+    OPT_SETUP_FROM_FILE=false
+    IMAGE_FILE=""
+    OPT_FAKEROOT=false
+    OPT_ROOT=false
+    OPT_PROOT_ARGS=false
+    PROOT_ARGS=""
+    OPT_ARCH=false
+    ARCH_ARG=""
+    OPT_BUILD_IMAGE=false
+    OPT_DISABLE_VALIDATION=false
+    OPT_CHECK=false
+    CHECK_ARG=""
+    OPT_SKIP_ROOT_TEST=false
+    OPT_DELETE=false
+    OPT_HELP=false
+    OPT_VERSION=false
+    for opt in "$@"
+    do
+        case "$1" in
+            -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
+            -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
+            -r|--root) OPT_ROOT=true ; shift ;;
+            -p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
+            -a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
+            -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
+            -n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
+            -c|--check) OPT_CHECK=true ; shift ; CHECK_ARG=$1; shift ;;
+            -s|--skip-root-tests) OPT_SKIP_ROOT_TEST=true ; shift ;;
+            -d|--delete) OPT_DELETE=true ; shift ;;
+            -h|--help) OPT_HELP=true ; shift ;;
+            -v|--version) OPT_VERSION=true ; shift ;;
+            --) shift ; break ;;
+            -*) die "Invalid option $1" ;;
+            *) break ;;
+        esac
+    done
 
-	ARGS=()
-	for arg in "$@"
-	do
-		ARGS+=("$arg")
-	done
+    ARGS=()
+    for arg in "$@"
+    do
+        ARGS+=("$arg")
+    done
 }
 
 function execute_operation(){
-	$OPT_HELP && usage && return
-	$OPT_VERSION && version && return
+    $OPT_HELP && usage && return
+    $OPT_VERSION && version && return
 
-	if $OPT_BUILD_IMAGE; then
-		build_image_env $OPT_DISABLE_VALIDATION $OPT_SKIP_ROOT_TEST
-		return
-	elif $OPT_DELETE; then
-		delete_env
-		return
-	elif $OPT_CHECK; then
-		check_env "${JUNEST_HOME}" "${CHECK_ARG}" $OPT_SKIP_ROOT_TEST
-		return
-	fi
+    if $OPT_BUILD_IMAGE; then
+        build_image_env $OPT_DISABLE_VALIDATION $OPT_SKIP_ROOT_TEST
+        return
+    elif $OPT_DELETE; then
+        delete_env
+        return
+    elif $OPT_CHECK; then
+        check_env "${JUNEST_HOME}" "${CHECK_ARG}" $OPT_SKIP_ROOT_TEST
+        return
+    fi
 
-	if ! is_env_installed
-	then
-		if $OPT_SETUP_FROM_FILE; then
-			setup_env_from_file $IMAGE_FILE
-		else
-			setup_env $ARCH_ARG
-			unset ARCH_ARG
-		fi
-	elif $OPT_SETUP_FROM_FILE; then
-		die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
-	fi
+    if ! is_env_installed
+    then
+        if $OPT_SETUP_FROM_FILE; then
+            setup_env_from_file $IMAGE_FILE
+        else
+            setup_env $ARCH_ARG
+            unset ARCH_ARG
+        fi
+    elif $OPT_SETUP_FROM_FILE; then
+        die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
+    fi
 
-	[ -z "${ARCH_ARG}" ] || \
-		die "The option --arch cannot be specified since JuNest has already been downloaded in $JUNEST_HOME"
+    [ -z "${ARCH_ARG}" ] || \
+        die "The option --arch cannot be specified since JuNest has already been downloaded in $JUNEST_HOME"
 
-	if $OPT_FAKEROOT; then
-		run_env_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
-	elif $OPT_ROOT; then
-		run_env_as_root "${ARGS[@]}"
-	else
-		run_env_as_user "${PROOT_ARGS}" "${ARGS[@]}"
-	fi
+    if $OPT_FAKEROOT; then
+        run_env_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
+    elif $OPT_ROOT; then
+        run_env_as_root "${ARGS[@]}"
+    else
+        run_env_as_user "${PROOT_ARGS}" "${ARGS[@]}"
+    fi
 }
 
-parse_arguments "$@"
-check_cli
-execute_operation
+function cli() {
+    parse_arguments "$@"
+    check_cli
+    execute_operation
+}
+
+cli "$@"
 # vim: set ts=4 sw=4 noet:
