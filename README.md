@@ -2,6 +2,13 @@ JuNest
 ======
 The Arch Linux based distro that runs upon any Linux distros without root access.
 
+<h1 align="center">
+    <a href="https://github.com/fsquillace/junest"><img
+        alt="JuNest"
+        width=250px
+        src="https://cdn.rawgit.com/fsquillace/junest-logo/master/junest.svg"></a>
+</h1>
+
 |Project Status|Donation|Communication|
 |:------------:|:------:|:-----------:|
 | [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![PayPal](https://img.shields.io/badge/PayPal-Donate%20a%20beer-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) [![Gratipay](https://img.shields.io/badge/Gratipay-Donate%20to%20JuNest-green.svg)](https://gratipay.com/junest/) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Join the IRC chat at https://webchat.freenode.net/?channels=junest](https://img.shields.io/badge/IRC-JuNest-yellow.svg)](https://webchat.freenode.net/?channels=junest) [![Join the group at https://groups.google.com/d/forum/junest](https://img.shields.io/badge/Google Groups-JuNest-red.svg)](https://groups.google.com/d/forum/junest) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
@@ -14,10 +21,9 @@ The Arch Linux based distro that runs upon any Linux distros without root access
 - [Advanced usage](#advanced-usage)
 - [Internals](#internals)
 - [Troubleshooting](#troubleshooting)
-- [More documentation](#more documentation)
-- [License](#license)
+- [More documentation](#more-documentation)
+- [Contributing](#contributing)
 - [Author](#author)
-- [WWW](#www)
 
 Description
 ===========
@@ -163,22 +169,22 @@ enhanced chroot for privileged users that mounts the primary directories
 (i.e. /proc, /sys, /dev and /run) before executing any programs inside
 the sandbox.
 
-##Automatic fallback to classic chroot##
+## Automatic fallback to classic chroot ##
 If jchroot fails for some reasons in the host system (i.e. it is not able to
 mount one of the directories),
 JuNest automatically tries to fallback to the classic chroot.
 
-##Automatic fallback for all the dependent host OS executables##
+## Automatic fallback for all the dependent host OS executables ##
 JuNest attempt first to run the executables in the host OS located in different
 positions (/usr/bin, /bin, /usr/sbin and /sbin).
 As a fallback it tries to run the same executable if it is available in the JuNest
 image.
 
-##Automatic building of the JuNest images##
+## Automatic building of the JuNest images ##
 The JuNest images are built every week so that you can always get the most
 updated package versions.
 
-##Static QEMU binaries##
+## Static QEMU binaries ##
 There are static QEMU binaries included in JuNest image that allows to run JuNest
 in a different architecture from the host system. They are located in `/opt/qemu`
 directory.
@@ -186,7 +192,7 @@ directory.
 Troubleshooting
 ===============
 
-##Cannot use AUR repository##
+## Cannot use AUR repository ##
 
 > **Q**: Why do I get the following error when I try to install a package with yaourt?
 
@@ -198,7 +204,7 @@ Troubleshooting
 
     #> pacman -S base-devel
 
-##No servers configured for repository##
+## No servers configured for repository ##
 
 > **Q**: Why I cannot install packages?
 
@@ -233,7 +239,7 @@ Troubleshooting
     $> pkgfile getop
     core/util-linux
 
-##Kernel too old##
+## Kernel too old ##
 
 > **Q**: Why do I get the error: "FATAL: kernel too old"?
 
@@ -254,7 +260,7 @@ Troubleshooting
 
 > From the output you can see what is the minimum recommended Linux kernel version.
 
-##SUID permissions##
+## SUID permissions ##
 > **Q**: Why I do not have permissions for ping?
 
     $> ping www.google.com
@@ -268,7 +274,7 @@ Troubleshooting
 
     $> find /usr/bin -perm +4000
 
-##No characters are visible on a graphic application##
+## No characters are visible on a graphic application ##
 
 > **Q**: Why I do not see any characters in the application I have installed?
 
@@ -280,7 +286,7 @@ Troubleshooting
 
     #> pacman -S gnu-free-fonts
 
-##Differences between filesystem and package ownership##
+## Differences between filesystem and package ownership ##
 
 > **Q**: Why do I get warning when I install a package using root privileges?
 
@@ -300,27 +306,15 @@ More documentation
 There are additional tutorials in the
 [JuNest wiki page](https://github.com/fsquillace/junest/wiki).
 
-License
-=======
-Copyright (c) 2012-2016
+Contributing
+============
+You could help improving JuNest in the following ways:
 
-This program is free software; you can redistribute it and/or modify it
-under the terms of the GNU Library General Public License as published
-by the Free Software Foundation; either version 2, or (at your option)
-any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- [Reporting Bugs](CONTRIBUTING.md#reporting-bugs)
+- [Suggesting Enhancements](CONTRIBUTING.md#suggesting-enhancements)
+- [Writing Code](CONTRIBUTING.md#your-first-code-contribution)
 
 Author
 ======
 Filippo Squillace <feel.sqoox@gmail.com>
 
-WWW
-===
-https://github.com/fsquillace/junest
