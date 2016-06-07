@@ -87,6 +87,8 @@ CHOWN="chown"
 LN=ln
 RM=rm
 MKDIR=mkdir
+GETENT=getent
+CP=cp
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -96,6 +98,14 @@ LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
 function ln_cmd(){
     $LN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$LN $@
+}
+
+function getent_cmd(){
+    $GETENT $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$GETENT $@
+}
+
+function cp_cmd(){
+    $CP $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CP $@
 }
 
 function rm_cmd(){
@@ -357,6 +367,7 @@ function run_env_as_user(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
 
+    _build_passwd_and_group
     _provide_bindings_as_user
     local bindings="$RESULT"
     unset RESULT
@@ -365,6 +376,9 @@ function run_env_as_user(){
 
 #######################################
 # Provide the proot binding options for the normal user.
+# The list of bindings can be found in `proot --help`. This function excludes
+# /etc/mtab file so that it will not give conflicts with the related
+# symlink in the image.
 #
 # Globals:
 #   HOME (RO)       : The home directory.
@@ -377,14 +391,46 @@ function run_env_as_user(){
 #   None
 #######################################
 function _provide_bindings_as_user(){
-    # The list of bindings can be found in `proot --help`. This function excludes
-    # /etc/mtab file so that it will not give conflicts with the related
-    # symlink in the image.
     RESULT=""
-    for bind in "/etc/host.conf" "/etc/hosts" "/etc/hosts.equiv" "/etc/netgroup" "/etc/networks" "/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/resolv.conf" "/etc/localtime" "/dev" "/sys" "/proc" "/tmp" "$HOME"
+    local re='(.*):.*'
+    for bind in "/etc/host.conf" "/etc/hosts" "/etc/hosts.equiv" "/etc/netgroup" "/etc/networks" "${JUNEST_HOME}/etc/junest/passwd:/etc/passwd" "${JUNEST_HOME}/etc/junest/group:/etc/group" "/etc/nsswitch.conf" "/etc/resolv.conf" "/etc/localtime" "/dev" "/sys" "/proc" "/tmp" "$HOME"
     do
-        [ -e "$bind" ] && RESULT="-b $bind $RESULT"
+        if [[ $bind =~ $re ]]
+        then
+            [ -e "${BASH_REMATCH[1]}" ] && RESULT="-b $bind $RESULT"
+        else
+            [ -e "$bind" ] && RESULT="-b $bind $RESULT"
+        fi
     done
+}
+
+#######################################
+# Build passwd and group files using getent command.
+# If getent fails the function fallbacks by copying the content from /etc/passwd
+# and /etc/group.
+#
+# The generated passwd and group will be stored in $JUNEST_HOME/etc/junest.
+#
+# Globals:
+#  JUNEST_HOME (RO)      : The JuNest home directory.
+# Arguments:
+#  None
+# Returns:
+#  None
+# Output:
+#  None
+#######################################
+function _build_passwd_and_group(){
+    if ! getent_cmd passwd > ${JUNEST_HOME}/etc/junest/passwd
+    then
+        warn "getent command failed or does not exist. Binding directly from /etc/passwd."
+        cp_cmd /etc/passwd ${JUNEST_HOME}/etc/junest/passwd
+    fi
+    if ! getent_cmd group > ${JUNEST_HOME}/etc/junest/group
+    then
+        warn "getent command failed or does not exist. Binding directly from /etc/group."
+        cp_cmd /etc/group ${JUNEST_HOME}/etc/junest/group
+    fi
 }
 
 #######################################

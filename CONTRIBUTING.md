@@ -153,7 +153,7 @@ All JuNest issues are tracked as [GitHub issues](https://guides.github.com/featu
 #### Unit Tests ####
 To run unit tests:
 ```sh
-./tests/unit-tests.sh
+./tests/unit-tests/unit-tests.sh
 ```
 
 #### Integration Tests ####

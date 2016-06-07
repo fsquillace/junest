@@ -55,6 +55,26 @@ function test_ln(){
     LN=false LD_EXEC=false assertCommandFail ln_cmd
 }
 
+function test_getent(){
+    GETENT=echo assertCommandSuccess getent_cmd passwd
+    assertEquals "passwd" "$(cat $STDOUTF)"
+
+    GETENT=false assertCommandSuccess getent_cmd passwd
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false passwd" "$(cat $STDOUTF)"
+
+    GETENT=false LD_EXEC=false assertCommandFail getent_cmd
+}
+
+function test_cp(){
+    CP=echo assertCommandSuccess cp_cmd passwd
+    assertEquals "passwd" "$(cat $STDOUTF)"
+
+    CP=false assertCommandSuccess cp_cmd passwd
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false passwd" "$(cat $STDOUTF)"
+
+    CP=false LD_EXEC=false assertCommandFail cp_cmd
+}
+
 function test_download(){
     WGET=/bin/true
     CURL=/bin/false
@@ -220,6 +240,45 @@ function test_run_env_as_user(){
     assertCommandSuccess run_env_as_user "-k 3.10"
     _provide_bindings_as_user
     assertEquals "${RESULT}-r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
+}
+
+function test_provide_bindings_as_user_no_junest_home(){
+    _provide_bindings_as_user
+    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/passwd"
+    assertEquals 1 $?
+    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/group"
+    assertEquals 1 $?
+}
+
+function test_provide_bindings_as_user(){
+    touch $JUNEST_HOME/etc/junest/passwd
+    touch $JUNEST_HOME/etc/junest/group
+    _provide_bindings_as_user
+    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/passwd"
+    assertEquals 0 $?
+    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/group"
+    assertEquals 0 $?
+}
+
+function test_build_passwd_and_group(){
+    getent_cmd_mock() {
+        echo $@
+    }
+    GETENT=getent_cmd_mock assertCommandSuccess _build_passwd_and_group
+    assertEquals "passwd" "$(cat $JUNEST_HOME/etc/junest/passwd)"
+    assertEquals "group" "$(cat $JUNEST_HOME/etc/junest/group)"
+}
+
+function test_build_passwd_and_group_fallback(){
+    cp_cmd_mock() {
+        echo $@
+    }
+    CP=cp_cmd_mock GETENT=false LD_EXEC=false assertCommandSuccess _build_passwd_and_group
+    assertEquals "$(echo -e "/etc/passwd $JUNEST_HOME/etc/junest/passwd\n/etc/group $JUNEST_HOME/etc/junest/group")" "$(cat $STDOUTF)"
+}
+
+function test_build_passwd_and_group_failure(){
+    CP=false GETENT=false LD_EXEC=false assertCommandFailOnStatus 1 _build_passwd_and_group
 }
 
 function test_run_env_as_fakeroot(){
