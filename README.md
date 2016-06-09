@@ -31,7 +31,8 @@ Description
 an isolated GNU/Linux environment inside any generic host GNU/Linux OS
 and without the need to have root privileges for installing packages.
 
-JuNest contains mainly the package managers (called [pacman](https://wiki.archlinux.org/index.php/Pacman) and [yaourt](https://wiki.archlinux.org/index.php/Yaourt)) that allows to access
+JuNest contains mainly the package managers (called [pacman](https://wiki.archlinux.org/index.php/Pacman)
+and a simple wrapper of [yaourt](https://wiki.archlinux.org/index.php/Yaourt) called yogurt) that allows to access
 to a wide range of packages from the Arch Linux repositories.
 
 The main advantages on using JuNest are:
@@ -84,7 +85,7 @@ Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 ### Installation using AUR (Arch Linux only) ###
 If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/):
 
-    yaourt -S junest-git
+    yogurt -S junest-git
     export PATH=/opt/junest/bin:$PATH
 
 ## Method two ##
@@ -104,7 +105,7 @@ You can build a new JuNest image from scratch by running the following command:
     junest -b [-n]
 
 The script will create a directory containing all the essentials
-files in order to make JuNest working properly (such as pacman, yaourt and proot).
+files in order to make JuNest working properly (such as pacman, yogurt and proot).
 The option **-n** will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
 arch-install-scripts, package-query, git and the base-devel packages installed.
@@ -194,12 +195,12 @@ Troubleshooting
 
 ## Cannot use AUR repository ##
 
-> **Q**: Why do I get the following error when I try to install a package with yaourt?
+> **Q**: Why do I get the following error when I try to install a package with yogurt?
 
     Cannot find the gzip binary required for compressing man and info pages.
 
 > **A**: JuNest comes with a very basic number of packages.
-> In order to install packages using yaourt you may need to install the package group **base-devel**
+> In order to install packages using yogurt you may need to install the package group **base-devel**
 > that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
 
     #> pacman -S base-devel

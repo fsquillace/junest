@@ -61,7 +61,6 @@ else
     die "Unknown architecture ${ARCH}"
 fi
 
-PROOT_LINK=http://static.proot.me/
 MAIN_REPO=https://dl.dropboxusercontent.com/u/42449030
 ENV_REPO=${MAIN_REPO}/${CMD}
 DEFAULT_MIRROR='https://mirrors.kernel.org/archlinux/$repo/os/$arch'
@@ -511,7 +510,12 @@ function build_image_env(){
     # yaourt requires sed
     sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
-    mkdir -p ${maindir}/root/run/lock
+    sudo mkdir -p ${maindir}/root/run/lock
+
+    # AUR packages requires non-root user to be compiled. proot fakes the user to 10
+    info "Compiling and installing yaourt..."
+    _install_from_aur ${maindir} "package-query"
+    _install_from_aur ${maindir} "yaourt"
 
     info "Install ${NAME} script..."
     sudo pacman --noconfirm --root ${maindir}/root -S git
@@ -524,47 +528,6 @@ function build_image_env(){
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
     sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root locale-gen
     sudo bash -c "echo 'LANG=\"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
-
-    info "Generating the metadata info..."
-    sudo mkdir ${maindir}/root/etc/${CMD}
-    sudo bash -c "echo 'JUNEST_ARCH=$ARCH' > ${maindir}/root/etc/${CMD}/info"
-
-    info "Installing compatibility binaries proot"
-    sudo mkdir -p ${maindir}/root/opt/proot
-    builtin cd ${maindir}/root/opt/proot
-    for arch in ${ARCH_LIST[@]}
-    do
-        info "Downloading $PROOT_LINK/proot-$arch ..."
-        sudo $CURL $PROOT_LINK/proot-$arch
-        sudo chmod +x proot-$arch
-    done
-
-    info "Installing qemu static binaries"
-    sudo mkdir -p ${maindir}/root/opt/qemu
-    builtin cd ${maindir}/root/opt/qemu
-    for arch in ${ARCH_LIST[@]}
-    do
-        if [ "$arch" != "$ARCH" ]
-        then
-            info "Downloading qemu-$ARCH-static-$arch ..."
-            sudo $CURL ${MAIN_REPO}/qemu/$ARCH/qemu-$ARCH-static-$arch
-            sudo chmod +x qemu-$ARCH-static-$arch
-        fi
-    done
-
-    # AUR packages requires non-root user to be compiled. proot fakes the user to 10
-    info "Compiling and installing yaourt..."
-    _install_from_aur ${maindir} "package-query"
-
-    _install_from_aur ${maindir} "yaourt"
-    # Apply patches for yaourt and makepkg
-    sudo mkdir -p ${maindir}/root/opt/yaourt/bin/
-    sudo cp ${maindir}/root/usr/bin/yaourt ${maindir}/root/opt/yaourt/bin/
-    sudo sed -i -e 's/"--asroot"//' ${maindir}/root/opt/yaourt/bin/yaourt
-    sudo cp ${maindir}/root/usr/bin/makepkg ${maindir}/root/opt/yaourt/bin/
-    sudo sed -i -e 's/EUID\s==\s0/false/' ${maindir}/root/opt/yaourt/bin/makepkg
-    sudo bash -c "echo 'export PATH=/opt/yaourt/bin:\$PATH' > ${maindir}/root/etc/profile.d/${CMD}.sh"
-    sudo chmod +x ${maindir}/root/etc/profile.d/${CMD}.sh
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root bash -c \
@@ -604,9 +567,9 @@ function check_env(){
     $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r pacman -Qi pacman 1> /dev/null
     JUNEST_HOME=${testdir} ${cmd} -- pacman -Qi pacman 1> /dev/null
     JUNEST_HOME=${testdir} ${cmd} -f -- pacman -Qi pacman 1> /dev/null
-    $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r yaourt -V 1> /dev/null
-    JUNEST_HOME=${testdir} ${cmd} -- yaourt -V 1> /dev/null
-    JUNEST_HOME=${testdir} ${cmd} -f -- yaourt -V 1> /dev/null
+    $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r yogurt -V 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -- yogurt -V 1> /dev/null
+    JUNEST_HOME=${testdir} ${cmd} -f -- yogurt -V 1> /dev/null
     $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r /opt/proot/proot-$ARCH --help 1> /dev/null
     JUNEST_HOME=${testdir} ${cmd} -- /opt/proot/proot-$ARCH --help 1> /dev/null
     JUNEST_HOME=${testdir} ${cmd} -f -- /opt/proot/proot-$ARCH --help 1> /dev/null
@@ -623,9 +586,9 @@ function check_env(){
     $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r iftop -t -s 5
 
     JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -S base-devel
-    local yaourt_package=tcptraceroute
-    info "Installing ${yaourt_package} package from AUR repo using proot..."
-    JUNEST_HOME=${testdir} ${cmd} -f -- yaourt -A --noconfirm -S ${yaourt_package}
+    local aur_package=tcptraceroute
+    info "Installing ${aur_package} package from AUR repo using proot..."
+    JUNEST_HOME=${testdir} ${cmd} -f -- yogurt -A --noconfirm -S ${aur_package}
     $skip_root_tests || JUNEST_HOME=${testdir} sudo -E ${cmd} -r tcptraceroute localhost
 
     info "Removing the previous packages..."
