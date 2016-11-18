@@ -420,15 +420,19 @@ function _provide_bindings_as_user(){
 #  None
 #######################################
 function _build_passwd_and_group(){
-    if ! getent_cmd passwd > ${JUNEST_HOME}/etc/junest/passwd
-    then
-        warn "getent command failed or does not exist. Binding directly from /etc/passwd."
-        cp_cmd /etc/passwd ${JUNEST_HOME}/etc/junest/passwd
+    if [ ! -f ${JUNEST_HOME}/etc/junest/passwd ] ; then
+        if ! getent_cmd passwd > ${JUNEST_HOME}/etc/junest/passwd
+        then
+            warn "getent command failed or does not exist. Binding directly from /etc/passwd."
+            cp_cmd /etc/passwd ${JUNEST_HOME}/etc/junest/passwd
+        fi
     fi
-    if ! getent_cmd group > ${JUNEST_HOME}/etc/junest/group
-    then
-        warn "getent command failed or does not exist. Binding directly from /etc/group."
-        cp_cmd /etc/group ${JUNEST_HOME}/etc/junest/group
+    if [ ! -f ${JUNEST_HOME}/etc/junest/group ] ; then
+        if ! getent_cmd group > ${JUNEST_HOME}/etc/junest/group
+        then
+            warn "getent command failed or does not exist. Binding directly from /etc/group."
+            cp_cmd /etc/group ${JUNEST_HOME}/etc/junest/group
+        fi
     fi
 }
 
