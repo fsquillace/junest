@@ -265,7 +265,7 @@ function test_build_passwd_and_group(){
         echo $@
     }
     GETENT=getent_cmd_mock assertCommandSuccess _build_passwd_and_group
-    assertEquals "passwd" "$(cat $JUNEST_HOME/etc/junest/passwd)"
+    assertEquals "$(echo -e "passwd\npasswd $USER")" "$(cat $JUNEST_HOME/etc/junest/passwd)"
     assertEquals "group" "$(cat $JUNEST_HOME/etc/junest/group)"
 }
 
@@ -325,11 +325,11 @@ function test_delete_env(){
 }
 
 function test_nested_env(){
-    JUNEST_ENV=1 assertCommandFailOnStatus 106 bash -ic "source $JUNEST_ROOT/lib/utils.sh; source $JUNEST_ROOT/lib/core.sh"
+    JUNEST_ENV=1 assertCommandFailOnStatus 106 bash -c "source $JUNEST_ROOT/lib/utils.sh; source $JUNEST_ROOT/lib/core.sh"
 }
 
 function test_nested_env_not_set_variable(){
-    JUNEST_ENV=aaa assertCommandFailOnStatus 107 bash -ic "source $JUNEST_ROOT/lib/utils.sh; source $JUNEST_ROOT/lib/core.sh"
+    JUNEST_ENV=aaa assertCommandFailOnStatus 107 bash -c "source $JUNEST_ROOT/lib/utils.sh; source $JUNEST_ROOT/lib/core.sh"
 }
 
 function test_qemu() {
