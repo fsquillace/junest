@@ -58,7 +58,7 @@ then
     ARCH="arm"
     LD_LIB="${JUNEST_HOME}/lib/ld-linux-armhf.so.3"
 else
-    die "Unknown architecture ${ARCH}"
+    die "Unknown architecture ${HOST_ARCH}"
 fi
 
 MAIN_REPO=https://dl.dropboxusercontent.com/u/42449030
@@ -76,6 +76,10 @@ ORIGIN_WD=$(pwd)
 SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
+FAKECHROOT="${JUNEST_HOME}/usr/bin/fakechroot \
+        -l ${JUNEST_HOME}/usr/lib/libfakeroot/fakechroot/libfakechroot.so \
+        -c ${JUNEST_BASE}/etc/fakechroot/ \
+        -b ${JUNEST_HOME}/usr/bin"
 PROOT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
 CHROOT=${JUNEST_BASE}/bin/jchroot
 CLASSIC_CHROOT="chroot"
@@ -117,20 +121,6 @@ function chown_cmd(){
 
 function mkdir_cmd(){
     $MKDIR $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$MKDIR $@
-}
-
-function proot_cmd(){
-    local proot_args="$1"
-    shift
-    if ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
-    then
-        ${PROOT} ${proot_args} "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
-    then
-        PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${@}"
-    else
-        die "Error: Check if the ${CMD} arguments are correct and if the kernel is too old use the option ${CMD} -p \"-k 3.10\""
-    fi
 }
 
 function download_cmd(){
@@ -293,38 +283,6 @@ function run_env_as_root(){
     JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
 }
 
-function _run_env_with_proot(){
-    local proot_args="$1"
-    shift
-
-    if [ "$1" != "" ]
-    then
-        JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
-    else
-        JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}"
-    fi
-}
-
-function _run_env_with_qemu(){
-    local proot_args="$1"
-    source ${JUNEST_HOME}/etc/junest/info
-
-    if [ "$JUNEST_ARCH" != "$ARCH" ]
-    then
-        local qemu_bin="qemu-$JUNEST_ARCH-static-$ARCH"
-        local qemu_symlink="/tmp/${qemu_bin}-$RANDOM"
-        trap - QUIT EXIT ABRT KILL TERM INT
-        trap "[ -e ${qemu_symlink} ] && rm_cmd -f ${qemu_symlink}" EXIT QUIT ABRT KILL TERM INT
-
-        warn "Emulating $NAME via QEMU..."
-        [ -e ${qemu_symlink} ] || \
-            ln_cmd -s ${JUNEST_HOME}/opt/qemu/${qemu_bin} ${qemu_symlink}
-        proot_args="-q ${qemu_symlink} $proot_args"
-    fi
-    shift
-    _run_env_with_proot "$proot_args" "${@}"
-}
-
 #######################################
 # Run JuNest as fakeroot.
 #
@@ -344,7 +302,16 @@ function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
 
-    _run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
+    _copy_files /etc/host.conf
+    _copy_files /etc/hosts
+    _copy_files /etc/nsswitch.conf
+
+    if [ "$1" != "" ]
+    then
+        JUNEST_ENV=1 $FAKECHROOT chroot "$JUNEST_HOME" fakeroot "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+    else
+        JUNEST_ENV=1 $FAKECHROOT chroot "$JUNEST_HOME" fakeroot "${SH[@]}"
+    fi
 }
 
 #######################################
@@ -366,41 +333,22 @@ function run_env_as_user(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
 
-    _build_passwd_and_group
-    _provide_bindings_as_user
-    local bindings="$RESULT"
-    unset RESULT
-    _run_env_with_qemu "$bindings -r ${JUNEST_HOME} $1" "${@:2}"
-}
+    _copy_files /etc/host.conf
+    _copy_files /etc/hosts
+    _copy_files /etc/hosts.equiv
+    _copy_files /etc/netgroup
+    _copy_files /etc/networks
+    _copy_files /etc/nsswitch.conf
+    _copy_files /etc/resolv.conf
+    #_copy_files /etc/localtime
+    _copy_passwd_and_group
 
-#######################################
-# Provide the proot binding options for the normal user.
-# The list of bindings can be found in `proot --help`. This function excludes
-# /etc/mtab file so that it will not give conflicts with the related
-# symlink in the image.
-#
-# Globals:
-#   HOME (RO)       : The home directory.
-#   RESULT (WO)     : Contains the binding options.
-# Arguments:
-#   None
-# Returns:
-#   None
-# Output:
-#   None
-#######################################
-function _provide_bindings_as_user(){
-    RESULT=""
-    local re='(.*):.*'
-    for bind in "/etc/host.conf" "/etc/hosts" "/etc/hosts.equiv" "/etc/netgroup" "/etc/networks" "${JUNEST_HOME}/etc/junest/passwd:/etc/passwd" "${JUNEST_HOME}/etc/junest/group:/etc/group" "/etc/nsswitch.conf" "/etc/resolv.conf" "/etc/localtime" "/dev" "/sys" "/proc" "/tmp" "$HOME"
-    do
-        if [[ $bind =~ $re ]]
-        then
-            [ -e "${BASH_REMATCH[1]}" ] && RESULT="-b $bind $RESULT"
-        else
-            [ -e "$bind" ] && RESULT="-b $bind $RESULT"
-        fi
-    done
+    if [ "$1" != "" ]
+    then
+        JUNEST_ENV=1 $FAKECHROOT chroot "$JUNEST_HOME" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+    else
+        JUNEST_ENV=1 $FAKECHROOT chroot "$JUNEST_HOME" "${SH[@]}"
+    fi
 }
 
 #######################################
@@ -419,23 +367,28 @@ function _provide_bindings_as_user(){
 # Output:
 #  None
 #######################################
-function _build_passwd_and_group(){
+function _copy_passwd_and_group(){
     # Enumeration of users/groups is disabled/limited depending on how nsswitch.conf
     # is configured.
     # Try to at least get the current user via `getent passwd $USER` since it uses
     # a more reliable and faster system call (getpwnam(3)).
-    if ! getent_cmd passwd > ${JUNEST_HOME}/etc/junest/passwd || \
-        ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/junest/passwd
+    if ! getent_cmd passwd > ${JUNEST_HOME}/etc/passwd || \
+        ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/passwd
     then
         warn "getent command failed or does not exist. Binding directly from /etc/passwd."
-        cp_cmd /etc/passwd ${JUNEST_HOME}/etc/junest/passwd
+        cp_cmd /etc/passwd ${JUNEST_HOME}/etc/passwd
     fi
 
-    if ! getent_cmd group > ${JUNEST_HOME}/etc/junest/group
+    if ! getent_cmd group > ${JUNEST_HOME}/etc/group
     then
         warn "getent command failed or does not exist. Binding directly from /etc/group."
-        cp_cmd /etc/group ${JUNEST_HOME}/etc/junest/group
+        cp_cmd /etc/group ${JUNEST_HOME}/etc/group
     fi
+}
+
+function _copy_files() {
+    [[ -r ${1} ]] && cp_cmd "${1}" ${JUNEST_HOME}/${1}
+    return 0
 }
 
 #######################################
@@ -502,6 +455,8 @@ function build_image_env(){
     _check_package gcc
     _check_package package-query
     _check_package git
+    _check_package fakeroot
+    _check_package fakechroot
 
     local disable_validation=$1
     local skip_root_tests=$2
@@ -514,7 +469,8 @@ function build_image_env(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # yaourt requires sed
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed
+    # localedef (called by locale-gen) requires gzip
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed gzip fakeroot fakechroot
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
     sudo mkdir -p ${maindir}/root/run/lock
 
@@ -533,7 +489,7 @@ function build_image_env(){
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
     sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root locale-gen
-    sudo bash -c "echo 'LANG=\"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
+    sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root bash -c \

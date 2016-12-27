@@ -26,7 +26,7 @@ usage() {
     echo -e "Access options:"
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
     echo -e "-r, --root                     Run $NAME with root privileges"
-    echo -e "-p, --proot-args <args>        Proot arguments (use '$CMD -p \"--help\"' to check out the proot options)"
+    echo -e "-p, --proot-args <args>        Proot arguments (use $CMD -p \"--help\" to check out the proot options)"
     echo
     echo -e "Building options:"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
@@ -202,11 +202,11 @@ function execute_operation(){
         die "The option --arch cannot be specified since JuNest has already been downloaded in $JUNEST_HOME"
 
     if $OPT_FAKEROOT; then
-        run_env_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
+        run_env_as_fakeroot "${ARGS[@]}"
     elif $OPT_ROOT; then
         run_env_as_root "${ARGS[@]}"
     else
-        run_env_as_user "${PROOT_ARGS}" "${ARGS[@]}"
+        run_env_as_user "${ARGS[@]}"
     fi
 }
 
