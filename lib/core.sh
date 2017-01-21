@@ -58,7 +58,7 @@ then
     ARCH="arm"
     LD_LIB="${JUNEST_HOME}/lib/ld-linux-armhf.so.3"
 else
-    die "Unknown architecture ${ARCH}"
+    die "Unknown architecture ${HOST_ARCH}"
 fi
 
 MAIN_REPO=https://dl.dropboxusercontent.com/u/42449030
@@ -344,7 +344,15 @@ function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
 
-    _run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
+    _copy_common_files
+
+    _provide_common_bindings
+    local bindings=${RESULT}
+    unset RESULT
+
+    # An alternative is via -S option:
+    #_run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
+    _run_env_with_qemu "-0 ${bindings} -r ${JUNEST_HOME} $1" "${@:2}"
 }
 
 #######################################
@@ -366,15 +374,27 @@ function run_env_as_user(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
 
-    _build_passwd_and_group
-    _provide_bindings_as_user
-    local bindings="$RESULT"
+    # Files to bind are visible in `proot --help`.
+    # This function excludes /etc/mtab file so that
+    # it will not give conflicts with the related
+    # symlink in the Arch Linux image.
+    _copy_common_files
+    _copy_file /etc/hosts.equiv
+    _copy_file /etc/netgroup
+    _copy_file /etc/networks
+    # No need for localtime as it is setup during the image build
+    #_copy_file /etc/localtime
+    _copy_passwd_and_group
+
+    _provide_common_bindings
+    local bindings=${RESULT}
     unset RESULT
-    _run_env_with_qemu "$bindings -r ${JUNEST_HOME} $1" "${@:2}"
+
+    _run_env_with_qemu "${bindings} -r ${JUNEST_HOME} $1" "${@:2}"
 }
 
 #######################################
-# Provide the proot binding options for the normal user.
+# Provide the proot common binding options for both normal user and fakeroot.
 # The list of bindings can be found in `proot --help`. This function excludes
 # /etc/mtab file so that it will not give conflicts with the related
 # symlink in the image.
@@ -389,10 +409,10 @@ function run_env_as_user(){
 # Output:
 #   None
 #######################################
-function _provide_bindings_as_user(){
+function _provide_common_bindings(){
     RESULT=""
     local re='(.*):.*'
-    for bind in "/etc/host.conf" "/etc/hosts" "/etc/hosts.equiv" "/etc/netgroup" "/etc/networks" "${JUNEST_HOME}/etc/junest/passwd:/etc/passwd" "${JUNEST_HOME}/etc/junest/group:/etc/group" "/etc/nsswitch.conf" "/etc/resolv.conf" "/etc/localtime" "/dev" "/sys" "/proc" "/tmp" "$HOME"
+    for bind in "/dev" "/sys" "/proc" "/tmp" "$HOME"
     do
         if [[ $bind =~ $re ]]
         then
@@ -401,6 +421,7 @@ function _provide_bindings_as_user(){
             [ -e "$bind" ] && RESULT="-b $bind $RESULT"
         fi
     done
+    return 0
 }
 
 #######################################
@@ -419,23 +440,38 @@ function _provide_bindings_as_user(){
 # Output:
 #  None
 #######################################
-function _build_passwd_and_group(){
+function _copy_passwd_and_group(){
     # Enumeration of users/groups is disabled/limited depending on how nsswitch.conf
     # is configured.
     # Try to at least get the current user via `getent passwd $USER` since it uses
     # a more reliable and faster system call (getpwnam(3)).
-    if ! getent_cmd passwd > ${JUNEST_HOME}/etc/junest/passwd || \
-        ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/junest/passwd
+    if ! getent_cmd passwd > ${JUNEST_HOME}/etc/passwd || \
+        ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/passwd
     then
         warn "getent command failed or does not exist. Binding directly from /etc/passwd."
-        cp_cmd /etc/passwd ${JUNEST_HOME}/etc/junest/passwd
+        _copy_file /etc/passwd ${JUNEST_HOME}/etc/passwd
     fi
 
-    if ! getent_cmd group > ${JUNEST_HOME}/etc/junest/group
+    if ! getent_cmd group > ${JUNEST_HOME}/etc/group
     then
         warn "getent command failed or does not exist. Binding directly from /etc/group."
-        cp_cmd /etc/group ${JUNEST_HOME}/etc/junest/group
+        _copy_file /etc/group ${JUNEST_HOME}/etc/group
     fi
+    return 0
+}
+
+function _copy_file() {
+    local file="${1}"
+    [[ -r "$file" ]] && cp_cmd "$file" "${JUNEST_HOME}/$file"
+    return 0
+}
+
+function _copy_common_files() {
+    _copy_file /etc/host.conf
+    _copy_file /etc/hosts
+    _copy_file /etc/nsswitch.conf
+    _copy_file /etc/resolv.conf
+    return 0
 }
 
 #######################################
@@ -470,7 +506,6 @@ function delete_env(){
         error "Error: Cannot delete ${NAME} in ${JUNEST_HOME}"
     fi
 }
-
 
 function _check_package(){
     if ! pacman -Qq $1 > /dev/null
@@ -514,7 +549,8 @@ function build_image_env(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # yaourt requires sed
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed
+    # localedef (called by locale-gen) requires gzip
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed gzip
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
     sudo mkdir -p ${maindir}/root/run/lock
 
@@ -533,7 +569,7 @@ function build_image_env(){
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
     sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root locale-gen
-    sudo bash -c "echo 'LANG=\"en_US.UTF-8\"' >> ${maindir}/root/etc/locale.conf"
+    sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root bash -c \
