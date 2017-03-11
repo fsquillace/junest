@@ -74,7 +74,12 @@ Before installing JuNest be sure that all dependencies are properly installed in
 - [bash (>=4.0)](https://www.gnu.org/software/bash/)
 - [GNU coreutils](https://www.gnu.org/software/coreutils/)
 
-The minimum recommended Linux kernel is 2.6.0+ on x86 32 and 64 bit and ARM architectures.
+The minimum recommended Linux kernel of the host OS is 2.6.32 on x86 (32-bit
+and 64 bit) and ARM architectures. It is still possible to run JuNest on lower
+2.6.x host OS kernels but errors may appear, and some applications may
+crash. For further information, read the [Troubleshooting](#troubleshooting)
+section below.
+
 
 ## Method one (Recommended) ##
 Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
@@ -244,22 +249,32 @@ Troubleshooting
 
 > **Q**: Why do I get the error: "FATAL: kernel too old"?
 
-> **A**: This is because the executable from the precompiled package cannot
-> properly run if the kernel is old.
-> You may need to specify the PRoot *-k* option if the guest rootfs
-> requires a newer kernel version:
+> **A**: This is because the binaries from the precompiled package are
+> compiled for Linux kernel 2.6.32. When JuNest is started without further
+> options, it tries to run a shell from the JuNest chroot. The system sees that
+> the host OS kernel is too old and refuses to start the shell.
+
+> The solution is to present a higher "fake" kernel version to the JuNest
+> chroot. PRoot offers the *-k* option for this, and JuNest passes this option
+> on to PRoot when *-p* is prepended. For example, to fake a kernel version of
+> 3.10, issue the following command:
 
     $> junest -p "-k 3.10"
 
-> In order to check if an executable inside JuNest environment can be compatible
-> with the kernel of the host OS just use the *file* command, for instance:
+> As Arch Linux ships binaries for kernel version 2.6.32, the above error is
+> not unique to the precompiled package from JuNest. It will also appear when
+> trying to run binaries that were later installed in the JuNest chroot with
+> the `pacman` command.
+
+> In order to check if an executable inside JuNest chroot is compatible with
+> the kernel of the host OS just use the `file` command, for instance:
 
     $> file ~/.junest/usr/bin/bash
     ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked
     (uses shared libs), for GNU/Linux 2.6.32,
     BuildID[sha1]=ec37e49e7188ff4030052783e61b859113e18ca6, stripped
 
-> From the output you can see what is the minimum recommended Linux kernel version.
+> The output shows the minimum recommended Linux kernel version.
 
 ## SUID permissions ##
 > **Q**: Why I do not have permissions for ping?
