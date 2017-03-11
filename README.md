@@ -276,6 +276,34 @@ Troubleshooting
 
 > The output shows the minimum recommended Linux kernel version.
 
+## Kernel doesn't support private futexes ##
+
+> **Q**: Why do I get the warning: "kompat: this kernel doesn't support private
+> futexes and PRoot can't emulate them."?
+
+> **A**: This happens on older host OS kernels when the trick of showing a fake
+> kernel version to the JuNest chroot is applied (see above:
+> [Kernel too old](#kernel-too-old)).
+
+> The consequence of showing a fake kernel version to the JuNest chroot is that
+> in the background, PRoot needs to translate requests from applications in the
+> chroot to the old kernel of the host OS. Some of the newer kernel
+> functionality can be emulated, but private futexes cannot be translated.
+
+> Private Futexes were introduced in Linux kernel 2.6.22. Therefore, the above
+> problem likely appears on old Linux systems, for example RHEL5 systems, which
+> are based on Linux kernel 2.6.18. Many of the core tools like `which`, `man`,
+> or `vim` run without problems while others, especially XOrg-based programs,
+> are more likely to show the warning. These are also more likely to crash
+> unexpectedly.
+
+> Currently, there is no (easy) workaround for this. In order to be fully
+> compatible with kernels below 2.6.22, both the precompiled package from
+> JuNest and all software that is installed later needs to be compiled for this
+> kernel. Most likely this can only be achieved by building the needed software
+> packages from source, which kind of contradicts JuNest's distro-in-a-distro
+> philosophy.
+
 ## SUID permissions ##
 > **Q**: Why I do not have permissions for ping?
 
