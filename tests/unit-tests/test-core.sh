@@ -233,52 +233,46 @@ function test_run_env_as_user(){
         echo $@
     }
     assertCommandSuccess run_env_as_user "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2"
-    _provide_bindings_as_user
-    assertEquals "${RESULT}-r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
+    assertEquals "-b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
 
     SH=("/usr/bin/echo")
     assertCommandSuccess run_env_as_user "-k 3.10"
-    _provide_bindings_as_user
-    assertEquals "${RESULT}-r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
-}
+    assertEquals "-b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
 
-function test_provide_bindings_as_user_no_junest_home(){
-    _provide_bindings_as_user
-    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/passwd"
-    assertEquals 1 $?
-    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/group"
-    assertEquals 1 $?
-}
+    [[ -e /etc/hosts ]] && assertEquals "$(cat /etc/hosts)" "$(cat ${JUNEST_HOME}/etc/hosts)"
+    [[ -e /etc/host.conf ]] && assertEquals "$(cat /etc/host.conf)" "$(cat ${JUNEST_HOME}/etc/host.conf)"
+    [[ -e /etc/nsswitch.conf ]] && assertEquals "$(cat /etc/nsswitch.conf)" "$(cat ${JUNEST_HOME}/etc/nsswitch.conf)"
+    [[ -e /etc/resolv.conf ]] && assertEquals "$(cat /etc/resolv.conf)" "$(cat ${JUNEST_HOME}/etc/resolv.conf)"
 
-function test_provide_bindings_as_user(){
-    touch $JUNEST_HOME/etc/junest/passwd
-    touch $JUNEST_HOME/etc/junest/group
-    _provide_bindings_as_user
-    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/passwd"
+    [[ -e /etc/hosts.equiv ]] && assertEquals "$(cat /etc/hosts.equiv)" "$(cat ${JUNEST_HOME}/etc/hosts.equiv)"
+    [[ -e /etc/netgroup ]] && assertEquals "$(cat /etc/netgroup)" "$(cat ${JUNEST_HOME}/etc/netgroup)"
+
+    [[ -e /etc/passwd ]]
     assertEquals 0 $?
-    echo "$RESULT" | grep -q "$JUNEST_HOME/etc/junest/group"
+    [[ -e /etc/group ]]
     assertEquals 0 $?
+
 }
 
-function test_build_passwd_and_group(){
+function test_copy_passwd_and_group(){
     getent_cmd_mock() {
         echo $@
     }
-    GETENT=getent_cmd_mock assertCommandSuccess _build_passwd_and_group
-    assertEquals "$(echo -e "passwd\npasswd $USER")" "$(cat $JUNEST_HOME/etc/junest/passwd)"
-    assertEquals "group" "$(cat $JUNEST_HOME/etc/junest/group)"
+    GETENT=getent_cmd_mock assertCommandSuccess _copy_passwd_and_group
+    assertEquals "$(echo -e "passwd\npasswd $USER")" "$(cat $JUNEST_HOME/etc/passwd)"
+    assertEquals "group" "$(cat $JUNEST_HOME/etc/group)"
 }
 
-function test_build_passwd_and_group_fallback(){
+function test_copy_passwd_and_group_fallback(){
     cp_cmd_mock() {
         echo $@
     }
-    CP=cp_cmd_mock GETENT=false LD_EXEC=false assertCommandSuccess _build_passwd_and_group
-    assertEquals "$(echo -e "/etc/passwd $JUNEST_HOME/etc/junest/passwd\n/etc/group $JUNEST_HOME/etc/junest/group")" "$(cat $STDOUTF)"
+    CP=cp_cmd_mock GETENT=false LD_EXEC=false assertCommandSuccess _copy_passwd_and_group
+    assertEquals "$(echo -e "/etc/passwd $JUNEST_HOME//etc/passwd\n/etc/group $JUNEST_HOME//etc/group")" "$(cat $STDOUTF)"
 }
 
-function test_build_passwd_and_group_failure(){
-    CP=false GETENT=false LD_EXEC=false assertCommandFailOnStatus 1 _build_passwd_and_group
+function test_copy_passwd_and_group_failure(){
+    CP=false GETENT=false LD_EXEC=false assertCommandFailOnStatus 1 _copy_passwd_and_group
 }
 
 function test_run_env_as_fakeroot(){
@@ -286,11 +280,16 @@ function test_run_env_as_fakeroot(){
         echo $@
     }
     assertCommandSuccess run_env_as_fakeroot "-k 3.10" "/usr/bin/mkdir" "-v" "/newdir2"
-    assertEquals "-S ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
+    assertEquals "-0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
 
     SH=("/usr/bin/echo")
     assertCommandSuccess run_env_as_fakeroot "-k 3.10"
-    assertEquals "-S ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
+    assertEquals "-0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
+
+    [[ -e /etc/hosts ]] && assertEquals "$(cat /etc/hosts)" "$(cat ${JUNEST_HOME}/etc/hosts)"
+    [[ -e /etc/host.conf ]] && assertEquals "$(cat /etc/host.conf)" "$(cat ${JUNEST_HOME}/etc/host.conf)"
+    [[ -e /etc/nsswitch.conf ]] && assertEquals "$(cat /etc/nsswitch.conf)" "$(cat ${JUNEST_HOME}/etc/nsswitch.conf)"
+    [[ -e /etc/resolv.conf ]] && assertEquals "$(cat /etc/resolv.conf)" "$(cat ${JUNEST_HOME}/etc/resolv.conf)"
 }
 
 function test_run_env_with_quotes(){
@@ -298,8 +297,7 @@ function test_run_env_with_quotes(){
         echo $@
     }
     assertCommandSuccess run_env_as_user "-k 3.10" "bash" "-c" "/usr/bin/mkdir -v /newdir2"
-    _provide_bindings_as_user
-    assertEquals "${RESULT}-r ${JUNEST_HOME} -k 3.10 bash -c /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
+    assertEquals "-b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 bash -c /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
 }
 
 function test_run_env_with_proot_args(){
