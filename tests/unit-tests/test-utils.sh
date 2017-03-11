@@ -1,10 +1,10 @@
 #!/bin/bash
-source "$(dirname $0)/utils.sh"
+source "$(dirname $0)/../utils/utils.sh"
 
 unset HOME
 export HOME=$(TMPDIR=/tmp mktemp -d -t pearl-user-home.XXXXXXX)
 
-source "$(dirname $0)/../../lib/utils.sh"
+source "$(dirname $0)/../../lib/utils/utils.sh"
 
 # Disable the exiterr
 set +e
@@ -94,4 +94,4 @@ function test_contains_element(){
     assertCommandFailOnStatus 1 contains_element "blabla" "${array[@]}"
 }
 
-source $(dirname $0)/shunit2
+source $(dirname $0)/../utils/shunit2

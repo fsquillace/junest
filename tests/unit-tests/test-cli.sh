@@ -1,5 +1,5 @@
 #!/bin/bash
-source "$(dirname $0)/utils.sh"
+source "$(dirname $0)/../utils/utils.sh"
 
 source $(dirname $0)/../../bin/junest -h &> /dev/null
 
@@ -178,4 +178,4 @@ function test_check_cli(){
     assertCommandFail cli -d args
 }
 
-source $(dirname $0)/shunit2
+source $(dirname $0)/../utils/shunit2
