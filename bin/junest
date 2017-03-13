@@ -5,8 +5,12 @@
 
 JUNEST_BASE="$(readlink -f $(dirname $(readlink -f "$0"))/..)"
 
-source "${JUNEST_BASE}/lib/utils.sh"
-source "${JUNEST_BASE}/lib/core.sh"
+source "${JUNEST_BASE}/lib/utils/utils.sh"
+source "${JUNEST_BASE}/lib/core/common.sh"
+source "${JUNEST_BASE}/lib/core/build.sh"
+source "${JUNEST_BASE}/lib/core/setup.sh"
+source "${JUNEST_BASE}/lib/core/proot.sh"
+source "${JUNEST_BASE}/lib/core/chroot.sh"
 
 ###################################
 ### General functions           ###
@@ -19,7 +23,7 @@ usage() {
     echo
     echo -e "Setup options:"
     echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUNEST_HOME}"
-    echo -e "-a, --arch <arch>              $NAME architecture to download (x86_64, x86, arm)."
+    echo -e "-a, --arch <arch>              $NAME architecture to download (x86_64, x86, arm)"
     echo -e "                               Defaults to the host architecture ($ARCH)"
     echo -e "-d, --delete                   Delete $NAME from ${JUNEST_HOME}"
     echo
@@ -32,8 +36,8 @@ usage() {
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
     echo -e "-n, --disable-validation       Disable the $NAME image validation"
     echo -e "-c, --check <${CMD}_script>    Validate the env located in ${JUNEST_HOME}"
-    echo -e "                               using ${CMD}_script. This will alterate the environment."
-    echo -e "-s, --skip-root-tests          Skip the root tests during the validation process."
+    echo -e "                               using ${CMD}_script. This will alterate the environment"
+    echo -e "-s, --skip-root-tests          Skip the root tests during the validation process"
     echo
     echo -e "General options:"
     echo -e "-h, --help                     Show this help message"

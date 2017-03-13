@@ -17,7 +17,8 @@ install:
 
 script:
   - bash --version
-  - ./tests/unit-tests/unit-tests.sh
+  - bash ./tests/unit-tests/unit-tests.sh
+  - bash ./tests/checkstyle/checkstyle.sh
   - junest --check ./bin/junest
   - yes | junest --delete
   - JUNEST_HOME=~/.junest-arm junest --check ./bin/junest --skip-root-tests
