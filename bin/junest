@@ -7,10 +7,13 @@ JUNEST_BASE="$(readlink -f $(dirname $(readlink -f "$0"))/..)"
 
 source "${JUNEST_BASE}/lib/utils/utils.sh"
 source "${JUNEST_BASE}/lib/core/common.sh"
+
 source "${JUNEST_BASE}/lib/core/build.sh"
-source "${JUNEST_BASE}/lib/core/setup.sh"
-source "${JUNEST_BASE}/lib/core/proot.sh"
 source "${JUNEST_BASE}/lib/core/chroot.sh"
+source "${JUNEST_BASE}/lib/core/namespace.sh"
+source "${JUNEST_BASE}/lib/core/proot.sh"
+source "${JUNEST_BASE}/lib/core/setup.sh"
+
 
 ###################################
 ### General functions           ###
@@ -29,8 +32,11 @@ usage() {
     echo
     echo -e "Access options:"
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
-    echo -e "-r, --root                     Run $NAME with root privileges"
-    echo -e "-p, --proot-args <args>        Proot arguments (use $CMD -p \"--help\" to check out the proot options)"
+    echo -e "-r, --root                     Run $NAME with root privileges via jchroot"
+    echo -e "-p, --backend-args <args>      Arguments for backend program (PRoot or jchroot)"
+    echo -e "                               ($CMD -p \"--help\" to check out the PRoot options"
+    echo -e "                                $CMD -u -p \"--help\" to check out the jchroot options)"
+    echo -e "-u, --user-namespace           Use Linux User Namespace instead of PRoot"
     echo
     echo -e "Building options:"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
@@ -109,7 +115,7 @@ check_cli(){
     then
         die "You must access to $NAME with either fakeroot or root permissions"
     fi
-    if $OPT_PROOT_ARGS || $OPT_ARCH
+    if $OPT_BACKEND_ARGS || $OPT_ARCH
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || \
             $OPT_ROOT || $OPT_VERSION || $OPT_DISABLE_VALIDATION || $OPT_CHECK
@@ -135,8 +141,9 @@ function parse_arguments(){
     IMAGE_FILE=""
     OPT_FAKEROOT=false
     OPT_ROOT=false
-    OPT_PROOT_ARGS=false
-    PROOT_ARGS=""
+    OPT_USER_NAMESPACE=false
+    OPT_BACKEND_ARGS=false
+    BACKEND_ARGS=""
     OPT_ARCH=false
     ARCH_ARG=""
     OPT_BUILD_IMAGE=false
@@ -153,7 +160,8 @@ function parse_arguments(){
             -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
             -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
             -r|--root) OPT_ROOT=true ; shift ;;
-            -p|--proot-args) OPT_PROOT_ARGS=true ; shift ; PROOT_ARGS=$1; shift ;;
+            -u|--user-namespace) OPT_USER_NAMESPACE=true ; shift ;;
+            -p|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
             -a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
             -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
             -n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
@@ -205,13 +213,22 @@ function execute_operation(){
     [ -z "${ARCH_ARG}" ] || \
         die "The option --arch cannot be specified since JuNest has already been downloaded in $JUNEST_HOME"
 
-    if $OPT_FAKEROOT; then
-        run_env_as_fakeroot "${PROOT_ARGS}" "${ARGS[@]}"
-    elif $OPT_ROOT; then
-        run_env_as_root "${ARGS[@]}"
+    if $OPT_USER_NAMESPACE; then
+        if $OPT_FAKEROOT; then
+            run_env_as_fakeroot_with_namespace "${BACKEND_ARGS}" "${ARGS[@]}"
+        else
+            run_env_as_user_with_namespace "${BACKEND_ARGS}" "${ARGS[@]}"
+        fi
     else
-        run_env_as_user "${PROOT_ARGS}" "${ARGS[@]}"
+        if $OPT_FAKEROOT; then
+            run_env_as_fakeroot "${BACKEND_ARGS}" "${ARGS[@]}"
+        elif $OPT_ROOT; then
+            run_env_as_root "${ARGS[@]}"
+        else
+            run_env_as_user "${BACKEND_ARGS}" "${ARGS[@]}"
+        fi
     fi
+
 }
 
 function cli() {

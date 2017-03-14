@@ -100,6 +100,16 @@ function test_mkdir(){
     MKDIR=false LD_EXEC=false assertCommandFail mkdir_cmd -p new_dir/new_dir
 }
 
+function test_zgrep(){
+    ZGREP=echo assertCommandSuccess zgrep_cmd new_file
+    assertEquals "new_file" "$(cat $STDOUTF)"
+
+    ZGREP=false assertCommandSuccess zgrep_cmd new_file
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false new_file" "$(cat $STDOUTF)"
+
+    ZGREP=false LD_EXEC=false assertCommandFail zgrep_cmd new_file
+}
+
 function test_chroot(){
     CHROOT=echo assertCommandSuccess chroot_cmd root
     assertEquals "root" "$(cat $STDOUTF)"

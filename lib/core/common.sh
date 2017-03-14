@@ -19,6 +19,7 @@ ARCHITECTURE_MISMATCH=104
 ROOT_ACCESS_ERROR=105
 NESTED_ENVIRONMENT=106
 VARIABLE_NOT_SET=107
+NO_CONFIG_FOUND=108
 
 if [ "$JUNEST_ENV" == "1" ]
 then
@@ -89,6 +90,8 @@ RM=rm
 MKDIR=mkdir
 GETENT=getent
 CP=cp
+# Used for checking user namespace in config.gz file
+ZGREP=zgrep
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -118,6 +121,10 @@ function chown_cmd(){
 
 function mkdir_cmd(){
     $MKDIR $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$MKDIR $@
+}
+
+function zgrep_cmd(){
+    $ZGREP $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$ZGREP $@
 }
 
 function proot_cmd(){

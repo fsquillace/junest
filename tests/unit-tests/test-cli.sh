@@ -44,17 +44,27 @@ function setup_env(){
     echo "setup_env($1)"
 }
 function run_env_as_fakeroot(){
-    local proot_args="$1"
+    local backend_args="$1"
     shift
-    echo "run_env_as_fakeroot($proot_args,$@)"
+    echo "run_env_as_fakeroot($backend_args,$@)"
 }
 function run_env_as_root(){
     echo "run_env_as_root $@"
 }
 function run_env_as_user(){
-    local proot_args="$1"
+    local backend_args="$1"
     shift
-    echo "run_env_as_user($proot_args,$@)"
+    echo "run_env_as_user($backend_args,$@)"
+}
+function run_env_as_fakeroot_with_namespace(){
+    local backend_args="$1"
+    shift
+    echo "run_env_as_fakeroot_with_namespace($backend_args,$@)"
+}
+function run_env_as_user_with_namespace(){
+    local backend_args="$1"
+    shift
+    echo "run_env_as_user_with_namespace($backend_args,$@)"
 }
 
 function test_help(){
@@ -162,6 +172,31 @@ function test_run_env_as_root(){
     assertEquals "run_env_as_root " "$(cat $STDOUTF)"
     assertCommandSuccess cli -r command
     assertEquals "run_env_as_root command" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_fakeroot_with_namespace(){
+    assertCommandSuccess cli -u -f
+    assertEquals "run_env_as_fakeroot_with_namespace(,)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli --user-namespace --fakeroot
+    assertEquals "run_env_as_fakeroot_with_namespace(,)" "$(cat $STDOUTF)"
+
+    assertCommandSuccess cli -u -f -p "-b arg"
+    assertEquals "run_env_as_fakeroot_with_namespace(-b arg,)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -u -f -p "-b arg" -- command -kv
+    assertEquals "run_env_as_fakeroot_with_namespace(-b arg,command -kv)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -u -f command --as
+    assertEquals "run_env_as_fakeroot_with_namespace(,command --as)" "$(cat $STDOUTF)"
+}
+function test_run_env_as_user_with_namespace(){
+    assertCommandSuccess cli -u
+    assertEquals "run_env_as_user_with_namespace(,)" "$(cat $STDOUTF)"
+
+    assertCommandSuccess cli -u -p "-b arg"
+    assertEquals "run_env_as_user_with_namespace(-b arg,)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -u -p "-b arg" -- command -ll
+    assertEquals "run_env_as_user_with_namespace(-b arg,command -ll)" "$(cat $STDOUTF)"
+    assertCommandSuccess cli -u command -ls
+    assertEquals "run_env_as_user_with_namespace(,command -ls)" "$(cat $STDOUTF)"
 }
 
 function test_check_cli(){
