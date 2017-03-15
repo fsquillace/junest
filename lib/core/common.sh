@@ -79,8 +79,8 @@ SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
 PROOT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
-CHROOT=${JUNEST_BASE}/bin/jchroot
-CLASSIC_CHROOT="chroot"
+JCHROOT=${JUNEST_BASE}/bin/jchroot
+CLASSIC_CHROOT=chroot
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR=tar
@@ -92,6 +92,7 @@ GETENT=getent
 CP=cp
 # Used for checking user namespace in config.gz file
 ZGREP=zgrep
+UNSHARE=unshare
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -127,6 +128,10 @@ function zgrep_cmd(){
     $ZGREP $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$ZGREP $@
 }
 
+function unshare_cmd(){
+    $UNSHARE $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE $@
+}
+
 function proot_cmd(){
     local proot_args="$1"
     shift
@@ -146,7 +151,7 @@ function download_cmd(){
 }
 
 function chroot_cmd(){
-    $CHROOT "$@" || $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/chroot "$@"
+    $JCHROOT "$@" || $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CLASSIC_CHROOT "$@"
 }
 
 ############## COMMON FUNCTIONS ###############
@@ -167,7 +172,7 @@ function chroot_cmd(){
 # Output:
 #   None
 #######################################
-function _provide_common_bindings(){
+function provide_common_bindings(){
     RESULT=""
     local re='(.*):.*'
     for bind in "/dev" "/sys" "/proc" "/tmp" "$HOME"
@@ -198,7 +203,7 @@ function _provide_common_bindings(){
 # Output:
 #  None
 #######################################
-function _copy_passwd_and_group(){
+function copy_passwd_and_group(){
     # Enumeration of users/groups is disabled/limited depending on how nsswitch.conf
     # is configured.
     # Try to at least get the current user via `getent passwd $USER` since it uses
@@ -207,27 +212,27 @@ function _copy_passwd_and_group(){
         ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/passwd
     then
         warn "getent command failed or does not exist. Binding directly from /etc/passwd."
-        _copy_file /etc/passwd ${JUNEST_HOME}/etc/passwd
+        copy_file /etc/passwd ${JUNEST_HOME}/etc/passwd
     fi
 
     if ! getent_cmd group > ${JUNEST_HOME}/etc/group
     then
         warn "getent command failed or does not exist. Binding directly from /etc/group."
-        _copy_file /etc/group ${JUNEST_HOME}/etc/group
+        copy_file /etc/group ${JUNEST_HOME}/etc/group
     fi
     return 0
 }
 
-function _copy_file() {
+function copy_file() {
     local file="${1}"
     [[ -r "$file" ]] && cp_cmd "$file" "${JUNEST_HOME}/$file"
     return 0
 }
 
-function _copy_common_files() {
-    _copy_file /etc/host.conf
-    _copy_file /etc/hosts
-    _copy_file /etc/nsswitch.conf
-    _copy_file /etc/resolv.conf
+function copy_common_files() {
+    copy_file /etc/host.conf
+    copy_file /etc/hosts
+    copy_file /etc/nsswitch.conf
+    copy_file /etc/resolv.conf
     return 0
 }

@@ -59,9 +59,9 @@ function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
 
-    _copy_common_files
+    copy_common_files
 
-    _provide_common_bindings
+    provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
 
@@ -93,15 +93,15 @@ function run_env_as_user(){
     # This function excludes /etc/mtab file so that
     # it will not give conflicts with the related
     # symlink in the Arch Linux image.
-    _copy_common_files
-    _copy_file /etc/hosts.equiv
-    _copy_file /etc/netgroup
-    _copy_file /etc/networks
+    copy_common_files
+    copy_file /etc/hosts.equiv
+    copy_file /etc/netgroup
+    copy_file /etc/networks
     # No need for localtime as it is setup during the image build
-    #_copy_file /etc/localtime
-    _copy_passwd_and_group
+    #copy_file /etc/localtime
+    copy_passwd_and_group
 
-    _provide_common_bindings
+    provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
 

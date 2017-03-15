@@ -110,17 +110,27 @@ function test_zgrep(){
     ZGREP=false LD_EXEC=false assertCommandFail zgrep_cmd new_file
 }
 
+function test_unshare(){
+    UNSHARE=echo assertCommandSuccess unshare_cmd new_program
+    assertEquals "new_program" "$(cat $STDOUTF)"
+
+    UNSHARE=false assertCommandSuccess unshare_cmd new_program
+    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false new_program" "$(cat $STDOUTF)"
+
+    UNSHARE=false LD_EXEC=false assertCommandFail unshare_cmd new_program
+}
+
 function test_chroot(){
-    CHROOT=echo assertCommandSuccess chroot_cmd root
+    JCHROOT=echo assertCommandSuccess chroot_cmd root
     assertEquals "root" "$(cat $STDOUTF)"
 
-    CHROOT=false CLASSIC_CHROOT=echo assertCommandSuccess chroot_cmd root
+    JCHROOT=false CLASSIC_CHROOT=echo assertCommandSuccess chroot_cmd root
     assertEquals "root" "$(cat $STDOUTF)"
 
-    CHROOT=false CLASSIC_CHROOT=false assertCommandSuccess chroot_cmd root
-    assertEquals "ld_exec $JUNEST_HOME/usr/bin/chroot root" "$(cat $STDOUTF)"
+    JCHROOT=false CLASSIC_CHROOT=false assertCommandSuccess chroot_cmd root
+    assertEquals "ld_exec $JUNEST_HOME/usr/bin/false root" "$(cat $STDOUTF)"
 
-    CHROOT=false CLASSIC_CHROOT=false LD_EXEC=false assertCommandFail chroot_cmd root
+    JCHROOT=false CLASSIC_CHROOT=false LD_EXEC=false assertCommandFail chroot_cmd root
 }
 
 function test_proot_cmd_compat(){
@@ -153,7 +163,7 @@ function test_copy_passwd_and_group(){
     getent_cmd_mock() {
         echo $@
     }
-    GETENT=getent_cmd_mock assertCommandSuccess _copy_passwd_and_group
+    GETENT=getent_cmd_mock assertCommandSuccess copy_passwd_and_group
     assertEquals "$(echo -e "passwd\npasswd $USER")" "$(cat $JUNEST_HOME/etc/passwd)"
     assertEquals "group" "$(cat $JUNEST_HOME/etc/group)"
 }
@@ -162,12 +172,12 @@ function test_copy_passwd_and_group_fallback(){
     cp_cmd_mock() {
         echo $@
     }
-    CP=cp_cmd_mock GETENT=false LD_EXEC=false assertCommandSuccess _copy_passwd_and_group
+    CP=cp_cmd_mock GETENT=false LD_EXEC=false assertCommandSuccess copy_passwd_and_group
     assertEquals "$(echo -e "/etc/passwd $JUNEST_HOME//etc/passwd\n/etc/group $JUNEST_HOME//etc/group")" "$(cat $STDOUTF)"
 }
 
 function test_copy_passwd_and_group_failure(){
-    CP=false GETENT=false LD_EXEC=false assertCommandFailOnStatus 1 _copy_passwd_and_group
+    CP=false GETENT=false LD_EXEC=false assertCommandFailOnStatus 1 copy_passwd_and_group
 }
 
 function test_nested_env(){
