@@ -7,8 +7,6 @@
 #
 # vim: ft=sh
 
-set -e
-
 NAME='JuNest'
 CMD='junest'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
@@ -79,7 +77,7 @@ SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
 PROOT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
-JCHROOT=${JUNEST_BASE}/bin/jchroot
+GROOT=${JUNEST_BASE}/bin/groot
 CLASSIC_CHROOT=chroot
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
@@ -125,7 +123,8 @@ function mkdir_cmd(){
 }
 
 function zgrep_cmd(){
-    $ZGREP $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$ZGREP $@
+    # No need for LD_EXEC as zgrep is a POSIX shell script
+    $ZGREP $@ || ${JUNEST_HOME}/usr/bin/$ZGREP $@
 }
 
 function unshare_cmd(){
@@ -151,7 +150,7 @@ function download_cmd(){
 }
 
 function chroot_cmd(){
-    $JCHROOT "$@" || $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CLASSIC_CHROOT "$@"
+    $GROOT "$@" || $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CLASSIC_CHROOT "$@"
 }
 
 ############## COMMON FUNCTIONS ###############

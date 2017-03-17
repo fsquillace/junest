@@ -69,11 +69,11 @@ function build_image_env(){
     # sed command is required for locale-gen
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
-    sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root locale-gen
+    sudo ${maindir}/root/opt/junest/bin/groot ${maindir}/root locale-gen
     sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
 
     info "Setting up the pacman keyring (this might take a while!)..."
-    sudo ${maindir}/root/opt/junest/bin/jchroot ${maindir}/root bash -c \
+    sudo ${maindir}/root/opt/junest/bin/groot ${maindir}/root bash -c \
         "pacman-key --init; pacman-key --populate archlinux; [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye"
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*

@@ -1,7 +1,8 @@
 #!/bin/bash
 source "$(dirname $0)/../utils/utils.sh"
 
-source $(dirname $0)/../../bin/junest -h &> /dev/null
+JUNEST_BASE="$(dirname $0)/../.."
+source $JUNEST_BASE/bin/junest -h &> /dev/null
 
 # Disable the exiterr
 set +e
@@ -68,149 +69,149 @@ function run_env_as_user_with_namespace(){
 }
 
 function test_help(){
-    assertCommandSuccess cli -h
+    assertCommandSuccess main -h
     assertEquals "usage" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --help
+    assertCommandSuccess main --help
     assertEquals "usage" "$(cat $STDOUTF)"
 }
 function test_version(){
-    assertCommandSuccess cli -v
+    assertCommandSuccess main -V
     assertEquals "version" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --version
+    assertCommandSuccess main --version
     assertEquals "version" "$(cat $STDOUTF)"
 }
 function test_build_image_env(){
-    assertCommandSuccess cli -b
+    assertCommandSuccess main -b
     assertEquals "build_image_env(false,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --build-image
+    assertCommandSuccess main --build-image
     assertEquals "build_image_env(false,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -b -s
+    assertCommandSuccess main -b -s
     assertEquals "build_image_env(false,true)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -b -n
+    assertCommandSuccess main -b -n
     assertEquals "build_image_env(true,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -b -n -s
+    assertCommandSuccess main -b -n -s
     assertEquals "build_image_env(true,true)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --build-image --disable-validation --skip-root-tests
+    assertCommandSuccess main --build-image --disable-validation --skip-root-tests
     assertEquals "build_image_env(true,true)" "$(cat $STDOUTF)"
 }
 function test_check_env(){
-    assertCommandSuccess cli -c myscript
+    assertCommandSuccess main -c myscript
     assertEquals "check_env(${JUNEST_HOME},myscript,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --check myscript
+    assertCommandSuccess main --check myscript
     assertEquals "check_env(${JUNEST_HOME},myscript,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -c myscript -s
+    assertCommandSuccess main -c myscript -s
     assertEquals "check_env(${JUNEST_HOME},myscript,true)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --check myscript --skip-root-tests
+    assertCommandSuccess main --check myscript --skip-root-tests
     assertEquals "check_env(${JUNEST_HOME},myscript,true)" "$(cat $STDOUTF)"
 }
 function test_delete_env(){
-    assertCommandSuccess cli -d
+    assertCommandSuccess main -d
     assertEquals "delete_env" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --delete
+    assertCommandSuccess main --delete
     assertEquals "delete_env" "$(cat $STDOUTF)"
 }
 function test_setup_env_from_file(){
     is_env_installed(){
         return 1
     }
-    assertCommandSuccess cli -i myimage
+    assertCommandSuccess main -i myimage
     assertEquals "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --setup-from-file myimage
+    assertCommandSuccess main --setup-from-file myimage
     assertEquals "$(echo -e "setup_env_from_file(myimage)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
 
     is_env_installed(){
         return 0
     }
-    assertCommandFail cli -i myimage
+    assertCommandFail main -i myimage
 }
 
 function test_setup_env(){
     is_env_installed(){
         return 1
     }
-    assertCommandSuccess cli -a arm
+    assertCommandSuccess main -a arm
     assertEquals "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --arch arm
+    assertCommandSuccess main --arch arm
     assertEquals "$(echo -e "setup_env(arm)\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
-    assertCommandSuccess cli
+    assertCommandSuccess main
     assertEquals "$(echo -e "setup_env()\nrun_env_as_user(,)")" "$(cat $STDOUTF)"
 
     is_env_installed(){
         return 0
     }
-    assertCommandFail cli -a arm
+    assertCommandFail main -a arm
 }
 function test_run_env_as_fakeroot(){
-    assertCommandSuccess cli -f
+    assertCommandSuccess main -f
     assertEquals "run_env_as_fakeroot(,)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --fakeroot
+    assertCommandSuccess main --fakeroot
     assertEquals "run_env_as_fakeroot(,)" "$(cat $STDOUTF)"
 
-    assertCommandSuccess cli -f -p "-b arg"
+    assertCommandSuccess main -f -p "-b arg"
     assertEquals "run_env_as_fakeroot(-b arg,)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -f -p "-b arg" -- command -kv
+    assertCommandSuccess main -f -p "-b arg" -- command -kv
     assertEquals "run_env_as_fakeroot(-b arg,command -kv)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -f command --as
+    assertCommandSuccess main -f command --as
     assertEquals "run_env_as_fakeroot(,command --as)" "$(cat $STDOUTF)"
-    assertCommandFail cli -a "myarch" -f command --as
+    assertCommandFail main -a "myarch" -f command --as
 }
 function test_run_env_as_user(){
-    assertCommandSuccess cli
+    assertCommandSuccess main
     assertEquals "run_env_as_user(,)" "$(cat $STDOUTF)"
 
-    assertCommandSuccess cli -p "-b arg"
+    assertCommandSuccess main -p "-b arg"
     assertEquals "run_env_as_user(-b arg,)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -p "-b arg" -- command -ll
+    assertCommandSuccess main -p "-b arg" -- command -ll
     assertEquals "run_env_as_user(-b arg,command -ll)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli command -ls
+    assertCommandSuccess main command -ls
     assertEquals "run_env_as_user(,command -ls)" "$(cat $STDOUTF)"
 
-    assertCommandFail cli -a "myarch" -- command -ls
+    assertCommandFail main -a "myarch" -- command -ls
 }
 function test_run_env_as_root(){
-    assertCommandSuccess cli -r
+    assertCommandSuccess main -r
     assertEquals "run_env_as_root " "$(cat $STDOUTF)"
-    assertCommandSuccess cli -r command
+    assertCommandSuccess main -r command
     assertEquals "run_env_as_root command" "$(cat $STDOUTF)"
 }
 
 function test_run_env_as_fakeroot_with_namespace(){
-    assertCommandSuccess cli -u -f
+    assertCommandSuccess main -u -f
     assertEquals "run_env_as_fakeroot_with_namespace(,)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli --user-namespace --fakeroot
+    assertCommandSuccess main --user-namespace --fakeroot
     assertEquals "run_env_as_fakeroot_with_namespace(,)" "$(cat $STDOUTF)"
 
-    assertCommandSuccess cli -u -f -p "-b arg"
+    assertCommandSuccess main -u -f -p "-b arg"
     assertEquals "run_env_as_fakeroot_with_namespace(-b arg,)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -u -f -p "-b arg" -- command -kv
+    assertCommandSuccess main -u -f -p "-b arg" -- command -kv
     assertEquals "run_env_as_fakeroot_with_namespace(-b arg,command -kv)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -u -f command --as
+    assertCommandSuccess main -u -f command --as
     assertEquals "run_env_as_fakeroot_with_namespace(,command --as)" "$(cat $STDOUTF)"
 }
 function test_run_env_as_user_with_namespace(){
-    assertCommandSuccess cli -u
+    assertCommandSuccess main -u
     assertEquals "run_env_as_user_with_namespace(,)" "$(cat $STDOUTF)"
 
-    assertCommandSuccess cli -u -p "-b arg"
+    assertCommandSuccess main -u -p "-b arg"
     assertEquals "run_env_as_user_with_namespace(-b arg,)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -u -p "-b arg" -- command -ll
+    assertCommandSuccess main -u -p "-b arg" -- command -ll
     assertEquals "run_env_as_user_with_namespace(-b arg,command -ll)" "$(cat $STDOUTF)"
-    assertCommandSuccess cli -u command -ls
+    assertCommandSuccess main -u command -ls
     assertEquals "run_env_as_user_with_namespace(,command -ls)" "$(cat $STDOUTF)"
 }
 
 function test_check_cli(){
-    assertCommandFail cli -b -h
-    assertCommandFail cli -b -c
-    assertCommandFail cli -d -s
-    assertCommandFail cli -n -v
-    assertCommandFail cli -d -r
-    assertCommandFail cli -h -f
-    assertCommandFail cli -v -i fsd
-    assertCommandFail cli -f -r
-    assertCommandFail cli -p args -v
-    assertCommandFail cli -a arch -v
-    assertCommandFail cli -d args
+    assertCommandFail main -b -h
+    assertCommandFail main -b -c
+    assertCommandFail main -d -s
+    assertCommandFail main -n -v
+    assertCommandFail main -d -r
+    assertCommandFail main -h -f
+    assertCommandFail main -v -i fsd
+    assertCommandFail main -f -r
+    assertCommandFail main -p args -v
+    assertCommandFail main -a arch -v
+    assertCommandFail main -d args
 }
 
 source $(dirname $0)/../utils/shunit2

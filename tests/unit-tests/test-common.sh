@@ -104,10 +104,16 @@ function test_zgrep(){
     ZGREP=echo assertCommandSuccess zgrep_cmd new_file
     assertEquals "new_file" "$(cat $STDOUTF)"
 
-    ZGREP=false assertCommandSuccess zgrep_cmd new_file
-    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false new_file" "$(cat $STDOUTF)"
+    mkdir -p ${JUNEST_HOME}/usr/bin
+    touch  ${JUNEST_HOME}/usr/bin/false
+    chmod +x ${JUNEST_HOME}/usr/bin/false
 
-    ZGREP=false LD_EXEC=false assertCommandFail zgrep_cmd new_file
+    echo -e "#!/bin/bash\necho zgrep" > ${JUNEST_HOME}/usr/bin/false
+    ZGREP=false assertCommandSuccess zgrep_cmd new_file
+    assertEquals "zgrep" "$(cat $STDOUTF)"
+
+    echo -e "#!/bin/bash\nexit 1" > ${JUNEST_HOME}/usr/bin/false
+    ZGREP=false assertCommandFail zgrep_cmd new_file
 }
 
 function test_unshare(){
@@ -121,16 +127,16 @@ function test_unshare(){
 }
 
 function test_chroot(){
-    JCHROOT=echo assertCommandSuccess chroot_cmd root
+    GROOT=echo assertCommandSuccess chroot_cmd root
     assertEquals "root" "$(cat $STDOUTF)"
 
-    JCHROOT=false CLASSIC_CHROOT=echo assertCommandSuccess chroot_cmd root
+    GROOT=false CLASSIC_CHROOT=echo assertCommandSuccess chroot_cmd root
     assertEquals "root" "$(cat $STDOUTF)"
 
-    JCHROOT=false CLASSIC_CHROOT=false assertCommandSuccess chroot_cmd root
+    GROOT=false CLASSIC_CHROOT=false assertCommandSuccess chroot_cmd root
     assertEquals "ld_exec $JUNEST_HOME/usr/bin/false root" "$(cat $STDOUTF)"
 
-    JCHROOT=false CLASSIC_CHROOT=false LD_EXEC=false assertCommandFail chroot_cmd root
+    GROOT=false CLASSIC_CHROOT=false LD_EXEC=false assertCommandFail chroot_cmd root
 }
 
 function test_proot_cmd_compat(){

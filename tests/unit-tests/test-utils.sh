@@ -79,6 +79,28 @@ function test_ask_wrong_default_answer() {
     assertEquals 33 $?
 }
 
+function test_check_and_trap_fail() {
+    trap echo EXIT
+    trap ls QUIT
+    assertCommandFailOnStatus 1 check_and_trap 'pwd' EXIT QUIT
+}
+
+function test_check_and_trap() {
+    trap - EXIT QUIT
+    assertCommandSuccess check_and_trap 'echo' EXIT QUIT
+}
+
+function test_check_and_force_trap_fail() {
+    trap echo EXIT
+    trap ls QUIT
+    assertCommandSuccess check_and_force_trap 'echo' EXIT QUIT
+}
+
+function test_check_and_force_trap() {
+    trap - EXIT QUIT
+    assertCommandSuccess check_and_force_trap 'echo' EXIT QUIT
+}
+
 function test_insert_quotes_on_spaces(){
     assertCommandSuccess insert_quotes_on_spaces this is "a test"
     assertEquals "this is \"a test\"" "$(cat $STDOUTF)"

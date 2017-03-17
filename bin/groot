@@ -1,0 +1,180 @@
+#!/bin/bash
+#
+# This script is the simplified and portable version of arch-chroot
+# (https://wiki.archlinux.org/index.php/Change_root#Using_arch-chroot)
+#
+
+set -e
+
+# JUNEST_BASE can be overridden for testing purposes.
+# There is no need for doing it for normal usage.
+JUNEST_BASE="${JUNEST_BASE:-$(readlink -f $(dirname $(readlink -f "$0"))/..)}"
+NAME='GRoot'
+CMD='groot'
+DESCRIPTION="I am $NAME!"
+CHROOTCMD=${CHROOTCMD:-chroot}
+SHELL="/bin/sh"
+MOUNT=mount
+UMOUNT=umount
+MOUNTPOINT=mountpoint
+MKDIR=mkdir
+TOUCH=touch
+
+NOT_EXISTING_FILE=103
+NOT_ABSOLUTE_PATH=111
+NO_ROOT_PRIVILEGES=110
+
+source "${JUNEST_BASE}/lib/utils/utils.sh"
+
+
+################################ MAIN FUNCTIONS ###########################
+
+function chroot_add_mount() {
+    $MOUNT "$@" && CHROOT_ACTIVE_MOUNTS=("${@: -1}" "${CHROOT_ACTIVE_MOUNTS[@]}")
+}
+
+function chroot_teardown() {
+    $UMOUNT "${CHROOT_ACTIVE_MOUNTS[@]}"
+    unset CHROOT_ACTIVE_MOUNTS
+}
+
+function chroot_maybe_add_mount() {
+    local cond=$1
+    shift
+    if eval "$cond"; then
+        chroot_add_mount "$@"
+        return
+    fi
+    return 1
+}
+
+function chroot_setup() {
+    CHROOT_ACTIVE_MOUNTS=()
+    check_and_trap 'chroot_teardown' EXIT
+
+    if ! chroot_maybe_add_mount "! $MOUNTPOINT -q '$CHROOTDIR'" --bind "$CHROOTDIR" "$CHROOTDIR"
+    then
+        warn "Failed mount of directories. $CHROOTDIR is already a mountpoint. Skipping it..."
+        return 0
+    fi
+
+    local re='(.*):(.*)'
+    for binds in ${BINDINGS[@]}
+    do
+        local host_path=""
+        local guest_path=""
+        if [[ $binds =~ $re ]]
+        then
+            local host_path="${BASH_REMATCH[1]}"
+            local guest_path="${BASH_REMATCH[2]}"
+        else
+            local host_path="$binds"
+            local guest_path="$binds"
+        fi
+
+        create_node "${host_path}" "${CHROOTDIR}${guest_path}"
+        chroot_add_mount --rbind "${host_path}" "${CHROOTDIR}${guest_path}"
+    done
+}
+
+function create_node() {
+    local src="$1"
+    local dst="$2"
+    if [[ ! -e $src ]]
+    then
+        die_on_status $NOT_EXISTING_FILE "${src} does not exist."
+    elif [[ $src != /* ]]
+    then
+        die_on_status $NOT_ABSOLUTE_PATH "${src} is not an absolute path."
+    elif [[ -f $src ]]
+    then
+        $TOUCH "$dst"
+    elif [[ -d $src ]]
+    then
+        $MKDIR -p "$dst"
+    fi
+}
+
+function usage() {
+  cat <<EOF
+$NAME (v$(cat $JUNEST_BASE/VERSION)): $DESCRIPTION
+
+Usage:
+    $CMD [options] [<chroot-dir> [command]]
+
+Options:
+    -b, --bind <path>
+            Make the content of <path> accessible in the guest rootfs.
+
+            This option makes any file or directory of the host rootfs
+            accessible in the confined environment just as if it were part of
+            the guest rootfs.  By default the host path is bound to the same
+            path in the guest rootfs but users can specify any other location
+            with the syntax: -b <host_path>:<guest_location>. This option can
+            be invoked multiple times and the paths specified must be absolutes.
+
+    -h, --help                Print this help message
+
+    -V, --version             Show the $NAME version
+
+If 'command' is unspecified, $CMD will launch $SHELL.
+
+EOF
+}
+
+version() {
+    echo -e "$NAME $(cat $JUNEST_BASE/VERSION)"
+}
+
+function parse_arguments() {
+    OPT_BIND=false
+    BINDINGS=()
+    OPT_HELP=false
+    OPT_VERSION=false
+    for opt in "$@"
+    do
+        case "$1" in
+            -b|--bind) OPT_BIND=true ; shift ; BINDINGS+=("$1") ; shift ;;
+            -h|--help) OPT_HELP=true ; shift ;;
+            -V|--version) OPT_VERSION=true ; shift ;;
+            -*) die "Invalid option $1" ;;
+            *) break ;;
+        esac
+    done
+
+    if [[ ! -z $1 ]]
+    then
+        CHROOTDIR="$1"
+        shift
+    fi
+    ARGS=()
+    for arg in "$@"
+    do
+        ARGS+=("$arg")
+    done
+}
+
+function is_user_root() {
+    (( EUID == 0 ))
+}
+
+function execute_operation() {
+    $OPT_HELP && usage && return
+    $OPT_VERSION && version && return
+
+    is_user_root || die_on_status $NO_ROOT_PRIVILEGES 'This script must be run with root privileges'
+
+    [[ -d $CHROOTDIR ]] || die_on_status $NOT_EXISTING_FILE "Can't create chroot on non-directory $CHROOTDIR"
+
+    chroot_setup "$CHROOTDIR" || die "Failed to setup chroot $CHROOTDIR"
+
+    $CHROOTCMD "$CHROOTDIR" "${ARGS[@]}"
+}
+
+
+function main() {
+    parse_arguments "$@"
+    execute_operation
+}
+
+main "$@"

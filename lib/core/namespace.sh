@@ -59,7 +59,7 @@ function run_env_as_user_with_namespace() {
     local bindings=${RESULT}
     unset RESULT
 
-    unshare_cmd --mount --user --map-root-user $JCHROOT $bindings $backend_args "$JUNEST_HOME"
+    unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME"
 }
 
 function run_env_as_fakeroot_with_namespace() {
@@ -69,9 +69,19 @@ function run_env_as_fakeroot_with_namespace() {
 
     copy_common_files
 
+  #mkdir -p "$chrootdir/$HOME"
+  #mkdir -p "$chrootdir/run/lock"
+  #chroot_add_mount --rbind /proc "$chrootdir/proc/"
+  #chroot_add_mount --rbind /dev "$chrootdir/dev/"
+  #chroot_add_mount --rbind /sys "$chrootdir/sys/"
+  #chroot_add_mount --rbind /tmp "$chrootdir/tmp/"
+  ## alternately create a new tmp istead of binding it:
+  ##chroot_add_mount -t tmpfs tmp "$chrootdir/tmp/"
+  #chroot_add_mount --rbind $HOME "$chrootdir/$HOME"
     provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
 
-    JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $JCHROOT $bindings $backend_args "$JUNEST_HOME"
+    JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME"
+
 }

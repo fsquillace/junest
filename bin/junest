@@ -3,7 +3,11 @@
 # This file is part of JuNest (https://github.com/fsquillace/junest).
 #
 
-JUNEST_BASE="$(readlink -f $(dirname $(readlink -f "$0"))/..)"
+set -e
+
+# JUNEST_BASE can be overridden for testing purposes.
+# There is no need for doing it for normal usage.
+JUNEST_BASE="${JUNEST_BASE:-$(readlink -f $(dirname $(readlink -f "$0"))/..)}"
 
 source "${JUNEST_BASE}/lib/utils/utils.sh"
 source "${JUNEST_BASE}/lib/core/common.sh"
@@ -32,10 +36,10 @@ usage() {
     echo
     echo -e "Access options:"
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
-    echo -e "-r, --root                     Run $NAME with root privileges via jchroot"
-    echo -e "-p, --backend-args <args>      Arguments for backend program (PRoot or jchroot)"
+    echo -e "-r, --root                     Run $NAME with root privileges via GRoot"
+    echo -e "-p, --backend-args <args>      Arguments for backend program (PRoot or GRoot)"
     echo -e "                               ($CMD -p \"--help\" to check out the PRoot options"
-    echo -e "                                $CMD -u -p \"--help\" to check out the jchroot options)"
+    echo -e "                                $CMD -u -p \"--help\" to check out the GRoot options)"
     echo -e "-u, --user-namespace           Use Linux User Namespace instead of PRoot"
     echo
     echo -e "Building options:"
@@ -47,7 +51,7 @@ usage() {
     echo
     echo -e "General options:"
     echo -e "-h, --help                     Show this help message"
-    echo -e "-v, --version                  Show the $NAME version"
+    echo -e "-V, --version                  Show the $NAME version"
 }
 
 version() {
@@ -169,7 +173,7 @@ function parse_arguments(){
             -s|--skip-root-tests) OPT_SKIP_ROOT_TEST=true ; shift ;;
             -d|--delete) OPT_DELETE=true ; shift ;;
             -h|--help) OPT_HELP=true ; shift ;;
-            -v|--version) OPT_VERSION=true ; shift ;;
+            -V|--version) OPT_VERSION=true ; shift ;;
             --) shift ; break ;;
             -*) die "Invalid option $1" ;;
             *) break ;;
@@ -231,11 +235,11 @@ function execute_operation(){
 
 }
 
-function cli() {
+function main() {
     parse_arguments "$@"
     check_cli
     execute_operation
 }
 
-cli "$@"
+main "$@"
 # vim: set ts=4 sw=4 noet:
