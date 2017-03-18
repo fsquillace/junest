@@ -8,7 +8,7 @@ set -e
 
 JUNEST_BASE="$(readlink -f $(dirname $(readlink -f "$0"))/..)"
 
-source "${JUNEST_BASE}/lib/utils.sh"
+source "${JUNEST_BASE}/lib/utils/utils.sh"
 
 ################################ MAIN FUNCTIONS ###########################
 
