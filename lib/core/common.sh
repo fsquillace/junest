@@ -61,7 +61,7 @@ else
     die "Unknown architecture ${HOST_ARCH}"
 fi
 
-MAIN_REPO=https://s3-eu-west-1.amazonaws.com
+MAIN_REPO=https://s3-eu-west-1.amazonaws.com/${CMD}-repo
 ENV_REPO=${MAIN_REPO}/${CMD}
 DEFAULT_MIRROR='https://mirrors.kernel.org/archlinux/$repo/os/$arch'
 
