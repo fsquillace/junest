@@ -29,6 +29,24 @@ function tearDown(){
     cwdTearDown
 }
 
+function _test_copy_common_files() {
+    [[ -e /etc/hosts ]] && assertEquals "$(cat /etc/hosts)" "$(cat ${JUNEST_HOME}/etc/hosts)"
+    [[ -e /etc/host.conf ]] && assertEquals "$(cat /etc/host.conf)" "$(cat ${JUNEST_HOME}/etc/host.conf)"
+    [[ -e /etc/nsswitch.conf ]] && assertEquals "$(cat /etc/nsswitch.conf)" "$(cat ${JUNEST_HOME}/etc/nsswitch.conf)"
+    [[ -e /etc/resolv.conf ]] && assertEquals "$(cat /etc/resolv.conf)" "$(cat ${JUNEST_HOME}/etc/resolv.conf)"
+}
+
+function _test_copy_remaining_files() {
+    [[ -e /etc/hosts.equiv ]] && assertEquals "$(cat /etc/hosts.equiv)" "$(cat ${JUNEST_HOME}/etc/hosts.equiv)"
+    [[ -e /etc/netgroup ]] && assertEquals "$(cat /etc/netgroup)" "$(cat ${JUNEST_HOME}/etc/netgroup)"
+    [[ -e /etc/networks ]] && assertEquals "$(cat /etc/networks)" "$(cat ${JUNEST_HOME}/etc/networks)"
+
+    [[ -e ${JUNEST_HOME}/etc/passwd ]]
+    assertEquals 0 $?
+    [[ -e ${JUNEST_HOME}/etc/group ]]
+    assertEquals 0 $?
+}
+
 function test_run_env_as_user(){
     _run_env_with_qemu() {
         echo $@
@@ -40,19 +58,8 @@ function test_run_env_as_user(){
     assertCommandSuccess run_env_as_user "-k 3.10"
     assertEquals "-b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
 
-    [[ -e /etc/hosts ]] && assertEquals "$(cat /etc/hosts)" "$(cat ${JUNEST_HOME}/etc/hosts)"
-    [[ -e /etc/host.conf ]] && assertEquals "$(cat /etc/host.conf)" "$(cat ${JUNEST_HOME}/etc/host.conf)"
-    [[ -e /etc/nsswitch.conf ]] && assertEquals "$(cat /etc/nsswitch.conf)" "$(cat ${JUNEST_HOME}/etc/nsswitch.conf)"
-    [[ -e /etc/resolv.conf ]] && assertEquals "$(cat /etc/resolv.conf)" "$(cat ${JUNEST_HOME}/etc/resolv.conf)"
-
-    [[ -e /etc/hosts.equiv ]] && assertEquals "$(cat /etc/hosts.equiv)" "$(cat ${JUNEST_HOME}/etc/hosts.equiv)"
-    [[ -e /etc/netgroup ]] && assertEquals "$(cat /etc/netgroup)" "$(cat ${JUNEST_HOME}/etc/netgroup)"
-
-    [[ -e /etc/passwd ]]
-    assertEquals 0 $?
-    [[ -e /etc/group ]]
-    assertEquals 0 $?
-
+    _test_copy_common_files
+    _test_copy_remaining_files
 }
 
 function test_run_env_as_fakeroot(){
@@ -66,10 +73,7 @@ function test_run_env_as_fakeroot(){
     assertCommandSuccess run_env_as_fakeroot "-k 3.10"
     assertEquals "-0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
 
-    [[ -e /etc/hosts ]] && assertEquals "$(cat /etc/hosts)" "$(cat ${JUNEST_HOME}/etc/hosts)"
-    [[ -e /etc/host.conf ]] && assertEquals "$(cat /etc/host.conf)" "$(cat ${JUNEST_HOME}/etc/host.conf)"
-    [[ -e /etc/nsswitch.conf ]] && assertEquals "$(cat /etc/nsswitch.conf)" "$(cat ${JUNEST_HOME}/etc/nsswitch.conf)"
-    [[ -e /etc/resolv.conf ]] && assertEquals "$(cat /etc/resolv.conf)" "$(cat ${JUNEST_HOME}/etc/resolv.conf)"
+    _test_copy_common_files
 }
 
 function test_run_env_with_quotes(){

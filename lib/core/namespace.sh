@@ -26,7 +26,7 @@ function _is_user_namespace_enabled() {
         return $NOT_EXISTING_FILE
     fi
 
-    if ! zgrep_cmd "CONFIG_USER_NS=y" $config_file
+    if ! zgrep_cmd -q "CONFIG_USER_NS=y" $config_file
     then
         return $NO_CONFIG_FOUND
     fi
@@ -42,6 +42,35 @@ function _check_user_namespace() {
     set -e
 }
 
+function _run_env_with_namespace(){
+    local backend_args="$1"
+    shift
+
+    if [[ "$1" != "" ]]
+    then
+        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+    else
+        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME" "${SH[@]}"
+    fi
+}
+
+
+#######################################
+# Run JuNest as normal user via user namespace.
+#
+# Globals:
+#   JUNEST_HOME (RO)         : The JuNest home directory.
+#   GROOT (RO)               : The groot program.
+#   SH (RO)                  : Contains the default command to run in JuNest.
+# Arguments:
+#   backend_args ($1)        : The arguments to pass to proot
+#   cmd ($2-?)               : The command to run inside JuNest environment.
+#                              Default command is defined by SH variable.
+# Returns:
+#   Depends on the unshare command outcome.
+# Output:
+#   -                        : The command output.
+#######################################
 function run_env_as_user_with_namespace() {
     local backend_args="$1"
     shift
@@ -59,9 +88,26 @@ function run_env_as_user_with_namespace() {
     local bindings=${RESULT}
     unset RESULT
 
-    unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME"
+    # TODO make sure to run the environment as normal user
+    _run_env_with_namespace "$backend_args" "$@"
 }
 
+#######################################
+# Run JuNest as fakeroot via user namespace.
+#
+# Globals:
+#   JUNEST_HOME (RO)         : The JuNest home directory.
+#   GROOT (RO)               : The groot program.
+#   SH (RO)                  : Contains the default command to run in JuNest.
+# Arguments:
+#   backend_args ($1)        : The arguments to pass to proot
+#   cmd ($2-?)               : The command to run inside JuNest environment.
+#                              Default command is defined by SH variable.
+# Returns:
+#   Depends on the unshare command outcome.
+# Output:
+#   -                        : The command output.
+#######################################
 function run_env_as_fakeroot_with_namespace() {
     local backend_args="$1"
     shift
@@ -69,19 +115,9 @@ function run_env_as_fakeroot_with_namespace() {
 
     copy_common_files
 
-  #mkdir -p "$chrootdir/$HOME"
-  #mkdir -p "$chrootdir/run/lock"
-  #chroot_add_mount --rbind /proc "$chrootdir/proc/"
-  #chroot_add_mount --rbind /dev "$chrootdir/dev/"
-  #chroot_add_mount --rbind /sys "$chrootdir/sys/"
-  #chroot_add_mount --rbind /tmp "$chrootdir/tmp/"
-  ## alternately create a new tmp istead of binding it:
-  ##chroot_add_mount -t tmpfs tmp "$chrootdir/tmp/"
-  #chroot_add_mount --rbind $HOME "$chrootdir/$HOME"
     provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
 
-    JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME"
-
+    _run_env_with_namespace "$backend_args" "$@"
 }

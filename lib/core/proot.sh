@@ -44,20 +44,23 @@ function _run_env_with_qemu(){
 # Run JuNest as fakeroot.
 #
 # Globals:
-#   JUNEST_HOME (RO)         : The JuNest home directory.
-#   EUID (RO)                : The user ID.
-#   SH (RO)                  : Contains the default command to run in JuNest.
+#   JUNEST_HOME (RO)          : The JuNest home directory.
+#   EUID (RO)                 : The user ID.
+#   SH (RO)                   : Contains the default command to run in JuNest.
 # Arguments:
-#   cmd ($@?)                : The command to run inside JuNest environment.
+#   backend_args ($1)         : The arguments to pass to proot
+#   cmd ($2-?)                : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
-#   $ROOT_ACCESS_ERROR       : If the user is the real root.
+#   $ROOT_ACCESS_ERROR        : If the user is the real root.
 # Output:
-#   -                        : The command output.
+#   -                         : The command output.
 #######################################
 function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+    local backend_args="$1"
+    shift
 
     copy_common_files
 
@@ -67,7 +70,7 @@ function run_env_as_fakeroot(){
 
     # An alternative is via -S option:
     #_run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
-    _run_env_with_qemu "-0 ${bindings} -r ${JUNEST_HOME} $1" "${@:2}"
+    _run_env_with_qemu "-0 ${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
 }
 
 #######################################
@@ -78,7 +81,8 @@ function run_env_as_fakeroot(){
 #   EUID (RO)                : The user ID.
 #   SH (RO)                  : Contains the default command to run in JuNest.
 # Arguments:
-#   cmd ($@?)                : The command to run inside JuNest environment.
+#   backend_args ($1)        : The arguments to pass to proot
+#   cmd ($2-?)               : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
 #   $ROOT_ACCESS_ERROR       : If the user is the real root.
@@ -88,6 +92,8 @@ function run_env_as_fakeroot(){
 function run_env_as_user(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+    local backend_args="$1"
+    shift
 
     # Files to bind are visible in `proot --help`.
     # This function excludes /etc/mtab file so that
@@ -105,5 +111,5 @@ function run_env_as_user(){
     local bindings=${RESULT}
     unset RESULT
 
-    _run_env_with_qemu "${bindings} -r ${JUNEST_HOME} $1" "${@:2}"
+    _run_env_with_qemu "${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
 }

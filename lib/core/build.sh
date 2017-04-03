@@ -137,4 +137,5 @@ function check_env(){
     info "Removing the previous packages..."
     JUNEST_HOME=${testdir} ${cmd} -f pacman --noconfirm -Rsn tcptraceroute tree iftop
 
+    JUNEST_HOME=${testdir} ${cmd} -u -- ls -la
 }
