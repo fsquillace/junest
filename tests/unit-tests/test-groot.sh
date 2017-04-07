@@ -133,5 +133,29 @@ function test_groot_with_bind_and_command(){
     assertEquals 0 $?
     assertEquals "$(echo -e "check_and_trap(chroot_teardown EXIT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--rbind /tmp chrootdir/home/tmp)\nmount(--rbind /dev chrootdir/dev)\nchroot(chrootdir ls -la -h)")" "$(cat $STDOUTF)"
 }
+function test_groot_with_bind_no_umount(){
+    assertCommandSuccess main -n chrootdir
+    assertEquals "$(echo -e "mountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+}
+function test_groot_with_chroot_teardown(){
+    echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
+    MOUNTS_FILE=./mounts
+    CHROOTDIR=/home/mychroot assertCommandSuccess chroot_teardown
+    assertEquals "$(echo -e "umount(/home/mychroot/proc/fs1)
+umount(/home/mychroot/proc)
+umount(/home/mychroot/dev/shm)
+umount(/home/mychroot/dev)
+umount(/home/mychroot)")" "$(cat $STDOUTF)"
+}
+function test_groot_with_chroot_teardown_with_trailing_slash(){
+    echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
+    MOUNTS_FILE=./mounts
+    CHROOTDIR=/home/mychroot assertCommandSuccess chroot_teardown
+    assertEquals "$(echo -e "umount(/home/mychroot/proc/fs1)
+umount(/home/mychroot/proc)
+umount(/home/mychroot/dev/shm)
+umount(/home/mychroot/dev)
+umount(/home/mychroot)")" "$(cat $STDOUTF)"
+}
 
 source $(dirname $0)/../utils/shunit2

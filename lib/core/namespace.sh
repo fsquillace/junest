@@ -46,11 +46,14 @@ function _run_env_with_namespace(){
     local backend_args="$1"
     shift
 
+    # Use option -n in groot because umount do not work sometimes.
+    # As soon as the process terminates, the namespace
+    # will terminate too with its own mounted directories.
     if [[ "$1" != "" ]]
     then
-        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT -n $bindings $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT $bindings $backend_args "$JUNEST_HOME" "${SH[@]}"
+        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT -n $bindings $backend_args "$JUNEST_HOME" "${SH[@]}"
     fi
 }
 

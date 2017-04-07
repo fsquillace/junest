@@ -19,6 +19,11 @@ UMOUNT=umount
 MOUNTPOINT=mountpoint
 MKDIR=mkdir
 TOUCH=touch
+CUT=cut
+SORT=sort
+UNIQ=uniq
+GREP=grep
+MOUNTS_FILE=/proc/self/mounts
 
 NOT_EXISTING_FILE=103
 NOT_ABSOLUTE_PATH=111
@@ -29,28 +34,29 @@ source "${JUNEST_BASE}/lib/utils/utils.sh"
 
 ################################ MAIN FUNCTIONS ###########################
 
-function chroot_add_mount() {
-    $MOUNT "$@" && CHROOT_ACTIVE_MOUNTS=("${@: -1}" "${CHROOT_ACTIVE_MOUNTS[@]}")
-}
-
 function chroot_teardown() {
-    $UMOUNT "${CHROOT_ACTIVE_MOUNTS[@]}"
-    unset CHROOT_ACTIVE_MOUNTS
+    # Remove all mounts starting from the most nested ones.
+    # Suffix the CHROOTDIR with / to avoid umounting directories not belonging
+    # to CHROOTDIR.
+    for mp in $($GREP "${CHROOTDIR%/}/" $MOUNTS_FILE | $CUT -f2 -d' ' | $SORT -r | $UNIQ)
+    do
+        $UMOUNT $mp
+    done
+    $UMOUNT ${CHROOTDIR%/}
 }
 
 function chroot_maybe_add_mount() {
     local cond=$1
     shift
     if eval "$cond"; then
-        chroot_add_mount "$@"
+        $MOUNT "$@"
         return
     fi
     return 1
 }
 
 function chroot_setup() {
-    CHROOT_ACTIVE_MOUNTS=()
-    check_and_trap 'chroot_teardown' EXIT
+    $OPT_NO_UMOUNT || check_and_trap 'chroot_teardown' EXIT
 
     if ! chroot_maybe_add_mount "! $MOUNTPOINT -q '$CHROOTDIR'" --bind "$CHROOTDIR" "$CHROOTDIR"
     then
@@ -73,7 +79,7 @@ function chroot_setup() {
         fi
 
         create_node "${host_path}" "${CHROOTDIR}${guest_path}"
-        chroot_add_mount --rbind "${host_path}" "${CHROOTDIR}${guest_path}"
+        $MOUNT --rbind "${host_path}" "${CHROOTDIR}${guest_path}"
     done
 }
 
@@ -112,6 +118,8 @@ Options:
             path in the guest rootfs but users can specify any other location
             with the syntax: -b <host_path>:<guest_location>. This option can
             be invoked multiple times and the paths specified must be absolutes.
+    -n, --no-umount
+            Do not umount after chroot session finished.
 
     -h, --help                Print this help message
 
@@ -129,12 +137,14 @@ version() {
 function parse_arguments() {
     OPT_BIND=false
     BINDINGS=()
+    OPT_NO_UMOUNT=false
     OPT_HELP=false
     OPT_VERSION=false
     for opt in "$@"
     do
         case "$1" in
             -b|--bind) OPT_BIND=true ; shift ; BINDINGS+=("$1") ; shift ;;
+            -n|--no-umount) OPT_NO_UMOUNT=true ; shift ;;
             -h|--help) OPT_HELP=true ; shift ;;
             -V|--version) OPT_VERSION=true ; shift ;;
             -*) die "Invalid option $1" ;;
