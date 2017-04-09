@@ -78,64 +78,36 @@ function test_is_user_namespace_enabled_with_config(){
     assertCommandSuccess _is_user_namespace_enabled
 }
 
-function test_run_env_as_user_with_namespace() {
-    assertCommandSuccess run_env_as_user_with_namespace "" ""
+function test_run_env_with_namespace() {
+    assertCommandSuccess run_env_with_namespace "" ""
     assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
 }
 
-function test_run_env_as_user_with_namespace_with_bindings() {
-    assertCommandSuccess run_env_as_user_with_namespace "-b /usr -b /lib:/tmp/lib" ""
+function test_run_env_with_namespace_with_bindings() {
+    assertCommandSuccess run_env_with_namespace "-b /usr -b /lib:/tmp/lib" ""
     assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev -b /usr -b /lib:/tmp/lib $JUNEST_HOME /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
 }
 
-function test_run_env_as_user_with_namespace_with_command() {
-    assertCommandSuccess run_env_as_user_with_namespace "" "ls -la"
+function test_run_env_with_namespace_with_command() {
+    assertCommandSuccess run_env_with_namespace "" "ls -la"
     assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
 }
 
-function test_run_env_as_user_with_namespace_with_bindings_and_command() {
-    assertCommandSuccess run_env_as_user_with_namespace "-b /usr -b /lib:/tmp/lib" "ls -la"
+function test_run_env_with_namespace_with_bindings_and_command() {
+    assertCommandSuccess run_env_with_namespace "-b /usr -b /lib:/tmp/lib" "ls -la"
     assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev -b /usr -b /lib:/tmp/lib $JUNEST_HOME /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
-}
-
-function test_run_env_as_fakeroot_with_namespace() {
-    assertCommandSuccess run_env_as_fakeroot_with_namespace "" ""
-    assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login" "$(cat $STDOUTF)"
-
-    _test_copy_common_files
-}
-
-function test_run_env_as_fakeroot_with_namespace_with_bindings() {
-    assertCommandSuccess run_env_as_fakeroot_with_namespace "-b /usr -b /lib:/tmp/lib" ""
-    assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev -b /usr -b /lib:/tmp/lib $JUNEST_HOME /bin/sh --login" "$(cat $STDOUTF)"
-
-    _test_copy_common_files
-}
-
-function test_run_env_as_fakeroot_with_namespace_with_command() {
-    assertCommandSuccess run_env_as_fakeroot_with_namespace "" "ls -la"
-    assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
-
-    _test_copy_common_files
-}
-
-function test_run_env_as_fakeroot_with_namespace_with_bindings_and_command() {
-    assertCommandSuccess run_env_as_fakeroot_with_namespace "-b /usr -b /lib:/tmp/lib" "ls -la"
-    assertEquals "unshare --mount --user --map-root-user $GROOT -n -b $HOME -b /tmp -b /proc -b /sys -b /dev -b /usr -b /lib:/tmp/lib $JUNEST_HOME /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
-
-    _test_copy_common_files
 }
 
 source $JUNEST_ROOT/tests/utils/shunit2

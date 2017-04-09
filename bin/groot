@@ -56,7 +56,7 @@ function chroot_maybe_add_mount() {
 }
 
 function chroot_setup() {
-    $OPT_NO_UMOUNT || check_and_trap 'chroot_teardown' EXIT
+    $OPT_NO_UMOUNT || check_and_trap 'chroot_teardown' QUIT EXIT ABRT KILL TERM INT
 
     if ! chroot_maybe_add_mount "! $MOUNTPOINT -q '$CHROOTDIR'" --bind "$CHROOTDIR" "$CHROOTDIR"
     then

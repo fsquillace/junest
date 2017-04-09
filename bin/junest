@@ -36,18 +36,17 @@ usage() {
     echo
     echo -e "Access options:"
     echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
-    echo -e "-r, --root                     Run $NAME with root privileges via GRoot"
+    echo -e "-g, --groot                    Run $NAME with root privileges via GRoot"
+    echo -e "-r, --root                     Run $NAME with root privileges via classic chroot"
+    echo -e "-u, --namespace                Use Linux Namespace (with GRoot) instead of PRoot"
     echo -e "-p, --backend-args <args>      Arguments for backend program (PRoot or GRoot)"
     echo -e "                               ($CMD -p \"--help\" to check out the PRoot options"
-    echo -e "                                $CMD -u -p \"--help\" to check out the GRoot options)"
-    echo -e "-u, --user-namespace           Use Linux User Namespace instead of PRoot"
+    echo -e "                                $CMD -g -p \"--help\" to check out the GRoot options"
+    echo -e "                                $CMD -r -p \"--help\" to check out the chroot options)"
     echo
     echo -e "Building options:"
     echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
     echo -e "-n, --disable-validation       Disable the $NAME image validation"
-    echo -e "-c, --check <${CMD}_script>    Validate the env located in ${JUNEST_HOME}"
-    echo -e "                               using ${CMD}_script. This will alterate the environment"
-    echo -e "-s, --skip-root-tests          Skip the root tests during the validation process"
     echo
     echo -e "General options:"
     echo -e "-h, --help                     Show this help message"
@@ -62,31 +61,15 @@ check_cli(){
     if $OPT_BUILD_IMAGE
     then
         if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_CHECK
-        then
-            die "The build image option must be used exclusively"
-        fi
-    fi
-    if $OPT_SKIP_ROOT_TEST
-    then
-        if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
             $OPT_FAKEROOT || $OPT_ROOT
         then
-            die "The skip root tests option must be used with either build image or check options"
-        fi
-    fi
-    if $OPT_CHECK
-    then
-        if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_BUILD_IMAGE
-        then
-            die "The validation image option must be used exclusively"
+            die "The build image option must be used exclusively"
         fi
     fi
     if $OPT_DISABLE_VALIDATION
     then
         if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_CHECK
+            $OPT_FAKEROOT || $OPT_ROOT
         then
             die "The disable validation option must be used with the build image option only"
         fi
@@ -94,7 +77,7 @@ check_cli(){
     if $OPT_DELETE
     then
         if $OPT_BUILD_IMAGE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION || $OPT_CHECK
+            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
         then
             die "The $NAME delete option must be used exclusively"
         fi
@@ -102,7 +85,7 @@ check_cli(){
     if $OPT_HELP
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION || $OPT_CHECK
+            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
         then
             die "The $NAME help option must be used exclusively"
         fi
@@ -110,7 +93,7 @@ check_cli(){
     if $OPT_VERSION
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION || $OPT_CHECK
+            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
         then
             die "The $NAME version option must be used exclusively"
         fi
@@ -122,7 +105,7 @@ check_cli(){
     if $OPT_BACKEND_ARGS || $OPT_ARCH
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || \
-            $OPT_ROOT || $OPT_VERSION || $OPT_DISABLE_VALIDATION || $OPT_CHECK
+            $OPT_ROOT || $OPT_VERSION || $OPT_DISABLE_VALIDATION
         then
             die "Invalid syntax: Proot and arch args are not allowed with the other options"
         fi
@@ -130,7 +113,7 @@ check_cli(){
     if [ "$ARGS" != "" ]
     then
         if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
-            $OPT_VERSION || $OPT_DISABLE_VALIDATION || $OPT_CHECK
+            $OPT_VERSION || $OPT_DISABLE_VALIDATION
         then
             die "No arguments are needed. For the CLI syntax run: $CMD --help"
         fi
@@ -145,6 +128,7 @@ function parse_arguments(){
     IMAGE_FILE=""
     OPT_FAKEROOT=false
     OPT_ROOT=false
+    OPT_GROOT=false
     OPT_USER_NAMESPACE=false
     OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
@@ -152,9 +136,7 @@ function parse_arguments(){
     ARCH_ARG=""
     OPT_BUILD_IMAGE=false
     OPT_DISABLE_VALIDATION=false
-    OPT_CHECK=false
     CHECK_ARG=""
-    OPT_SKIP_ROOT_TEST=false
     OPT_DELETE=false
     OPT_HELP=false
     OPT_VERSION=false
@@ -164,13 +146,12 @@ function parse_arguments(){
             -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
             -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
             -r|--root) OPT_ROOT=true ; shift ;;
-            -u|--user-namespace) OPT_USER_NAMESPACE=true ; shift ;;
+            -g|--groot) OPT_GROOT=true ; shift ;;
+            -u|--namespace) OPT_USER_NAMESPACE=true ; shift ;;
             -p|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
             -a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
             -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
             -n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
-            -c|--check) OPT_CHECK=true ; shift ; CHECK_ARG=$1; shift ;;
-            -s|--skip-root-tests) OPT_SKIP_ROOT_TEST=true ; shift ;;
             -d|--delete) OPT_DELETE=true ; shift ;;
             -h|--help) OPT_HELP=true ; shift ;;
             -V|--version) OPT_VERSION=true ; shift ;;
@@ -192,13 +173,10 @@ function execute_operation(){
     $OPT_VERSION && version && return
 
     if $OPT_BUILD_IMAGE; then
-        build_image_env $OPT_DISABLE_VALIDATION $OPT_SKIP_ROOT_TEST
+        build_image_env $OPT_DISABLE_VALIDATION
         return
     elif $OPT_DELETE; then
         delete_env
-        return
-    elif $OPT_CHECK; then
-        check_env "${JUNEST_HOME}" "${CHECK_ARG}" $OPT_SKIP_ROOT_TEST
         return
     fi
 
@@ -217,21 +195,20 @@ function execute_operation(){
     [ -z "${ARCH_ARG}" ] || \
         die "The option --arch cannot be specified since JuNest has already been downloaded in $JUNEST_HOME"
 
+    local run_env
     if $OPT_USER_NAMESPACE; then
-        if $OPT_FAKEROOT; then
-            run_env_as_fakeroot_with_namespace "${BACKEND_ARGS}" "${ARGS[@]}"
-        else
-            run_env_as_user_with_namespace "${BACKEND_ARGS}" "${ARGS[@]}"
-        fi
+        run_env=run_env_with_namespace
+    elif $OPT_FAKEROOT; then
+        run_env=run_env_as_fakeroot
+    elif $OPT_ROOT; then
+        run_env=run_env_as_chroot
+    elif $OPT_GROOT; then
+        run_env=run_env_as_groot
     else
-        if $OPT_FAKEROOT; then
-            run_env_as_fakeroot "${BACKEND_ARGS}" "${ARGS[@]}"
-        elif $OPT_ROOT; then
-            run_env_as_root "${ARGS[@]}"
-        else
-            run_env_as_user "${BACKEND_ARGS}" "${ARGS[@]}"
-        fi
+        run_env=run_env_as_user
     fi
+
+    $run_env "${BACKEND_ARGS}" "${ARGS[@]}"
 
 }
 

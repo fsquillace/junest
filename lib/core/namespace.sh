@@ -46,6 +46,12 @@ function _run_env_with_namespace(){
     local backend_args="$1"
     shift
 
+    check_nested_env
+
+    provide_common_bindings
+    local bindings=${RESULT}
+    unset RESULT
+
     # Use option -n in groot because umount do not work sometimes.
     # As soon as the process terminates, the namespace
     # will terminate too with its own mounted directories.
@@ -59,7 +65,7 @@ function _run_env_with_namespace(){
 
 
 #######################################
-# Run JuNest as normal user via user namespace.
+# Run JuNest as fakeroot user via user namespace.
 #
 # Globals:
 #   JUNEST_HOME (RO)         : The JuNest home directory.
@@ -70,14 +76,17 @@ function _run_env_with_namespace(){
 #   cmd ($2-?)               : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
+#   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
 #   Depends on the unshare command outcome.
 # Output:
 #   -                        : The command output.
 #######################################
-function run_env_as_user_with_namespace() {
+function run_env_with_namespace() {
     local backend_args="$1"
     shift
     _check_user_namespace
+
+    check_same_arch
 
     copy_common_files
     copy_file /etc/hosts.equiv
@@ -86,41 +95,6 @@ function run_env_as_user_with_namespace() {
     # No need for localtime as it is setup during the image build
     #copy_file /etc/localtime
     copy_passwd_and_group
-
-    provide_common_bindings
-    local bindings=${RESULT}
-    unset RESULT
-
-    # TODO make sure to run the environment as normal user
-    _run_env_with_namespace "$backend_args" "$@"
-}
-
-#######################################
-# Run JuNest as fakeroot via user namespace.
-#
-# Globals:
-#   JUNEST_HOME (RO)         : The JuNest home directory.
-#   GROOT (RO)               : The groot program.
-#   SH (RO)                  : Contains the default command to run in JuNest.
-# Arguments:
-#   backend_args ($1)        : The arguments to pass to proot
-#   cmd ($2-?)               : The command to run inside JuNest environment.
-#                              Default command is defined by SH variable.
-# Returns:
-#   Depends on the unshare command outcome.
-# Output:
-#   -                        : The command output.
-#######################################
-function run_env_as_fakeroot_with_namespace() {
-    local backend_args="$1"
-    shift
-    _check_user_namespace
-
-    copy_common_files
-
-    provide_common_bindings
-    local bindings=${RESULT}
-    unset RESULT
 
     _run_env_with_namespace "$backend_args" "$@"
 }

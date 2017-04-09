@@ -17,9 +17,14 @@ install:
 
 script:
   - bash --version
-  - bash ./tests/unit-tests/unit-tests.sh
   - bash ./tests/checkstyle/checkstyle.sh
-  - junest --check ./bin/junest
+  - bash ./tests/unit-tests/unit-tests.sh
+
+  # Multiple tests against different execution modes:
+  - junest -f -- ${PWD}/lib/checks/check.sh
+  - junest -u -- ${PWD}/lib/checks/check.sh --skip-aur-tests
+  - sudo -E ${PWD}/bin/junest -g -- ${PWD}/lib/checks/check.sh --run-root-tests
   - yes | junest --delete
-  - JUNEST_HOME=~/.junest-arm junest --check ./bin/junest --skip-root-tests
+
+  - JUNEST_HOME=~/.junest-arm junest -f -- ./lib/checks/check.sh
   - yes | JUNEST_HOME=~/.junest-arm junest --delete

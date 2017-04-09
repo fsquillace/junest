@@ -20,10 +20,20 @@ function oneTimeTearDown(){
 }
 
 function setUp(){
-    ld_exec() {
+    ld_exec_mock() {
         echo "ld_exec $@"
     }
-    LD_EXEC=ld_exec
+    ld_exec_mock_false() {
+        echo "ld_exec $@"
+        return 1
+    }
+    LD_EXEC=ld_exec_mock
+
+    unshare_mock() {
+        echo "unshare $@"
+    }
+    UNSHARE=unshare_mock
+
 }
 
 function test_ln(){
@@ -117,26 +127,23 @@ function test_zgrep(){
 }
 
 function test_unshare(){
-    UNSHARE=echo assertCommandSuccess unshare_cmd new_program
-    assertEquals "new_program" "$(cat $STDOUTF)"
+    assertCommandSuccess unshare_cmd new_program
+    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/$UNSHARE --user /bin/sh --login -c :\nld_exec ${JUNEST_HOME}/usr/bin/$UNSHARE new_program")" "$(cat $STDOUTF)"
 
-    UNSHARE=false assertCommandSuccess unshare_cmd new_program
-    assertEquals "ld_exec ${JUNEST_HOME}/usr/bin/false new_program" "$(cat $STDOUTF)"
+    LD_EXEC=ld_exec_mock_false assertCommandSuccess unshare_cmd new_program
+    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/unshare_mock --user /bin/sh --login -c :\nunshare --user /bin/sh --login -c :\nunshare new_program")" "$(cat $STDOUTF)"
 
     UNSHARE=false LD_EXEC=false assertCommandFail unshare_cmd new_program
 }
 
 function test_chroot(){
-    GROOT=echo assertCommandSuccess chroot_cmd root
+    CLASSIC_CHROOT=echo assertCommandSuccess chroot_cmd root
     assertEquals "root" "$(cat $STDOUTF)"
 
-    GROOT=false CLASSIC_CHROOT=echo assertCommandSuccess chroot_cmd root
-    assertEquals "root" "$(cat $STDOUTF)"
-
-    GROOT=false CLASSIC_CHROOT=false assertCommandSuccess chroot_cmd root
+    CLASSIC_CHROOT=false assertCommandSuccess chroot_cmd root
     assertEquals "ld_exec $JUNEST_HOME/usr/bin/false root" "$(cat $STDOUTF)"
 
-    GROOT=false CLASSIC_CHROOT=false LD_EXEC=false assertCommandFail chroot_cmd root
+    CLASSIC_CHROOT=false LD_EXEC=false assertCommandFail chroot_cmd root
 }
 
 function test_proot_cmd_compat(){
@@ -187,11 +194,22 @@ function test_copy_passwd_and_group_failure(){
 }
 
 function test_nested_env(){
-    JUNEST_ENV=1 assertCommandFailOnStatus 106 bash -c "source $JUNEST_ROOT/lib/utils/utils.sh; source $JUNEST_ROOT/lib/core/common.sh"
+    JUNEST_ENV=1 assertCommandFailOnStatus 106 check_nested_env
 }
 
 function test_nested_env_not_set_variable(){
-    JUNEST_ENV=aaa assertCommandFailOnStatus 107 bash -c "source $JUNEST_ROOT/lib/utils/utils.sh; source $JUNEST_ROOT/lib/core/common.sh"
+    JUNEST_ENV=aaa assertCommandFailOnStatus 107 check_nested_env
 }
+
+function test_check_same_arch_not_same(){
+    echo "JUNEST_ARCH=XXX" > ${JUNEST_HOME}/etc/junest/info
+    assertCommandFailOnStatus 104 check_same_arch
+}
+
+function test_check_same_arch(){
+    echo "JUNEST_ARCH=$ARCH" > ${JUNEST_HOME}/etc/junest/info
+    assertCommandSuccess check_same_arch
+}
+
 
 source $JUNEST_ROOT/tests/utils/shunit2

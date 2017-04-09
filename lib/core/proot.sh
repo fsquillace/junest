@@ -12,6 +12,7 @@ function _run_env_with_proot(){
     local proot_args="$1"
     shift
 
+    check_nested_env
     if [ "$1" != "" ]
     then
         JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
@@ -58,7 +59,7 @@ function _run_env_with_qemu(){
 #######################################
 function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
-        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
     local backend_args="$1"
     shift
 
@@ -91,7 +92,7 @@ function run_env_as_fakeroot(){
 #######################################
 function run_env_as_user(){
     (( EUID == 0 )) && \
-        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
     local backend_args="$1"
     shift
 

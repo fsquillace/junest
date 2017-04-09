@@ -26,14 +26,7 @@ function version(){
 }
 function build_image_env(){
     local disable_validation=$1
-    local skip_root_tests=$2
-    echo "build_image_env($disable_validation,$skip_root_tests)"
-}
-function check_env(){
-    local env_home=$1
-    local cmd_script=$2
-    local skip_root_tests=$3
-    echo "check_env($env_home,$cmd_script,$skip_root_tests)"
+    echo "build_image_env($disable_validation)"
 }
 function delete_env(){
     echo "delete_env"
@@ -49,23 +42,21 @@ function run_env_as_fakeroot(){
     shift
     echo "run_env_as_fakeroot($backend_args,$@)"
 }
-function run_env_as_root(){
-    echo "run_env_as_root $@"
+function run_env_as_groot(){
+    echo "run_env_as_groot $@"
+}
+function run_env_as_chroot(){
+    echo "run_env_as_chroot $@"
 }
 function run_env_as_user(){
     local backend_args="$1"
     shift
     echo "run_env_as_user($backend_args,$@)"
 }
-function run_env_as_fakeroot_with_namespace(){
+function run_env_with_namespace(){
     local backend_args="$1"
     shift
-    echo "run_env_as_fakeroot_with_namespace($backend_args,$@)"
-}
-function run_env_as_user_with_namespace(){
-    local backend_args="$1"
-    shift
-    echo "run_env_as_user_with_namespace($backend_args,$@)"
+    echo "run_env_with_namespace($backend_args,$@)"
 }
 
 function test_help(){
@@ -82,27 +73,13 @@ function test_version(){
 }
 function test_build_image_env(){
     assertCommandSuccess main -b
-    assertEquals "build_image_env(false,false)" "$(cat $STDOUTF)"
+    assertEquals "build_image_env(false)" "$(cat $STDOUTF)"
     assertCommandSuccess main --build-image
-    assertEquals "build_image_env(false,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess main -b -s
-    assertEquals "build_image_env(false,true)" "$(cat $STDOUTF)"
+    assertEquals "build_image_env(false)" "$(cat $STDOUTF)"
     assertCommandSuccess main -b -n
-    assertEquals "build_image_env(true,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess main -b -n -s
-    assertEquals "build_image_env(true,true)" "$(cat $STDOUTF)"
-    assertCommandSuccess main --build-image --disable-validation --skip-root-tests
-    assertEquals "build_image_env(true,true)" "$(cat $STDOUTF)"
-}
-function test_check_env(){
-    assertCommandSuccess main -c myscript
-    assertEquals "check_env(${JUNEST_HOME},myscript,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess main --check myscript
-    assertEquals "check_env(${JUNEST_HOME},myscript,false)" "$(cat $STDOUTF)"
-    assertCommandSuccess main -c myscript -s
-    assertEquals "check_env(${JUNEST_HOME},myscript,true)" "$(cat $STDOUTF)"
-    assertCommandSuccess main --check myscript --skip-root-tests
-    assertEquals "check_env(${JUNEST_HOME},myscript,true)" "$(cat $STDOUTF)"
+    assertEquals "build_image_env(true)" "$(cat $STDOUTF)"
+    assertCommandSuccess main --build-image --disable-validation
+    assertEquals "build_image_env(true)" "$(cat $STDOUTF)"
 }
 function test_delete_env(){
     assertCommandSuccess main -d
@@ -168,36 +145,31 @@ function test_run_env_as_user(){
 
     assertCommandFail main -a "myarch" -- command -ls
 }
-function test_run_env_as_root(){
+function test_run_env_as_groot(){
+    assertCommandSuccess main -g
+    assertEquals "run_env_as_groot " "$(cat $STDOUTF)"
+    assertCommandSuccess main -g command
+    assertEquals "run_env_as_groot  command" "$(cat $STDOUTF)"
+}
+function test_run_env_as_chroot(){
     assertCommandSuccess main -r
-    assertEquals "run_env_as_root " "$(cat $STDOUTF)"
+    assertEquals "run_env_as_chroot " "$(cat $STDOUTF)"
     assertCommandSuccess main -r command
-    assertEquals "run_env_as_root command" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_chroot  command" "$(cat $STDOUTF)"
 }
 
-function test_run_env_as_fakeroot_with_namespace(){
+function test_run_env_with_namespace(){
     assertCommandSuccess main -u -f
-    assertEquals "run_env_as_fakeroot_with_namespace(,)" "$(cat $STDOUTF)"
-    assertCommandSuccess main --user-namespace --fakeroot
-    assertEquals "run_env_as_fakeroot_with_namespace(,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_with_namespace(,)" "$(cat $STDOUTF)"
+    assertCommandSuccess main --namespace --fakeroot
+    assertEquals "run_env_with_namespace(,)" "$(cat $STDOUTF)"
 
     assertCommandSuccess main -u -f -p "-b arg"
-    assertEquals "run_env_as_fakeroot_with_namespace(-b arg,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_with_namespace(-b arg,)" "$(cat $STDOUTF)"
     assertCommandSuccess main -u -f -p "-b arg" -- command -kv
-    assertEquals "run_env_as_fakeroot_with_namespace(-b arg,command -kv)" "$(cat $STDOUTF)"
+    assertEquals "run_env_with_namespace(-b arg,command -kv)" "$(cat $STDOUTF)"
     assertCommandSuccess main -u -f command --as
-    assertEquals "run_env_as_fakeroot_with_namespace(,command --as)" "$(cat $STDOUTF)"
-}
-function test_run_env_as_user_with_namespace(){
-    assertCommandSuccess main -u
-    assertEquals "run_env_as_user_with_namespace(,)" "$(cat $STDOUTF)"
-
-    assertCommandSuccess main -u -p "-b arg"
-    assertEquals "run_env_as_user_with_namespace(-b arg,)" "$(cat $STDOUTF)"
-    assertCommandSuccess main -u -p "-b arg" -- command -ll
-    assertEquals "run_env_as_user_with_namespace(-b arg,command -ll)" "$(cat $STDOUTF)"
-    assertCommandSuccess main -u command -ls
-    assertEquals "run_env_as_user_with_namespace(,command -ls)" "$(cat $STDOUTF)"
+    assertEquals "run_env_with_namespace(,command --as)" "$(cat $STDOUTF)"
 }
 
 function test_check_cli(){

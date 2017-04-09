@@ -18,6 +18,7 @@ function oneTimeSetUp(){
 function setUp(){
     cwdSetUp
     junestSetUp
+    init_mocks
 }
 
 function tearDown(){
@@ -25,28 +26,42 @@ function tearDown(){
     cwdTearDown
 }
 
-function test_run_env_as_root_different_arch(){
-    echo "JUNEST_ARCH=XXX" > ${JUNEST_HOME}/etc/junest/info
-    assertCommandFailOnStatus 104 run_env_as_root pwd
-}
-
-function _test_run_env_as_root() {
+function init_mocks() {
     chroot_cmd() {
         [ "$JUNEST_ENV" != "1" ] && return 1
-        echo $@
+        echo "chroot_cmd $@"
     }
-
-    assertCommandSuccess run_env_as_root $@
+    GROOT=chroot_cmd
 }
 
-function test_run_env_as_root_cmd(){
-    _test_run_env_as_root pwd
-    assertEquals "$JUNEST_HOME /bin/sh --login -c pwd" "$(cat $STDOUTF)"
+function test_run_env_as_groot_cmd(){
+    assertCommandSuccess run_env_as_groot "" pwd
+    assertEquals "chroot_cmd -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login -c pwd" "$(cat $STDOUTF)"
 }
 
-function test_run_env_as_classic_root_no_cmd(){
-    _test_run_env_as_root
-    assertEquals "$JUNEST_HOME /bin/sh --login -c /bin/sh --login" "$(cat $STDOUTF)"
+function test_run_env_as_groot_no_cmd(){
+    assertCommandSuccess run_env_as_groot ""
+    assertEquals "chroot_cmd -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login -c /bin/sh --login" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_groot_cmd_with_backend_args(){
+    assertCommandSuccess run_env_as_groot "-n -b /home/blah" pwd
+    assertEquals "chroot_cmd -b $HOME -b /tmp -b /proc -b /sys -b /dev -n -b /home/blah $JUNEST_HOME /bin/sh --login -c pwd" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_chroot_cmd(){
+    assertCommandSuccess run_env_as_chroot "" pwd
+    assertEquals "chroot_cmd $JUNEST_HOME /bin/sh --login -c pwd" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_chroot_no_cmd(){
+    assertCommandSuccess run_env_as_chroot ""
+    assertEquals "chroot_cmd $JUNEST_HOME /bin/sh --login -c /bin/sh --login" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_chroot_cmd_with_backend_args(){
+    assertCommandSuccess run_env_as_chroot "-n -b /home/blah" pwd
+    assertEquals "chroot_cmd -n -b /home/blah $JUNEST_HOME /bin/sh --login -c pwd" "$(cat $STDOUTF)"
 }
 
 source $JUNEST_ROOT/tests/utils/shunit2

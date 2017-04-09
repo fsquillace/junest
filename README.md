@@ -11,7 +11,7 @@ The Arch Linux based distro that runs upon any Linux distros without root access
 
 |Project Status|Donation|Communication|
 |:------------:|:------:|:-----------:|
-| [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![PayPal](https://img.shields.io/badge/PayPal-Donate%20a%20beer-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) [![Gratipay](https://img.shields.io/badge/Gratipay-Donate%20to%20JuNest-green.svg)](https://gratipay.com/junest/) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Join the IRC chat at https://webchat.freenode.net/?channels=junest](https://img.shields.io/badge/IRC-JuNest-yellow.svg)](https://webchat.freenode.net/?channels=junest) [![Join the group at https://groups.google.com/d/forum/junest](https://img.shields.io/badge/Google Groups-JuNest-red.svg)](https://groups.google.com/d/forum/junest) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
+| [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![PayPal](https://img.shields.io/badge/PayPal-Donate%20a%20beer-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) [![Gratipay](https://img.shields.io/badge/Gratipay-Donate%20to%20JuNest-green.svg)](https://gratipay.com/junest/) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Join the IRC chat at https://webchat.freenode.net/?channels=junest](https://img.shields.io/badge/IRC-JuNest-yellow.svg)](https://webchat.freenode.net/?channels=junest) [![Join the group at https://groups.google.com/d/forum/junest](https://img.shields.io/badge/GoogleGroups-JuNest-red.svg)](https://groups.google.com/d/forum/junest) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
 
 **Table of Contents**
 - [Description](#description)
@@ -48,19 +48,62 @@ JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/
 
 Quickstart
 ==========
-There are three different ways you can run JuNest:
+
+Backend programs
+----------------
+There are three different ways you can run JuNest depending on the backend program you decide to use.
+
+### PRoot based ###
+[Proot](https://wiki.archlinux.org/index.php/Proot) represents the default
+program used for accessing to the JuNest environments.
+The main reason to choose Proot as default backend program is because
+it represents a portable solution that works well in most of GNU/Linux distros available.
+One of the major drawbacks is the fact that Proot is not officially
+supported anymore, therefore, Proot bugs may no longer be fixed.
+
+In order to run JuNest via Proot:
 
 - As normal user - Allow to make basic operations: ```junest```
 
 - As fakeroot - Allow to install/remove packages: ```junest -f```
 
-- As root - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -r```
+### Linux namespaces based ###
+The [Linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html)
+represents the next generation backend program for JuNest.
+The major drawback about the namespace is portability, as certain requirements
+need to be satisfied: 1) Only starting from Linux 3.8, unprivileged processes can
+create the required user and mount namespaces.
+2) Moreover, the Linux kernel distro must have the user namespace enabled.
+Hopefully, in the future the major GNU/Linux distros will start enabling such feature by default.
+For instance, Ubuntu (version 14.04+) already has such feature enabled.
 
+In order to run JuNest via Linux namespaces:
+
+- As fakeroot - Allow to install/remove packages: ```junest -u```
+
+### Chroot based ###
+This solution suits only for privileged users. JuNest provides the possibility
+to run the environment via `chroot` program.
+In particular, it uses a special program called `GRoot`, an enhanced `chroot`
+wrapper that allows to bind mount directories specified by the user, such as
+/proc, /sys, /dev, /tmp and $HOME, before
+executing any programs inside the JuNest sandbox. In case the mounting will not
+work, JuNest is even providing the possibility to run the environment directly via
+the pure `chroot` command.
+
+In order to run JuNest via `chroot` solutions:
+
+- As root via `GRoot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -g```
+
+- As root via `chroot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -r```
+
+After running JuNest
+--------------------
 If the JuNest image has not been downloaded yet, the script will download
-the image and will place it to the default directory ~/.junest.
-You can change the default directory by changing the environment variable *JUNEST\_HOME*.
+the image from the repository and will place it to the default directory `~/.junest`.
+You can change the default directory by changing the environment variable `JUNEST_HOME`.
 
-If you are new on Archlinux and you are not familiar with *pacman* package manager
+If you are new on Arch Linux and you are not familiar with `pacman` package manager
 visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
 
 Installation
@@ -90,7 +133,7 @@ Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 ### Installation using AUR (Arch Linux only) ###
 If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/):
 
-    yogurt -S junest-git
+    yaourt -S junest-git
     export PATH=/opt/junest/bin:$PATH
 
 ## Method two ##
@@ -98,7 +141,7 @@ Alternatively, another installation method would be to directly download the JuN
 
     ARCH=<one of "x86_64", "x86", "arm">
     mkdir ~/.junest
-    curl https://dl.dropboxusercontent.com/u/42449030/junest/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
+    curl https://s3-eu-west-1.amazonaws.com/junest-repo/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
     export PATH=~/.junest/opt/junest/bin:$PATH
 
 Advanced usage
@@ -141,12 +184,12 @@ To bind a host directory to a guest location, you can use proot arguments:
 
     junest -p "-b /mnt/mydata:/home/user/mydata"
 
-Check out the proot options with:
+This will works with PRoot, Namespace and GRoot backend programs.
+Check out the backend program options by passing `--help` option:
 
-    junest -p "--help"
+    junest [-u|-g] -p "--help"
 
 ## Systemd integration ##
-
 Although JuNest has not been designed to be a complete container, it is even possible to
 virtualize the process tree thanks to the [systemd container](https://wiki.archlinux.org/index.php/Systemd-nspawn).
 The JuNest containter allows to run services inside the container that can be
@@ -344,6 +387,18 @@ Troubleshooting
 > This should happen every time you install package with root privileges
 > since JuNest will try to preserve the JuNest environment by assigning ownership
 > of the files to the real user.
+
+## Not enabled User namespace or kernel too old ##
+
+> **Q**: Why do I get warning when I run JuNest via Linux namespaces?
+
+    $> junest -u
+    User namespace is not enabled or Kernel too old (<3.8). Proceeding anyway...
+
+> **A**: This means that JuNest detected that the host OS either
+> does not have a newer Linux version or the user namespace is not enabled.
+> JuNest does not stop the execution of the program but it attempts to run it
+> anyway. Try to use Proot as backend program in case is not possible to invoke namespaces.
 
 More documentation
 ==================
