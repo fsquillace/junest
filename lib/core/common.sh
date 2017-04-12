@@ -128,10 +128,13 @@ function unshare_cmd(){
     # Most of the distros do not have the `unshare` command updated
     # with --user option available.
     # Hence, give priority to the `unshare` executable in JuNest image.
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${SH[@]}" "-c" ":"
+    # Also, unshare provides an environment in which /bin/sh maps to dash shell,
+    # therefore it ignores all the remaining SH arguments (i.e. --login) as
+    # they are not supported by dash.
+    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${SH[0]}" "-c" ":"
     then
         $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE "${@}"
-    elif $UNSHARE --user "${SH[@]}" "-c" ":"
+    elif $UNSHARE --user "${SH[0]}" "-c" ":"
     then
         $UNSHARE "$@"
     else

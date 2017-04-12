@@ -157,7 +157,7 @@ files in order to make JuNest working properly (such as pacman, yogurt and proot
 The option **-n** will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
 arch-install-scripts, package-query, git and the base-devel packages installed.
-To change the build directory just use the *JUNEST_TEMPDIR* (by default /tmp).
+To change the build directory just use the `JUNEST_TEMPDIR` (by default /tmp).
 
 After creating the image junest-x86\_64.tar.gz you can install it by running:
 

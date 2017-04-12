@@ -50,7 +50,8 @@ function build_image_env(){
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # yaourt requires sed
     # localedef (called by locale-gen) requires gzip
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed gzip
+    # unshare command belongs to util-linux
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed gzip util-linux
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
     sudo mkdir -p ${maindir}/root/run/lock
 

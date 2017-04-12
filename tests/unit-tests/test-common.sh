@@ -128,10 +128,10 @@ function test_zgrep(){
 
 function test_unshare(){
     assertCommandSuccess unshare_cmd new_program
-    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/$UNSHARE --user /bin/sh --login -c :\nld_exec ${JUNEST_HOME}/usr/bin/$UNSHARE new_program")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/$UNSHARE --user /bin/sh -c :\nld_exec ${JUNEST_HOME}/usr/bin/$UNSHARE new_program")" "$(cat $STDOUTF)"
 
     LD_EXEC=ld_exec_mock_false assertCommandSuccess unshare_cmd new_program
-    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/unshare_mock --user /bin/sh --login -c :\nunshare --user /bin/sh --login -c :\nunshare new_program")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/unshare_mock --user /bin/sh -c :\nunshare --user /bin/sh -c :\nunshare new_program")" "$(cat $STDOUTF)"
 
     UNSHARE=false LD_EXEC=false assertCommandFail unshare_cmd new_program
 }
