@@ -170,6 +170,20 @@ function ask(){
     [ "$res" == "Y" ]
 }
 
+function check_and_trap() {
+    local sigs="${@:2:${#@}}"
+    local traps="$(trap -p $sigs)"
+    [[ $traps ]] && die "Attempting to overwrite existing $sigs trap: $traps"
+    trap $@
+}
+
+function check_and_force_trap() {
+    local sigs="${@:2:${#@}}"
+    local traps="$(trap -p $sigs)"
+    [[ $traps ]] && warn "Attempting to overwrite existing $sigs trap: $traps"
+    trap $@
+}
+
 function insert_quotes_on_spaces(){
 # It inserts quotes between arguments.
 # Useful to preserve quotes on command

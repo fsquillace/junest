@@ -7,8 +7,6 @@
 #
 # vim: ft=sh
 
-set -e
-
 NAME='JuNest'
 CMD='junest'
 DESCRIPTION='The Arch Linux based distro that runs upon any Linux distros without root access'
@@ -19,21 +17,11 @@ ARCHITECTURE_MISMATCH=104
 ROOT_ACCESS_ERROR=105
 NESTED_ENVIRONMENT=106
 VARIABLE_NOT_SET=107
+NO_CONFIG_FOUND=108
 
-if [ "$JUNEST_ENV" == "1" ]
-then
-    die_on_status $NESTED_ENVIRONMENT "Error: Nested ${NAME} environments are not allowed"
-elif [ ! -z $JUNEST_ENV ] && [ "$JUNEST_ENV" != "0" ]
-then
-    die_on_status $VARIABLE_NOT_SET "The variable JUNEST_ENV is not properly set"
-fi
-
-[ -z ${JUNEST_HOME} ] && JUNEST_HOME=~/.${CMD}
-[ -z ${JUNEST_BASE} ] && JUNEST_BASE=${JUNEST_HOME}/opt/junest
-if [ -z ${JUNEST_TEMPDIR} ] || [ ! -d ${JUNEST_TEMPDIR} ]
-then
-    JUNEST_TEMPDIR=/tmp
-fi
+JUNEST_HOME=${JUNEST_HOME:-~/.${CMD}}
+JUNEST_BASE=${JUNEST_BASE:-${JUNEST_HOME}/opt/junest}
+JUNEST_TEMPDIR=${JUNEST_TEMPDIR:-/tmp}
 
 # The update of the variable PATH ensures that the executables are
 # found on different locations
@@ -78,8 +66,8 @@ SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
 PROOT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
-CHROOT=${JUNEST_BASE}/bin/jchroot
-CLASSIC_CHROOT="chroot"
+GROOT=${JUNEST_BASE}/bin/groot
+CLASSIC_CHROOT=chroot
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR=tar
@@ -89,6 +77,9 @@ RM=rm
 MKDIR=mkdir
 GETENT=getent
 CP=cp
+# Used for checking user namespace in config.gz file
+ZGREP=zgrep
+UNSHARE=unshare
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -97,27 +88,58 @@ LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 # image.
 
 function ln_cmd(){
-    $LN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$LN $@
+    $LN "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$LN "$@"
 }
 
 function getent_cmd(){
-    $GETENT $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$GETENT $@
+    $GETENT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$GETENT "$@"
 }
 
 function cp_cmd(){
-    $CP $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CP $@
+    $CP "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CP "$@"
 }
 
 function rm_cmd(){
-    $RM $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$RM $@
+    $RM "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$RM "$@"
 }
 
 function chown_cmd(){
-    $CHOWN $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CHOWN $@
+    $CHOWN "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CHOWN "$@"
 }
 
 function mkdir_cmd(){
-    $MKDIR $@ || $LD_EXEC ${JUNEST_HOME}/usr/bin/$MKDIR $@
+    $MKDIR "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$MKDIR "$@"
+}
+
+function zgrep_cmd(){
+    # No need for LD_EXEC as zgrep is a POSIX shell script
+    $ZGREP "$@" || ${JUNEST_HOME}/usr/bin/$ZGREP "$@"
+}
+
+function download_cmd(){
+    $WGET "$@" || $CURL "$@"
+}
+
+function chroot_cmd(){
+    $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CLASSIC_CHROOT "$@"
+}
+
+function unshare_cmd(){
+    # Most of the distros do not have the `unshare` command updated
+    # with --user option available.
+    # Hence, give priority to the `unshare` executable in JuNest image.
+    # Also, unshare provides an environment in which /bin/sh maps to dash shell,
+    # therefore it ignores all the remaining SH arguments (i.e. --login) as
+    # they are not supported by dash.
+    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${SH[0]}" "-c" ":"
+    then
+        $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE "${@}"
+    elif $UNSHARE --user "${SH[0]}" "-c" ":"
+    then
+        $UNSHARE "$@"
+    else
+        die "Error: Something went wrong with unshare command. Exiting"
+    fi
 }
 
 function proot_cmd(){
@@ -130,19 +152,59 @@ function proot_cmd(){
     then
         PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${@}"
     else
-        die "Error: Check if the ${CMD} arguments are correct and if the kernel is too old use the option ${CMD} -p \"-k 3.10\""
+        die "Error: Something went wrong with proot command. Exiting"
     fi
 }
 
-function download_cmd(){
-    $WGET $@ || $CURL $@
-}
-
-function chroot_cmd(){
-    $CHROOT "$@" || $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/chroot "$@"
-}
-
 ############## COMMON FUNCTIONS ###############
+
+#######################################
+# Check if the executable is being running inside a JuNest environment.
+#
+# Globals:
+#   JUNEST_ENV (RO)           : The boolean junest env check
+#   NESTED_ENVIRONMENT (RO)   : The nest env exception
+#   VARIABLE_NOT_SET (RO)     : The var not set exception
+#   NAME (RO)                 : The JuNest name
+# Arguments:
+#   None
+# Returns:
+#   VARIABLE_NOT_SET          : If no JUNEST_ENV is not properly set
+#   NESTED_ENVIRONMENT        : If the script is executed inside JuNest env
+# Output:
+#   None
+#######################################
+function check_nested_env() {
+    if [[ $JUNEST_ENV == "1" ]]
+    then
+        die_on_status $NESTED_ENVIRONMENT "Error: Nested ${NAME} environments are not allowed"
+    elif [[ ! -z $JUNEST_ENV ]] && [[ $JUNEST_ENV != "0" ]]
+    then
+        die_on_status $VARIABLE_NOT_SET "The variable JUNEST_ENV is not properly set"
+    fi
+}
+
+#######################################
+# Check if the architecture between Host OS and Guest OS is the same.
+#
+# Globals:
+#   JUNEST_HOME (RO)           : The JuNest home path.
+#   ARCHITECTURE_MISMATCH (RO) : The arch mismatch exception
+#   ARCH (RO)                  : The host OS arch
+#   JUNEST_ARCH (RO)           : The JuNest arch
+# Arguments:
+#   None
+# Returns:
+#   ARCHITECTURE_MISMATCH      : If arch between host and guest is not the same
+# Output:
+#   None
+#######################################
+function check_same_arch() {
+    source ${JUNEST_HOME}/etc/junest/info
+    [ "$JUNEST_ARCH" != "$ARCH" ] && \
+        die_on_status $ARCHITECTURE_MISMATCH "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
+    return 0
+}
 
 #######################################
 # Provide the proot common binding options for both normal user and fakeroot.
@@ -160,7 +222,7 @@ function chroot_cmd(){
 # Output:
 #   None
 #######################################
-function _provide_common_bindings(){
+function provide_common_bindings(){
     RESULT=""
     local re='(.*):.*'
     for bind in "/dev" "/sys" "/proc" "/tmp" "$HOME"
@@ -191,7 +253,7 @@ function _provide_common_bindings(){
 # Output:
 #  None
 #######################################
-function _copy_passwd_and_group(){
+function copy_passwd_and_group(){
     # Enumeration of users/groups is disabled/limited depending on how nsswitch.conf
     # is configured.
     # Try to at least get the current user via `getent passwd $USER` since it uses
@@ -200,27 +262,27 @@ function _copy_passwd_and_group(){
         ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/passwd
     then
         warn "getent command failed or does not exist. Binding directly from /etc/passwd."
-        _copy_file /etc/passwd ${JUNEST_HOME}/etc/passwd
+        copy_file /etc/passwd ${JUNEST_HOME}/etc/passwd
     fi
 
     if ! getent_cmd group > ${JUNEST_HOME}/etc/group
     then
         warn "getent command failed or does not exist. Binding directly from /etc/group."
-        _copy_file /etc/group ${JUNEST_HOME}/etc/group
+        copy_file /etc/group ${JUNEST_HOME}/etc/group
     fi
     return 0
 }
 
-function _copy_file() {
+function copy_file() {
     local file="${1}"
     [[ -r "$file" ]] && cp_cmd "$file" "${JUNEST_HOME}/$file"
     return 0
 }
 
-function _copy_common_files() {
-    _copy_file /etc/host.conf
-    _copy_file /etc/hosts
-    _copy_file /etc/nsswitch.conf
-    _copy_file /etc/resolv.conf
+function copy_common_files() {
+    copy_file /etc/host.conf
+    copy_file /etc/hosts
+    copy_file /etc/nsswitch.conf
+    copy_file /etc/resolv.conf
     return 0
 }

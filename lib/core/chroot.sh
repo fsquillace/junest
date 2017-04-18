@@ -8,27 +8,12 @@
 #
 # vim: ft=sh
 
-#######################################
-# Run JuNest as real root.
-#
-# Globals:
-#   JUNEST_HOME (RO)         : The JuNest home directory.
-#   UID (RO)                 : The user ID.
-#   SUDO_USER (RO)           : The sudo user ID.
-#   SUDO_GID (RO)            : The sudo group ID.
-#   SH (RO)                  : Contains the default command to run in JuNest.
-# Arguments:
-#   cmd ($@?)                : The command to run inside JuNest environment.
-#                              Default command is defined by SH variable.
-# Returns:
-#   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
-# Output:
-#   -                        : The command output.
-#######################################
-function run_env_as_root(){
-    source ${JUNEST_HOME}/etc/junest/info
-    [ "$JUNEST_ARCH" != "$ARCH" ] && \
-        die_on_status $ARCHITECTURE_MISMATCH "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
+function _run_env_as_xroot(){
+    local cmd=$1
+    local backend_args="$2"
+    shift 2
+
+    check_same_arch
 
     local uid=$UID
     # SUDO_USER is more reliable compared to SUDO_UID
@@ -41,5 +26,63 @@ function run_env_as_root(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME};" EXIT QUIT ABRT KILL TERM INT
 
-    JUNEST_ENV=1 chroot_cmd "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
+    copy_common_files
+
+    check_nested_env
+
+    JUNEST_ENV=1 $cmd $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
+}
+
+#######################################
+# Run JuNest as real root via GRoot command.
+#
+# Globals:
+#   JUNEST_HOME (RO)         : The JuNest home directory.
+#   UID (RO)                 : The user ID.
+#   SUDO_USER (RO)           : The sudo user ID.
+#   SUDO_GID (RO)            : The sudo group ID.
+#   SH (RO)                  : Contains the default command to run in JuNest.
+# Arguments:
+#   backend_args ($1)        : The arguments to pass to proot
+#   cmd ($2-?)               : The command to run inside JuNest environment.
+#                              Default command is defined by SH variable.
+# Returns:
+#   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
+# Output:
+#   -                        : The command output.
+#######################################
+function run_env_as_groot(){
+    local backend_args="$1"
+    shift
+
+    provide_common_bindings
+    local bindings=${RESULT}
+    unset RESULT
+
+    _run_env_as_xroot "$GROOT $bindings" "$backend_args" "$@"
+}
+
+#######################################
+# Run JuNest as real root via chroot command.
+#
+# Globals:
+#   JUNEST_HOME (RO)         : The JuNest home directory.
+#   UID (RO)                 : The user ID.
+#   SUDO_USER (RO)           : The sudo user ID.
+#   SUDO_GID (RO)            : The sudo group ID.
+#   SH (RO)                  : Contains the default command to run in JuNest.
+# Arguments:
+#   backend_args ($1)        : The arguments to pass to proot
+#   cmd ($2-?)               : The command to run inside JuNest environment.
+#                              Default command is defined by SH variable.
+# Returns:
+#   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
+# Output:
+#   -                        : The command output.
+#######################################
+function run_env_as_chroot(){
+    local backend_args="$1"
+    shift
+
+    _run_env_as_xroot chroot_cmd "$backend_args" "$@"
 }

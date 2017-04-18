@@ -12,6 +12,7 @@ function _run_env_with_proot(){
     local proot_args="$1"
     shift
 
+    check_nested_env
     if [ "$1" != "" ]
     then
         JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
@@ -44,30 +45,33 @@ function _run_env_with_qemu(){
 # Run JuNest as fakeroot.
 #
 # Globals:
-#   JUNEST_HOME (RO)         : The JuNest home directory.
-#   EUID (RO)                : The user ID.
-#   SH (RO)                  : Contains the default command to run in JuNest.
+#   JUNEST_HOME (RO)          : The JuNest home directory.
+#   EUID (RO)                 : The user ID.
+#   SH (RO)                   : Contains the default command to run in JuNest.
 # Arguments:
-#   cmd ($@?)                : The command to run inside JuNest environment.
+#   backend_args ($1)         : The arguments to pass to proot
+#   cmd ($2-?)                : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
-#   $ROOT_ACCESS_ERROR       : If the user is the real root.
+#   $ROOT_ACCESS_ERROR        : If the user is the real root.
 # Output:
-#   -                        : The command output.
+#   -                         : The command output.
 #######################################
 function run_env_as_fakeroot(){
     (( EUID == 0 )) && \
-        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
+    local backend_args="$1"
+    shift
 
-    _copy_common_files
+    copy_common_files
 
-    _provide_common_bindings
+    provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
 
     # An alternative is via -S option:
     #_run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
-    _run_env_with_qemu "-0 ${bindings} -r ${JUNEST_HOME} $1" "${@:2}"
+    _run_env_with_qemu "-0 ${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
 }
 
 #######################################
@@ -78,7 +82,8 @@ function run_env_as_fakeroot(){
 #   EUID (RO)                : The user ID.
 #   SH (RO)                  : Contains the default command to run in JuNest.
 # Arguments:
-#   cmd ($@?)                : The command to run inside JuNest environment.
+#   backend_args ($1)        : The arguments to pass to proot
+#   cmd ($2-?)               : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
 #   $ROOT_ACCESS_ERROR       : If the user is the real root.
@@ -87,23 +92,25 @@ function run_env_as_fakeroot(){
 #######################################
 function run_env_as_user(){
     (( EUID == 0 )) && \
-        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --root option instead."
+        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
+    local backend_args="$1"
+    shift
 
     # Files to bind are visible in `proot --help`.
     # This function excludes /etc/mtab file so that
     # it will not give conflicts with the related
     # symlink in the Arch Linux image.
-    _copy_common_files
-    _copy_file /etc/hosts.equiv
-    _copy_file /etc/netgroup
-    _copy_file /etc/networks
+    copy_common_files
+    copy_file /etc/hosts.equiv
+    copy_file /etc/netgroup
+    copy_file /etc/networks
     # No need for localtime as it is setup during the image build
-    #_copy_file /etc/localtime
-    _copy_passwd_and_group
+    #copy_file /etc/localtime
+    copy_passwd_and_group
 
-    _provide_common_bindings
+    provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
 
-    _run_env_with_qemu "${bindings} -r ${JUNEST_HOME} $1" "${@:2}"
+    _run_env_with_qemu "${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
 }
