@@ -17,7 +17,7 @@ The Arch Linux based distro that runs upon any Linux distros without root access
 - [Description](#description)
 - [Quickstart](#quickstart)
 - [Installation](#installation)
-- [Dependencies](#dependencies)
+- [Usage](#usage)
 - [Advanced usage](#advanced-usage)
 - [Internals](#internals)
 - [Troubleshooting](#troubleshooting)
@@ -48,54 +48,14 @@ JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/
 
 Quickstart
 ==========
-
-Backend programs
-----------------
-There are three different ways you can run JuNest depending on the backend program you decide to use.
-
-### PRoot based ###
-[Proot](https://wiki.archlinux.org/index.php/Proot) represents the default
-program used for accessing to the JuNest environments.
-The main reason to choose Proot as default backend program is because
-it represents a portable solution that works well in most of GNU/Linux distros available.
-One of the major drawbacks is the fact that Proot is not officially
-supported anymore, therefore, Proot bugs may no longer be fixed.
-
-In order to run JuNest via Proot:
+The basic way to run JuNest is via the [Proot](https://wiki.archlinux.org/index.php/Proot) as the backend program:
 
 - As normal user - Allow to make basic operations: ```junest```
 
 - As fakeroot - Allow to install/remove packages: ```junest -f```
 
-### Linux namespaces based ###
-The [Linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html)
-represents the next generation backend program for JuNest.
-The major drawback about the namespace is portability, as certain requirements
-need to be satisfied: 1) Only starting from Linux 3.8, unprivileged processes can
-create the required user and mount namespaces.
-2) Moreover, the Linux kernel distro must have the user namespace enabled.
-Hopefully, in the future the major GNU/Linux distros will start enabling such feature by default.
-For instance, Ubuntu (version 14.04+) already has such feature enabled.
-
-In order to run JuNest via Linux namespaces:
-
-- As fakeroot - Allow to install/remove packages: ```junest -u```
-
-### Chroot based ###
-This solution suits only for privileged users. JuNest provides the possibility
-to run the environment via `chroot` program.
-In particular, it uses a special program called `GRoot`, an enhanced `chroot`
-wrapper that allows to bind mount directories specified by the user, such as
-/proc, /sys, /dev, /tmp and $HOME, before
-executing any programs inside the JuNest sandbox. In case the mounting will not
-work, JuNest is even providing the possibility to run the environment directly via
-the pure `chroot` command.
-
-In order to run JuNest via `chroot` solutions:
-
-- As root via `GRoot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -g```
-
-- As root via `chroot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -r```
+To know more about the JuNest execution modes depending on the backend program
+used, see the [Usage](#usage) section below.
 
 After running JuNest
 --------------------
@@ -144,9 +104,69 @@ Alternatively, another installation method would be to directly download the JuN
     curl https://s3-eu-west-1.amazonaws.com/junest-repo/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
     export PATH=~/.junest/opt/junest/bin:$PATH
 
+Usage
+=====
+There are three different ways you can run JuNest depending on the backend program you decide to use.
+
+PRoot based
+-----------
+[Proot](https://wiki.archlinux.org/index.php/Proot) represents the default
+program used for accessing to the JuNest environments.
+The main reason to choose Proot as default backend program is because
+it represents a portable solution that works well in most of GNU/Linux distros available.
+One of the major drawbacks is the fact that Proot is not officially
+supported anymore, therefore, Proot bugs may no longer be fixed.
+
+In order to run JuNest via Proot:
+
+- As normal user - Allow to make basic operations: ```junest```
+
+- As fakeroot - Allow to install/remove packages: ```junest -f```
+
+Linux namespaces based
+----------------------
+The [Linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html)
+represents the next generation backend program for JuNest.
+The major drawback about the namespace is portability, as certain requirements
+need to be satisfied: 1) Only starting from Linux 3.8, unprivileged processes can
+create the required user and mount namespaces.
+2) Moreover, the Linux kernel distro must have the user namespace enabled.
+Hopefully, in the future the major GNU/Linux distros will start enabling such feature by default.
+For instance, Ubuntu (version 14.04+) already has such feature enabled.
+
+In order to run JuNest via Linux namespaces:
+
+- As fakeroot - Allow to install/remove packages: ```junest -u```
+
+Chroot based
+------------
+This solution suits only for privileged users. JuNest provides the possibility
+to run the environment via `chroot` program.
+In particular, it uses a special program called `GRoot`, an enhanced `chroot`
+wrapper that allows to bind mount directories specified by the user, such as
+/proc, /sys, /dev, /tmp and $HOME, before
+executing any programs inside the JuNest sandbox. In case the mounting will not
+work, JuNest is even providing the possibility to run the environment directly via
+the pure `chroot` command.
+
+In order to run JuNest via `chroot` solutions:
+
+- As root via `GRoot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -g```
+
+- As root via `chroot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -r```
+
+Execution modes comparison table
+----------------
+The following table shows the capabilities that each backend program is able to perform:
+
+|     | QEMU | Root privileges required | Manage Official Packages | Manage AUR Packages | Portability | Support | User modes |
+| --- | ---- | ------------------------ | ------------------------ | ------------------- | ----------- | ------- | ---------- |
+| **Proot** | YES | NO | YES | YES | YES | Poor | Normal user and `fakeroot` |
+| **Linux Namespaces** | NO | NO | YES | NO | Poor | YES | `fakeroot` only |
+| **Chroot** | NO | YES | YES | YES | YES | YES | `root` only |
+
 Advanced usage
 ==============
-
 ## Build image ##
 You can build a new JuNest image from scratch by running the following command:
 
