@@ -89,14 +89,14 @@ function test_groot_with_bind(){
     assertCommandSuccess main -b /tmp chrootdir
     [[ -d chrootdir/tmp ]]
     assertEquals 0 $?
-    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--rbind /tmp chrootdir/tmp)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--bind /tmp chrootdir/tmp)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
 }
 function test_groot_with_bind_file(){
     touch file_src
     assertCommandSuccess main -b ${PWD}/file_src:/file_src chrootdir
     [[ -f chrootdir/file_src ]]
     assertEquals 0 $?
-    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--rbind ${PWD}/file_src chrootdir/file_src)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--bind ${PWD}/file_src chrootdir/file_src)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
 }
 function test_groot_with_bind_not_existing_node(){
     assertCommandFailOnStatus $NOT_EXISTING_FILE main -b ${PWD}/file_src:/file_src chrootdir
@@ -111,7 +111,7 @@ function test_groot_with_bind_guest_host(){
     assertCommandSuccess main -b /tmp:/home/tmp chrootdir
     [[ -d chrootdir/home/tmp ]]
     assertEquals 0 $?
-    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--rbind /tmp chrootdir/home/tmp)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--bind /tmp chrootdir/home/tmp)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
 }
 function test_groot_with_multiple_bind(){
     assertCommandSuccess main -b /tmp:/home/tmp -b /dev chrootdir
@@ -119,7 +119,7 @@ function test_groot_with_multiple_bind(){
     assertEquals 0 $?
     [[ -d chrootdir/dev ]]
     assertEquals 0 $?
-    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--rbind /tmp chrootdir/home/tmp)\nmount(--rbind /dev chrootdir/dev)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--bind /tmp chrootdir/home/tmp)\nmount(--bind /dev chrootdir/dev)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
 }
 function test_groot_with_command(){
     assertCommandSuccess main chrootdir ls -la -h
@@ -131,7 +131,7 @@ function test_groot_with_bind_and_command(){
     assertEquals 0 $?
     [[ -d chrootdir/dev ]]
     assertEquals 0 $?
-    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--rbind /tmp chrootdir/home/tmp)\nmount(--rbind /dev chrootdir/dev)\nchroot(chrootdir ls -la -h)")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--bind /tmp chrootdir/home/tmp)\nmount(--bind /dev chrootdir/dev)\nchroot(chrootdir ls -la -h)")" "$(cat $STDOUTF)"
 }
 function test_groot_with_bind_no_umount(){
     assertCommandSuccess main -n chrootdir
@@ -147,6 +147,23 @@ umount(/home/mychroot/dev/shm)
 umount(/home/mychroot/dev)
 umount(/home/mychroot)")" "$(cat $STDOUTF)"
 }
+
+function test_groot_with_chroot_teardown_umount_failure(){
+    function umount() {
+        echo "umount($@)"
+        [[ "$1" == "/home/mychroot/dev/shm" ]] && return 128
+        return 0
+    }
+    UMOUNT=umount
+    echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
+    MOUNTS_FILE=./mounts
+    CHROOTDIR=/home/mychroot assertCommandFailOnStatus 128 chroot_teardown
+    assertEquals "$(echo -e "umount(/home/mychroot/proc/fs1)
+umount(/home/mychroot/proc)
+umount(/home/mychroot/dev/shm)
+umount(/home/mychroot/dev)
+umount(/home/mychroot)")" "$(cat $STDOUTF)"
+}
 function test_groot_with_chroot_teardown_with_trailing_slash(){
     echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
     MOUNTS_FILE=./mounts
@@ -156,6 +173,58 @@ umount(/home/mychroot/proc)
 umount(/home/mychroot/dev/shm)
 umount(/home/mychroot/dev)
 umount(/home/mychroot)")" "$(cat $STDOUTF)"
+}
+
+function test_groot_with_rbind(){
+    assertCommandSuccess main -r -b /tmp chrootdir
+    [[ -d chrootdir/tmp ]]
+    assertEquals 0 $?
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(--rbind /tmp chrootdir/tmp)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+}
+
+function test_groot_with_avoid_bind_proc(){
+    assertCommandSuccess main -i -b /proc chrootdir
+    [[ -d chrootdir/proc ]]
+    assertEquals 0 $?
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(proc chrootdir/proc -t proc)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+}
+
+function test_groot_with_avoid_bind_dev(){
+    assertCommandSuccess main -i -b /dev chrootdir
+    [[ -d chrootdir/dev ]]
+    assertEquals 0 $?
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(udev chrootdir/dev -t devtmpfs)\nmount(devpts /dev/pts -t devpts)\nmount(shm /dev/shm -t tmpfs)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+}
+
+function test_groot_with_avoid_bind_sys(){
+    assertCommandSuccess main -i -b /sys chrootdir
+    [[ -d chrootdir/sys ]]
+    assertEquals 0 $?
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(sys chrootdir/sys -t sysfs)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+}
+
+function test_groot_with_avoid_bind_run(){
+    assertCommandSuccess main -i -b /run chrootdir
+    [[ -d chrootdir/run ]]
+    assertEquals 0 $?
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(run chrootdir/run -t tmpfs)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+}
+
+function test_groot_with_avoid_bind_tmp(){
+    assertCommandSuccess main -i -b /tmp chrootdir
+    [[ -d chrootdir/tmp ]]
+    assertEquals 0 $?
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(tmp chrootdir/tmp -t tmpfs)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
+}
+
+function test_groot_with_avoid_bind_combined(){
+    assertCommandSuccess main -i -b /tmp -b /usr chrootdir
+    cat $STDERRF
+    [[ -d chrootdir/tmp ]]
+    assertEquals 0 $?
+    [[ -d chrootdir/usr ]]
+    assertEquals 0 $?
+    assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nmount(tmp chrootdir/tmp -t tmpfs)\nmount(--bind /usr chrootdir/usr)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
 }
 
 source $(dirname $0)/../utils/shunit2

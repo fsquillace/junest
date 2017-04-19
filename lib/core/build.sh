@@ -73,7 +73,7 @@ function build_image_env(){
     sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
 
     info "Setting up the pacman keyring (this might take a while!)..."
-    sudo ${maindir}/root/opt/junest/bin/groot ${maindir}/root bash -c \
+    sudo ${maindir}/root/opt/junest/bin/groot -b /dev ${maindir}/root bash -c \
         "pacman-key --init; pacman-key --populate archlinux; [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye"
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*

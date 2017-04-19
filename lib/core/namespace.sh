@@ -57,9 +57,9 @@ function _run_env_with_namespace(){
     # will terminate too with its own mounted directories.
     if [[ "$1" != "" ]]
     then
-        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT -n $bindings $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT --no-umount --recursive $bindings $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT -n $bindings $backend_args "$JUNEST_HOME" "${SH[@]}"
+        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT --no-umount --recursive $bindings $backend_args "$JUNEST_HOME" "${SH[@]}"
     fi
 }
 
