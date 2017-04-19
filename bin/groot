@@ -43,7 +43,7 @@ function chroot_teardown() {
     local final_res=0
     for mp in $($CAT $MOUNTS_FILE | $CUT -f2 -d' ' | $SORT -r | $UNIQ)
     do
-        if [[ $mp =~ ^${normalized_chrootdir}.* ]]
+        if [[ $mp =~ ^${normalized_chrootdir}.* ]] && $MOUNTPOINT -q "$mp"
         then
             $UMOUNT $mp || final_res=$?
         fi

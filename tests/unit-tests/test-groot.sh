@@ -41,6 +41,9 @@ function init_mocks() {
         # As default suppose the mountpoint does not exist
         return 1
     }
+    function mountpoint_mock() {
+        echo "mountpoint($@)"
+    }
     function mount() {
         echo "mount($@)"
     }
@@ -74,9 +77,6 @@ function test_groot_no_directory(){
     assertCommandFailOnStatus $NOT_EXISTING_FILE main no-directory
 }
 function test_groot_mountpoint_exist(){
-    mountpoint_mock() {
-        echo "mountpoint($@)"
-    }
     MOUNTPOINT=mountpoint_mock
     assertCommandSuccess main chrootdir
     assertEquals "$(echo -e "check_and_trap(chroot_teardown QUIT EXIT ABRT KILL TERM INT)\nmountpoint(-q chrootdir)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
@@ -138,17 +138,23 @@ function test_groot_with_bind_no_umount(){
     assertEquals "$(echo -e "mountpoint(-q chrootdir)\nmount(--bind chrootdir chrootdir)\nchroot(chrootdir)")" "$(cat $STDOUTF)"
 }
 function test_groot_with_chroot_teardown(){
+    MOUNTPOINT=mountpoint_mock
     echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
     MOUNTS_FILE=./mounts
     CHROOTDIR=/home/mychroot assertCommandSuccess chroot_teardown
-    assertEquals "$(echo -e "umount(/home/mychroot/proc/fs1)
+    assertEquals "$(echo -e "mountpoint(-q /home/mychroot/proc/fs1)
+umount(/home/mychroot/proc/fs1)
+mountpoint(-q /home/mychroot/proc)
 umount(/home/mychroot/proc)
+mountpoint(-q /home/mychroot/dev/shm)
 umount(/home/mychroot/dev/shm)
+mountpoint(-q /home/mychroot/dev)
 umount(/home/mychroot/dev)
 umount(/home/mychroot)")" "$(cat $STDOUTF)"
 }
 
 function test_groot_with_chroot_teardown_umount_failure(){
+    MOUNTPOINT=mountpoint_mock
     function umount() {
         echo "umount($@)"
         [[ "$1" == "/home/mychroot/dev/shm" ]] && return 128
@@ -158,19 +164,47 @@ function test_groot_with_chroot_teardown_umount_failure(){
     echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
     MOUNTS_FILE=./mounts
     CHROOTDIR=/home/mychroot assertCommandFailOnStatus 128 chroot_teardown
-    assertEquals "$(echo -e "umount(/home/mychroot/proc/fs1)
+    assertEquals "$(echo -e "mountpoint(-q /home/mychroot/proc/fs1)
+umount(/home/mychroot/proc/fs1)
+mountpoint(-q /home/mychroot/proc)
 umount(/home/mychroot/proc)
+mountpoint(-q /home/mychroot/dev/shm)
 umount(/home/mychroot/dev/shm)
+mountpoint(-q /home/mychroot/dev)
 umount(/home/mychroot/dev)
 umount(/home/mychroot)")" "$(cat $STDOUTF)"
 }
 function test_groot_with_chroot_teardown_with_trailing_slash(){
+    MOUNTPOINT=mountpoint_mock
     echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
     MOUNTS_FILE=./mounts
     CHROOTDIR=/home/mychroot assertCommandSuccess chroot_teardown
-    assertEquals "$(echo -e "umount(/home/mychroot/proc/fs1)
+    assertEquals "$(echo -e "mountpoint(-q /home/mychroot/proc/fs1)
+umount(/home/mychroot/proc/fs1)
+mountpoint(-q /home/mychroot/proc)
 umount(/home/mychroot/proc)
+mountpoint(-q /home/mychroot/dev/shm)
 umount(/home/mychroot/dev/shm)
+mountpoint(-q /home/mychroot/dev)
+umount(/home/mychroot/dev)
+umount(/home/mychroot)")" "$(cat $STDOUTF)"
+}
+function test_groot_with_chroot_teardown_mountpoint_failure(){
+    mountpoint_mock() {
+        echo "mountpoint($@)"
+        [[ $2 == "/home/mychroot/dev/shm" ]] && return 128
+        return 0
+    }
+    MOUNTPOINT=mountpoint_mock
+    echo -e "1 /home/mychroot/dev\n1 /home/mychroot/proc/fs1\n1 /home/mychroot\n1 /home/mychroot-no/dev\n1 /home/mychroot/dev/shm\n1 /home/mychroot/proc\n" > ./mounts
+    MOUNTS_FILE=./mounts
+    CHROOTDIR=/home/mychroot assertCommandSuccess chroot_teardown
+    assertEquals "$(echo -e "mountpoint(-q /home/mychroot/proc/fs1)
+umount(/home/mychroot/proc/fs1)
+mountpoint(-q /home/mychroot/proc)
+umount(/home/mychroot/proc)
+mountpoint(-q /home/mychroot/dev/shm)
+mountpoint(-q /home/mychroot/dev)
 umount(/home/mychroot/dev)
 umount(/home/mychroot)")" "$(cat $STDOUTF)"
 }
