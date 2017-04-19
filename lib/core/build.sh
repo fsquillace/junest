@@ -88,8 +88,8 @@ function build_image_env(){
     then
         mkdir -p ${maindir}/root_test
         $TAR -zxpf ${imagefile} -C "${maindir}/root_test"
-        JUNEST_HOME="${maindir}/root_test" ${maindir}/root_test/opt/${CMD}/bin/${CMD} -f ./lib/checks/check.sh
-        JUNEST_HOME="${maindir}/root_test" sudo -E ${maindir}/root_test/opt/${CMD}/bin/${CMD} -g ./lib/checks/check.sh --run-root-tests
+        JUNEST_HOME="${maindir}/root_test" ${maindir}/root_test/opt/${CMD}/bin/${CMD} -f ${JUNEST_BASE}/lib/checks/check.sh
+        JUNEST_HOME="${maindir}/root_test" sudo -E ${maindir}/root_test/opt/${CMD}/bin/${CMD} -g ${JUNEST_BASE}/lib/checks/check.sh --run-root-tests
     fi
 
     sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
