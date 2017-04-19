@@ -22,7 +22,8 @@ TOUCH=touch
 CUT=cut
 SORT=sort
 UNIQ=uniq
-GREP=grep
+CAT=cat
+READLINK=readlink
 MOUNTS_FILE=/proc/self/mounts
 
 NOT_EXISTING_FILE=103
@@ -38,11 +39,18 @@ function chroot_teardown() {
     # Remove all mounts starting from the most nested ones.
     # Suffix the CHROOTDIR with / to avoid umounting directories not belonging
     # to CHROOTDIR.
-    for mp in $($GREP "${CHROOTDIR%/}/" $MOUNTS_FILE | $CUT -f2 -d' ' | $SORT -r | $UNIQ)
+    local normalized_chrootdir="$($READLINK -f ${CHROOTDIR})/"
+    local final_res=0
+    for mp in $($CAT $MOUNTS_FILE | $CUT -f2 -d' ' | $SORT -r | $UNIQ)
     do
-        $UMOUNT $mp
+        if [[ $mp =~ ^${normalized_chrootdir}.* ]]
+        then
+            $UMOUNT $mp || final_res=$?
+        fi
     done
     $UMOUNT ${CHROOTDIR%/}
+
+    return $final_res
 }
 
 function chroot_maybe_add_mount() {
@@ -79,8 +87,30 @@ function chroot_setup() {
         fi
 
         create_node "${host_path}" "${CHROOTDIR}${guest_path}"
-        $MOUNT --rbind "${host_path}" "${CHROOTDIR}${guest_path}"
+        mount_directory "${host_path}" "${guest_path}"
     done
+}
+
+function mount_directory() {
+    local host_path=$($READLINK -f "$1")
+    local guest_path="$2"
+
+    if ! $OPT_AVOID_BIND
+    then
+        $MOUNT $OPT_BIND "${host_path}" "${CHROOTDIR}${guest_path}"
+        return 0
+    fi
+
+    case "$host_path" in
+        /proc) $MOUNT proc "${CHROOTDIR}${guest_path}" -t proc ;;
+        /sys) $MOUNT sys "${CHROOTDIR}${guest_path}" -t sysfs ;;
+        /dev) $MOUNT udev "${CHROOTDIR}${guest_path}" -t devtmpfs; $MOUNT devpts "${guest_path}/pts" -t devpts; $MOUNT shm "${guest_path}/shm" -t tmpfs ;;
+        /run) $MOUNT run "${CHROOTDIR}${guest_path}" -t tmpfs ;;
+        /tmp) $MOUNT tmp "${CHROOTDIR}${guest_path}" -t tmpfs ;;
+        *) $MOUNT $OPT_BIND "${host_path}" "${CHROOTDIR}${guest_path}" ;;
+    esac
+
+    return 0
 }
 
 function create_node() {
@@ -118,8 +148,18 @@ Options:
             path in the guest rootfs but users can specify any other location
             with the syntax: -b <host_path>:<guest_location>. This option can
             be invoked multiple times and the paths specified must be absolutes.
+
     -n, --no-umount
             Do not umount after chroot session finished.
+
+    -r, --recursive
+            Use rbind instead of bind.
+
+    -i, --avoid-bind
+            Attempt to avoid mount --bind for common directories and use
+            proper mount fstype instead. Detected directories with
+            corresponding fstype are: /proc (proc), /sys (sysfs),
+            /dev (devtmpfs), /tmp (tmpfs), /run (tmpfs).
 
     -h, --help                Print this help message
 
@@ -135,16 +175,20 @@ version() {
 }
 
 function parse_arguments() {
-    OPT_BIND=false
     BINDINGS=()
     OPT_NO_UMOUNT=false
+    OPT_RECURSIVE=false
+    OPT_BIND="--bind"
+    OPT_AVOID_BIND=false
     OPT_HELP=false
     OPT_VERSION=false
     for opt in "$@"
     do
         case "$1" in
-            -b|--bind) OPT_BIND=true ; shift ; BINDINGS+=("$1") ; shift ;;
+            -b|--bind) shift ; BINDINGS+=("$1") ; shift ;;
             -n|--no-umount) OPT_NO_UMOUNT=true ; shift ;;
+            -r|--recursive) OPT_BIND="--rbind" ; shift ;;
+            -i|--avoid-bind) OPT_AVOID_BIND=true ; shift ;;
             -h|--help) OPT_HELP=true ; shift ;;
             -V|--version) OPT_VERSION=true ; shift ;;
             -*) die "Invalid option $1" ;;
