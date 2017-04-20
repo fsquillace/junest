@@ -132,7 +132,7 @@ need to be satisfied: 1) Only starting from Linux 3.8, unprivileged processes ca
 create the required user and mount namespaces.
 2) Moreover, the Linux kernel distro must have the user namespace enabled.
 Hopefully, in the future the major GNU/Linux distros will start enabling such feature by default.
-For instance, Ubuntu (version 14.04+) already has such feature enabled.
+For instance, Ubuntu (version 12.04+) already has such feature enabled.
 
 In order to run JuNest via Linux namespaces:
 

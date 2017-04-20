@@ -16,7 +16,6 @@ CHROOTCMD=${CHROOTCMD:-chroot}
 SHELL="/bin/sh"
 MOUNT=mount
 UMOUNT=umount
-MOUNTPOINT=mountpoint
 MKDIR=mkdir
 TOUCH=touch
 CUT=cut
@@ -35,6 +34,15 @@ source "${JUNEST_BASE}/lib/utils/utils.sh"
 
 ################################ MAIN FUNCTIONS ###########################
 
+function is_mountpoint() {
+    local mountpoint="$1"
+    for mp in $($CAT $MOUNTS_FILE | $CUT -f2 -d' ' | $SORT -r | $UNIQ)
+    do
+        [[ $mp == $mountpoint ]] && return 0
+    done
+    return 1
+}
+
 function chroot_teardown() {
     # Remove all mounts starting from the most nested ones.
     # Suffix the CHROOTDIR with / to avoid umounting directories not belonging
@@ -43,7 +51,7 @@ function chroot_teardown() {
     local final_res=0
     for mp in $($CAT $MOUNTS_FILE | $CUT -f2 -d' ' | $SORT -r | $UNIQ)
     do
-        if [[ $mp =~ ^${normalized_chrootdir}.* ]] && $MOUNTPOINT -q "$mp"
+        if [[ $mp =~ ^${normalized_chrootdir}.* ]] && is_mountpoint "$mp"
         then
             $UMOUNT $mp || final_res=$?
         fi
@@ -66,7 +74,7 @@ function chroot_maybe_add_mount() {
 function chroot_setup() {
     $OPT_NO_UMOUNT || check_and_trap 'chroot_teardown' QUIT EXIT ABRT KILL TERM INT
 
-    if ! chroot_maybe_add_mount "! $MOUNTPOINT -q '$CHROOTDIR'" --bind "$CHROOTDIR" "$CHROOTDIR"
+    if ! chroot_maybe_add_mount "! is_mountpoint '$CHROOTDIR'" --bind "$CHROOTDIR" "$CHROOTDIR"
     then
         warn "Failed mount of directories. $CHROOTDIR is already a mountpoint. Skipping it..."
         return 0
