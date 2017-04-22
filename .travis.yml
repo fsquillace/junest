@@ -5,8 +5,8 @@ sudo: required
 env:
   - TRAVIS_BASH_VERSION="4.0"
 
-before_install:
-  - ./tests/integ-tests/install-bash.sh "$TRAVIS_BASH_VERSION"
+#before_install:
+  #- ./tests/integ-tests/install-bash.sh "$TRAVIS_BASH_VERSION"
 
 install:
   - PATH=$PWD/bin:$PATH
@@ -16,15 +16,19 @@ install:
   #- JUNEST_HOME=~/.junest-x86 junest -a x86 -- echo "Installing JuNest (\$(uname -m))"
 
 script:
-  - bash --version
-  - bash ./tests/checkstyle/checkstyle.sh
-  - bash ./tests/unit-tests/unit-tests.sh
+  - pwd
+  - ls -l
+  - junest -u -p "-i" -- bash ${PWD}/scripts/build-image.sh
 
-  # Multiple tests against different execution modes:
-  - junest -f -- ${PWD}/lib/checks/check.sh
-  - junest -u -- ${PWD}/lib/checks/check.sh --skip-aur-tests
-  - sudo -E ${PWD}/bin/junest -g -- ${PWD}/lib/checks/check.sh --run-root-tests
-  - yes | junest --delete
+  #- bash --version
+  #- bash ./tests/checkstyle/checkstyle.sh
+  #- bash ./tests/unit-tests/unit-tests.sh
 
-  - JUNEST_HOME=~/.junest-arm junest -f -- ./lib/checks/check.sh
-  - yes | JUNEST_HOME=~/.junest-arm junest --delete
+  ## Multiple tests against different execution modes:
+  #- junest -f -- ${PWD}/lib/checks/check.sh
+  #- junest -u -- ${PWD}/lib/checks/check.sh --skip-aur-tests
+  #- sudo -E ${PWD}/bin/junest -g -- ${PWD}/lib/checks/check.sh --run-root-tests
+  #- yes | junest --delete
+
+  #- JUNEST_HOME=~/.junest-arm junest -f -- ./lib/checks/check.sh
+  #- yes | JUNEST_HOME=~/.junest-arm junest --delete

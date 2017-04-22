@@ -31,18 +31,18 @@ function build_image_env(){
     umask 022
 
     # The function must runs on ArchLinux with non-root privileges.
-    (( EUID == 0 )) && \
-        die "You cannot build with root privileges."
+    #(( EUID == 0 )) && \
+        #die "You cannot build with root privileges."
 
     _check_package arch-install-scripts
     _check_package gcc
-    _check_package package-query
+    #_check_package package-query
     _check_package git
 
     local disable_validation=$1
 
     local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
-    sudo mkdir -p ${maindir}/root
+    mkdir -p ${maindir}/root
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "sudo rm -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
     info "Installing pacman and its dependencies..."
@@ -51,9 +51,27 @@ function build_image_env(){
     # yaourt requires sed
     # localedef (called by locale-gen) requires gzip
     # unshare command belongs to util-linux
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed gzip util-linux
-    sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
-    sudo mkdir -p ${maindir}/root/run/lock
+
+    mkdir -m 0755 -p "$maindir"/root/var/{cache/pacman/pkg,lib/pacman,log} "$maindir"/root/{dev,run,etc}
+    mkdir -m 1777 -p "$maindir"/root/tmp
+    mkdir -m 0555 -p "$maindir"/root/{sys,proc}
+
+    mount --bind /proc "$maindir"/root/proc
+    mount --bind /dev "$maindir"/root/dev
+    mount --bind /sys "$maindir"/root/sys
+    mount --bind /tmp "$maindir"/root/tmp
+    mount --bind /run "$maindir"/root/run
+
+    info 'Installing packages to %s' "$maindir"/root
+    pacman -r "${maindir}/root" -Sy pacman coreutils libunistring archlinux-keyring sed gzip util-linux
+
+
+    #pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed gzip util-linux
+
+
+
+    bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
+    mkdir -p ${maindir}/root/run/lock
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
     info "Compiling and installing yaourt..."
