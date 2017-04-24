@@ -37,7 +37,6 @@ function build_image_env(){
     _check_package arch-install-scripts
     _check_package gcc
     _check_package package-query
-    _check_package git
 
     local disable_validation=$1
 
@@ -59,6 +58,7 @@ function build_image_env(){
     info "Compiling and installing yaourt..."
     _install_from_aur ${maindir} "package-query"
     _install_from_aur ${maindir} "yaourt"
+    _install_from_aur ${maindir} "sudo-fake"
 
     info "Install ${NAME} script..."
     sudo pacman --noconfirm --root ${maindir}/root -S git

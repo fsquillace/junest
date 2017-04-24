@@ -162,7 +162,7 @@ The following table shows the capabilities that each backend program is able to 
 |     | QEMU | Root privileges required | Manage Official Packages | Manage AUR Packages | Portability | Support | User modes |
 | --- | ---- | ------------------------ | ------------------------ | ------------------- | ----------- | ------- | ---------- |
 | **Proot** | YES | NO | YES | YES | YES | Poor | Normal user and `fakeroot` |
-| **Linux Namespaces** | NO | NO | YES | NO | Poor | YES | `fakeroot` only |
+| **Linux Namespaces** | NO | NO | YES | YES | Poor | YES | `fakeroot` only |
 | **Chroot** | NO | YES | YES | YES | YES | YES | `root` only |
 
 Advanced usage
@@ -176,7 +176,7 @@ The script will create a directory containing all the essentials
 files in order to make JuNest working properly (such as pacman, yogurt and proot).
 The option **-n** will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
-arch-install-scripts, package-query, git and the base-devel packages installed.
+arch-install-scripts, package-query and the base-devel packages installed.
 To change the build directory just use the `JUNEST_TEMPDIR` (by default /tmp).
 
 After creating the image junest-x86\_64.tar.gz you can install it by running:
@@ -268,10 +268,15 @@ Troubleshooting
     Cannot find the gzip binary required for compressing man and info pages.
 
 > **A**: JuNest comes with a very basic number of packages.
-> In order to install packages using yogurt you may need to install the package group **base-devel**
-> that contains all the essential packages for compiling source code (such as gcc, make, patch, etc):
+> In order to install AUR packages via yogurt you need to install the package group `base-devel` first
+> that contains all the essential packages for compiling from source code (such as gcc, make, patch, etc):
 
     #> pacman -S base-devel
+
+> This command will fail as `base-devel` contains `sudo` command that conflicts with
+> `sudo-fake` package. In order to install all packages in `base-devel` except `sudo`:
+
+    #> pacman -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
 
 ## No servers configured for repository ##
 
