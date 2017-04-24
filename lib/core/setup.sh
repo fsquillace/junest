@@ -147,7 +147,7 @@ function delete_env(){
     fi
     # the CA directories are read only and can be deleted only by changing the mod
     chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
-    if rm_cmd -rf ${JUNEST_HOME}/*
+    if rm_cmd -rf ${JUNEST_HOME}
     then
         info "${NAME} deleted in ${JUNEST_HOME}"
     else
