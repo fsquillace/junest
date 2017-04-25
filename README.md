@@ -174,9 +174,9 @@ You can build a new JuNest image from scratch by running the following command:
 
 The script will create a directory containing all the essentials
 files in order to make JuNest working properly (such as pacman, yogurt and proot).
-The option **-n** will skip the final validation tests if they are not needed.
+The option `-n` will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
-arch-install-scripts, package-query and the base-devel packages installed.
+arch-install-scripts and the base-devel packages installed.
 To change the build directory just use the `JUNEST_TEMPDIR` (by default /tmp).
 
 After creating the image junest-x86\_64.tar.gz you can install it by running:
@@ -271,12 +271,9 @@ Troubleshooting
 > In order to install AUR packages via yogurt you need to install the package group `base-devel` first
 > that contains all the essential packages for compiling from source code (such as gcc, make, patch, etc):
 
-    #> pacman -S base-devel
+    #> pacman -S --ignore sudo base-devel
 
-> This command will fail as `base-devel` contains `sudo` command that conflicts with
-> `sudo-fake` package. In order to install all packages in `base-devel` except `sudo`:
-
-    #> pacman -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
+> Remember to ignore `sudo` as it conflicts with `sudo-fake` package.
 
 ## No servers configured for repository ##
 

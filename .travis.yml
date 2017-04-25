@@ -22,7 +22,7 @@ script:
 
   # Multiple tests against different execution modes:
   - junest -f -- ${PWD}/lib/checks/check.sh
-  - junest -u -- ${PWD}/lib/checks/check.sh --skip-aur-tests
+  - junest -u -- ${PWD}/lib/checks/check.sh
   - sudo -E ${PWD}/bin/junest -g -- ${PWD}/lib/checks/check.sh --run-root-tests
   - yes | junest --delete
 

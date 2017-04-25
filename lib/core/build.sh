@@ -36,7 +36,6 @@ function build_image_env(){
 
     _check_package arch-install-scripts
     _check_package gcc
-    _check_package package-query
 
     local disable_validation=$1
 
