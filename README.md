@@ -174,9 +174,9 @@ You can build a new JuNest image from scratch by running the following command:
 
 The script will create a directory containing all the essentials
 files in order to make JuNest working properly (such as pacman, yogurt and proot).
-The option **-n** will skip the final validation tests if they are not needed.
+The option `-n` will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
-arch-install-scripts, package-query and the base-devel packages installed.
+arch-install-scripts and the base-devel packages installed.
 To change the build directory just use the `JUNEST_TEMPDIR` (by default /tmp).
 
 After creating the image junest-x86\_64.tar.gz you can install it by running:
