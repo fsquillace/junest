@@ -271,12 +271,9 @@ Troubleshooting
 > In order to install AUR packages via yogurt you need to install the package group `base-devel` first
 > that contains all the essential packages for compiling from source code (such as gcc, make, patch, etc):
 
-    #> pacman -S base-devel
+    #> pacman -S --ignore sudo base-devel
 
-> This command will fail as `base-devel` contains `sudo` command that conflicts with
-> `sudo-fake` package. In order to install all packages in `base-devel` except `sudo`:
-
-    #> pacman -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
+> Remember to ignore `sudo` as it conflicts with `sudo-fake` package.
 
 ## No servers configured for repository ##
 
