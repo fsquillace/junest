@@ -32,7 +32,7 @@ info "Validating JuNest located in ${JUNEST_HOME}..."
 
 info "Initial JuNest setup..."
 echo "Server = ${DEFAULT_MIRROR}" >> /etc/pacman.d/mirrorlist
-pacman --noconfirm -Syy
+pacman --noconfirm -Syyu
 pacman --noconfirm -S grep coreutils
 pacman --noconfirm -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
 
@@ -61,3 +61,9 @@ then
     $RUN_ROOT_TESTS && tcptraceroute localhost
     pacman --noconfirm -Rsn ${aur_package}
 fi
+
+# The following ensure that the gpg agent gets killed (if exists)
+# otherwise it is not possible to exit from the session
+[[ -e /etc/pacman.d/gnupg/S.gpg-agent ]] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye
+
+exit 0
