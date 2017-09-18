@@ -32,7 +32,11 @@ info "Validating JuNest located in ${JUNEST_HOME}..."
 
 info "Initial JuNest setup..."
 echo "Server = ${DEFAULT_MIRROR}" >> /etc/pacman.d/mirrorlist
-pacman --noconfirm -Syyu
+pacman --noconfirm -Syy
+pacman --noconfirm -S archlinux-keyring
+pacman-key --init
+pacman-key --populate archlinux
+pacman --noconfirm -Su
 pacman --noconfirm -S grep coreutils
 pacman --noconfirm -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
 
