@@ -46,8 +46,6 @@ function _run_env_with_namespace(){
     local backend_args="$1"
     shift
 
-    check_nested_env
-
     provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
@@ -82,6 +80,8 @@ function _run_env_with_namespace(){
 #   -                        : The command output.
 #######################################
 function run_env_with_namespace() {
+    check_nested_env
+
     local backend_args="$1"
     shift
     _check_user_namespace

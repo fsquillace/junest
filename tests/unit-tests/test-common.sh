@@ -164,7 +164,6 @@ function test_proot_cmd_seccomp(){
         env | grep "^PROOT_NO_SECCOMP"
     }
     PROOT=envv
-    local output=$(proot_cmd | grep "^PROOT_NO_SECCOMP")
     assertCommandSuccess proot_cmd cmd
     # The variable PROOT_NO_SECCOMP will be produced
     # twice due to the fallback mechanism

@@ -110,4 +110,10 @@ function test_run_env_with_namespace_with_bindings_and_command() {
     _test_copy_remaining_files
 }
 
+function test_run_env_with_namespace_nested_env(){
+    JUNEST_ENV=1
+    assertCommandFailOnStatus 106 run_env_with_namespace ""
+    unset JUNEST_ENV
+}
+
 source $JUNEST_ROOT/tests/utils/shunit2

@@ -44,6 +44,12 @@ function test_run_env_as_groot_no_cmd(){
     assertEquals "chroot_cmd -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login -c /bin/sh --login" "$(cat $STDOUTF)"
 }
 
+function test_run_env_as_groot_nested_env(){
+    JUNEST_ENV=1
+    assertCommandFailOnStatus 106 run_env_as_groot ""
+    unset JUNEST_ENV
+}
+
 function test_run_env_as_groot_cmd_with_backend_args(){
     assertCommandSuccess run_env_as_groot "-n -b /home/blah" pwd
     assertEquals "chroot_cmd -b $HOME -b /tmp -b /proc -b /sys -b /dev -n -b /home/blah $JUNEST_HOME /bin/sh --login -c pwd" "$(cat $STDOUTF)"
@@ -57,6 +63,12 @@ function test_run_env_as_chroot_cmd(){
 function test_run_env_as_chroot_no_cmd(){
     assertCommandSuccess run_env_as_chroot ""
     assertEquals "chroot_cmd $JUNEST_HOME /bin/sh --login -c /bin/sh --login" "$(cat $STDOUTF)"
+}
+
+function test_run_env_as_choot_nested_env(){
+    JUNEST_ENV=1
+    assertCommandFailOnStatus 106 run_env_as_chroot ""
+    unset JUNEST_ENV
 }
 
 function test_run_env_as_chroot_cmd_with_backend_args(){

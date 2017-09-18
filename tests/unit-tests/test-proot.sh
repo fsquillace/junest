@@ -62,6 +62,12 @@ function test_run_env_as_user(){
     _test_copy_remaining_files
 }
 
+function test_run_env_as_user_nested_env(){
+    JUNEST_ENV=1
+    assertCommandFailOnStatus 106 run_env_as_user ""
+    unset JUNEST_ENV
+}
+
 function test_run_env_as_fakeroot(){
     _run_env_with_qemu() {
         echo $@
@@ -74,6 +80,12 @@ function test_run_env_as_fakeroot(){
     assertEquals "-0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat $STDOUTF)"
 
     _test_copy_common_files
+}
+
+function test_run_env_as_fakeroot_nested_env(){
+    JUNEST_ENV=1
+    assertCommandFailOnStatus 106 run_env_as_fakeroot ""
+    unset JUNEST_ENV
 }
 
 function test_run_env_with_quotes(){

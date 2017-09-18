@@ -28,8 +28,6 @@ function _run_env_as_xroot(){
 
     copy_common_files
 
-    check_nested_env
-
     JUNEST_ENV=1 $cmd $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
 }
 
@@ -52,6 +50,8 @@ function _run_env_as_xroot(){
 #   -                        : The command output.
 #######################################
 function run_env_as_groot(){
+    check_nested_env
+
     local backend_args="$1"
     shift
 
@@ -81,6 +81,8 @@ function run_env_as_groot(){
 #   -                        : The command output.
 #######################################
 function run_env_as_chroot(){
+    check_nested_env
+
     local backend_args="$1"
     shift
 
