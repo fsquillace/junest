@@ -1,6 +1,6 @@
 JuNest
 ======
-The Arch Linux based distro that runs upon any Linux distros without root access.
+The lightweight Arch Linux based distro that runs upon any Linux distros without root access.
 
 <h1 align="center">
     <a href="https://github.com/fsquillace/junest"><img
@@ -32,19 +32,34 @@ an isolated GNU/Linux environment inside any generic host GNU/Linux OS
 and without the need to have root privileges for installing packages.
 
 JuNest contains mainly the package managers (called [pacman](https://wiki.archlinux.org/index.php/Pacman)
-and a simple wrapper of [yaourt](https://wiki.archlinux.org/index.php/Yaourt) called yogurt) that allows to access
+and a simple [yaourt](https://wiki.archlinux.org/index.php/Yaourt) wrapper called yogurt) that allows to access
 to a wide range of packages from the Arch Linux repositories.
 
 The main advantages on using JuNest are:
 
 - Install packages without root privileges.
-- Isolated environment in which you can install packages without affecting a production system.
+- Partial isolated environment which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
 - Available for x86\_64, x86 and ARM architectures but you can build your own image from scratch too!
 - Run on a different architecture from the host OS via QEMU
 - All Arch Linux lovers can have their favourite distro everywhere!
 
 JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/The_Arch_Way).
+
+How different JuNest is from Docker and Vagrant?
+------------------------------------------------
+Although JuNest sounds similar to a virtualisation/Linux container -like system,
+JuNest differentiate a lot between Docker and Vagrant.
+In fact, the purpose of JuNest is **not** to
+build a complete isolated environment but, conversely, is the ability to run
+programs as they are running natively from the host OS. Almost everything is shared
+between host OS and the JuNest sandbox (kernel, process subtree, network, mounting, etc)
+and only the root filesystem gets isolated
+(as the programs installed in JuNest need to reside elsewhere).
+
+This allows interaction between processes belonging to both host OS and JuNest.
+For instance, you can install `top` command in JuNest in order to monitor
+any processes belonging to the host OS.
 
 Quickstart
 ==========
