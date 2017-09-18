@@ -46,13 +46,13 @@ The main advantages on using JuNest are:
 
 JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/The_Arch_Way).
 
-How different JuNest is from Docker and Vagrant?
+How different is JuNest from Docker and Vagrant?
 ------------------------------------------------
 Although JuNest sounds similar to a virtualisation/Linux container -like system,
 JuNest differentiate a lot between Docker and Vagrant.
 In fact, the purpose of JuNest is **not** to
 build a complete isolated environment but, conversely, is the ability to run
-programs as they are running natively from the host OS. Almost everything is shared
+programs as they were running natively from the host OS. Almost everything is shared
 between host OS and the JuNest sandbox (kernel, process subtree, network, mounting, etc)
 and only the root filesystem gets isolated
 (as the programs installed in JuNest need to reside elsewhere).
