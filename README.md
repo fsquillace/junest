@@ -40,7 +40,7 @@ The main advantages on using JuNest are:
 - Install packages without root privileges.
 - Partial isolated environment which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
-- Available for x86\_64, x86 and ARM architectures but you can build your own image from scratch too!
+- Available for x86\_64, x86 (deprecating) and ARM architectures but you can build your own image from scratch too!
 - Run on a different architecture from the host OS via QEMU
 - All Arch Linux lovers can have their favourite distro everywhere!
 
