@@ -116,7 +116,7 @@ Alternatively, another installation method would be to directly download the JuN
 
     ARCH=<one of "x86_64", "x86", "arm">
     mkdir ~/.junest
-    curl https://s3-eu-west-1.amazonaws.com/junest-repo/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
+    curl https://s3-eu-west-1.amazonaws.com/junest-repo/junest/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
     export PATH=~/.junest/opt/junest/bin:$PATH
 
 Usage
