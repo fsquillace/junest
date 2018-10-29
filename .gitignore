@@ -1,1 +1,4 @@
 *.swp
+*pkg.tar.xz
+*.tar.gz
+*.SRCINFO

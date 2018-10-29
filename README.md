@@ -265,8 +265,8 @@ As a fallback it tries to run the same executable if it is available in the JuNe
 image.
 
 ## Automatic building of the JuNest images ##
-The JuNest images are built every week so that you can always get the most
-updated package versions.
+There is not periodic automation build of the JuNest images yet.
+This was due to the difficulty to automate builds for arm architecture.
 
 ## Static QEMU binaries ##
 There are static QEMU binaries included in JuNest image that allows to run JuNest

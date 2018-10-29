@@ -31,6 +31,10 @@ source "${JUNEST_BASE}/lib/core/common.sh"
 info "Validating JuNest located in ${JUNEST_HOME}..."
 
 info "Initial JuNest setup..."
+# The following ensures that the gpg agent gets killed (if exists)
+# otherwise it is not possible to exit from the session
+trap "[[ -e /etc/pacman.d/gnupg/S.gpg-agent ]] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye" QUIT EXIT ABRT KILL TERM INT
+
 echo "Server = ${DEFAULT_MIRROR}" >> /etc/pacman.d/mirrorlist
 pacman --noconfirm -Syy
 pacman --noconfirm -S archlinux-keyring
@@ -59,14 +63,15 @@ pacman --noconfirm -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
 then
-    aur_package=tcptraceroute
+    aur_package=cower
     info "Checking ${aur_package} package from AUR repo..."
+    gpg --recv-key --keyserver hkp://pgp.mit.edu 1EB2638FF56C0C53
     yogurt -A --noconfirm -S ${aur_package}
-    $RUN_ROOT_TESTS && tcptraceroute localhost
+    ${aur_package} --help
     pacman --noconfirm -Rsn ${aur_package}
 fi
 
-# The following ensure that the gpg agent gets killed (if exists)
+# The following ensures that the gpg agent gets killed (if exists)
 # otherwise it is not possible to exit from the session
 [[ -e /etc/pacman.d/gnupg/S.gpg-agent ]] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye
 

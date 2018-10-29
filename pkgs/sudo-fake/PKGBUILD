@@ -1,0 +1,45 @@
+# Maintainer: Filippo Squillace <feel dot sqoox at gmail dot com>
+# More details on how to change this file:
+# https://wiki.archlinux.org/index.php/PKGBUILD
+# https://wiki.archlinux.org/index.php/Creating_packages
+# https://wiki.archlinux.org/index.php/Arch_User_Repository#Submitting_packages
+
+pkgname=sudo-fake
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Simple script that bypasses sudo and execute the actual command. Useful for fakeroot environments."
+arch=('any')
+url=""
+license=('GPL')
+groups=()
+depends=()
+makedepends=()
+provides=('sudo')
+conflicts=('sudo')
+backup=()
+options=()
+#install=
+source=()
+md5sums=()
+noextract=()
+
+package() {
+    install -d -m 755 "${pkgdir}/usr/bin/"
+    cat <<EOF > "${pkgdir}/usr/bin/sudo"
+#!/bin/bash
+for opt in "\$@"
+do
+    case "\$1" in
+        --) shift ; break ;;
+        -*) shift ;;
+        *) break ;;
+    esac
+done
+
+[[ -z "\${@}" ]] || "\${@}"
+EOF
+
+    chmod 755 "${pkgdir}/usr/bin/sudo"
+}
+
+# vim:set ts=2 sw=2 et:
