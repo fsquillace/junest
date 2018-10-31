@@ -15,7 +15,7 @@ function _check_package(){
     fi
 }
 
-function _install_from_aur(){
+function _install_pkg_from_aur(){
     local maindir=$1
     local pkgname=$2
     local installname=$3
@@ -25,6 +25,14 @@ function _install_from_aur(){
     [ -z "${installname}" ] || $CURL "https://aur.archlinux.org/cgit/aur.git/plain/${installname}?h=${pkgname}"
     makepkg -sfcd
     sudo pacman --noconfirm --root ${maindir}/root -U ${pkgname}*.pkg.tar.xz
+}
+
+function _install_pkg(){
+    local maindir=$1
+    local pkgbuilddir=$2
+    builtin cd ${pkgbuilddir}
+    makepkg -sfcd
+    sudo pacman --noconfirm --root ${maindir}/root -U *.pkg.tar.xz
 }
 
 function build_image_env(){
@@ -55,13 +63,13 @@ function build_image_env(){
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
     info "Compiling and installing yaourt..."
-    _install_from_aur ${maindir} "package-query"
-    _install_from_aur ${maindir} "yaourt"
-    _install_from_aur ${maindir} "sudo-fake"
+    _install_pkg_from_aur ${maindir} "package-query"
+    _install_pkg_from_aur ${maindir} "yaourt"
+    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
 
     info "Install ${NAME} script..."
     sudo pacman --noconfirm --root ${maindir}/root -S git
-    _install_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
+    _install_pkg_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
     sudo pacman --noconfirm --root ${maindir}/root -Rsn git
 
     info "Generating the locales..."

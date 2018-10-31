@@ -265,8 +265,8 @@ As a fallback it tries to run the same executable if it is available in the JuNe
 image.
 
 ## Automatic building of the JuNest images ##
-The JuNest images are built every week so that you can always get the most
-updated package versions.
+There is not periodic automation build of the JuNest images yet.
+This was due to the difficulty to automate builds for arm architecture.
 
 ## Static QEMU binaries ##
 There are static QEMU binaries included in JuNest image that allows to run JuNest
@@ -425,17 +425,31 @@ Troubleshooting
 > since JuNest will try to preserve the JuNest environment by assigning ownership
 > of the files to the real user.
 
-## Not enabled User namespace or kernel too old ##
+## Unprivileged user namespace disable at kernel compile time or kernel too old ##
 
-> **Q**: Why do I get warning when I run JuNest via Linux namespaces?
+> **Q**: Why do I get this warning when I run JuNest via Linux namespaces?
 
     $> junest -u
-    User namespace is not enabled or Kernel too old (<3.8). Proceeding anyway...
+    Unprivileged user namespace is disabled at kernel compile time or kernel too old (<3.8). Proceeding anyway...
+
+> **A**: This means that JuNest detected that the host OS either
+> does not have a newer kernel version or the unprivileged user namespace
+> is not enabled at kernel compile time.
+> JuNest does not stop the execution of the program but it attempts to run it
+> anyway. Try to use Proot as backend program in case is not possible to invoke namespaces.
+
+## Unprivileged user namespace disabled
+
+> **Q**: Why do I get this warning when I run JuNest via Linux namespaces?
+
+    $> junest -u
+    Unprivileged user namespace disabled. Root permissions are required to enable it: sudo sysctl kernel.unprivileged_userns_clone=1
 
 > **A**: This means that JuNest detected that the host OS either
 > does not have a newer Linux version or the user namespace is not enabled.
 > JuNest does not stop the execution of the program but it attempts to run it
-> anyway. Try to use Proot as backend program in case is not possible to invoke namespaces.
+> anyway. If you have root permissions try to enable it, otherwise try to use
+> Proot as backend program.
 
 More documentation
 ==================

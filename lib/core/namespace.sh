@@ -13,6 +13,7 @@
 
 CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
+PROC_USERNS_CLONE_FILE="/proc/sys/kernel/unprivileged_userns_clone"
 
 function _is_user_namespace_enabled() {
     local config_file=""
@@ -30,6 +31,18 @@ function _is_user_namespace_enabled() {
     then
         return $NO_CONFIG_FOUND
     fi
+
+    if [[ ! -e $PROC_USERNS_CLONE_FILE ]]
+    then
+        return 0
+    fi
+
+    if ! zgrep_cmd -q "1" $PROC_USERNS_CLONE_FILE
+    then
+        return $UNPRIVILEGED_USERNS_DISABLED
+    fi
+
+    return 0
 }
 
 function _check_user_namespace() {
@@ -37,7 +50,8 @@ function _check_user_namespace() {
     _is_user_namespace_enabled
     case $? in
         $NOT_EXISTING_FILE) warn "Could not understand if user namespace is enabled. No config.gz file found. Proceeding anyway..." ;;
-        $NO_CONFIG_FOUND) warn "User namespace is not enabled or Kernel too old (<3.8). Proceeding anyway..." ;;
+        $NO_CONFIG_FOUND) warn "Unprivileged user namespace is disabled at kernel compile time or kernel too old (<3.8). Proceeding anyway..." ;;
+        $UNPRIVILEGED_USERNS_DISABLED) warn "Unprivileged user namespace disabled. Root permissions are required to enable it: sudo sysctl kernel.unprivileged_userns_clone=1" ;;
     esac
     set -e
 }

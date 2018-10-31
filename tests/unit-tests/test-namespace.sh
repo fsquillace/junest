@@ -75,6 +75,27 @@ function test_is_user_namespace_enabled_with_config(){
     gzip config
     CONFIG_PROC_FILE="config.gz"
     CONFIG_BOOT_FILE="blah"
+    PROC_USERNS_CLONE_FILE="not-existing-file"
+    assertCommandSuccess _is_user_namespace_enabled
+}
+
+function test_is_user_namespace_enabled_with_userns_clone_file_disabled(){
+    echo "CONFIG_USER_NS=y" > config
+    gzip config
+    CONFIG_PROC_FILE="config.gz"
+    CONFIG_BOOT_FILE="blah"
+    PROC_USERNS_CLONE_FILE="unprivileged_userns_clone"
+    echo "0" > $PROC_USERNS_CLONE_FILE
+    assertCommandFailOnStatus $UNPRIVILEGED_USERNS_DISABLED _is_user_namespace_enabled
+}
+
+function test_is_user_namespace_enabled_with_userns_clone_file_enabled(){
+    echo "CONFIG_USER_NS=y" > config
+    gzip config
+    CONFIG_PROC_FILE="config.gz"
+    CONFIG_BOOT_FILE="blah"
+    PROC_USERNS_CLONE_FILE="unprivileged_userns_clone"
+    echo "1" > $PROC_USERNS_CLONE_FILE
     assertCommandSuccess _is_user_namespace_enabled
 }
 
