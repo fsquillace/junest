@@ -276,6 +276,8 @@ directory.
 Troubleshooting
 ===============
 
+For Arch Linux related FAQs take a look at the [General troubleshooting page](https://wiki.archlinux.org/index.php/General_troubleshooting).
+
 ## Cannot use AUR repository ##
 
 > **Q**: Why do I get the following error when I try to install a package with yogurt?
@@ -324,6 +326,8 @@ Troubleshooting
     #> pkgfile --update
     $> pkgfile getop
     core/util-linux
+
+> Alternatively, you can use directly `pacman` command only. Take a look [here](https://wiki.archlinux.org/index.php/General_troubleshooting#Message:_%22error_while_loading_shared_libraries%22).
 
 ## Kernel too old ##
 
