@@ -98,26 +98,27 @@ and 64 bit) and ARM architectures. It is still possible to run JuNest on lower
 crash. For further information, read the [Troubleshooting](#troubleshooting)
 section below.
 
+## Method ##
+Install junest using the latest junest build image maintained in [srgk26/junest_build_image](https://github.com/srgk26/junest_build_image) repo:
 
-## Method one (Recommended) ##
-Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
+```
+## Downloading Junest
+$ git clone git://github.com/fsquillace/junest ~/.local/share/junest ## Downloads junest in your local system
 
-    git clone git://github.com/fsquillace/junest ~/.local/share/junest
-    export PATH=~/.local/share/junest/bin:$PATH
+## Add this line to ~/.bashrc configuration to add junest to PATH
+$ vim ~/.bashrc
+export PATH=~/.local/share/junest/bin:$PATH ## Adds junest to PATH
 
-### Installation using AUR (Arch Linux only) ###
-If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/):
+$ source ~/.bashrc
 
-    yaourt -S junest-git
-    export PATH=/opt/junest/bin:$PATH
+## Downloading the latest junest system build image from this repo
+$ git clone https://github.com/srgk26/junest_build_image.git ## Clone repo
+$ cd junest_build_image/build_images ## Move into the directory containing junest build images
 
-## Method two ##
-Alternatively, another installation method would be to directly download the JuNest image and place it to the default directory ~/.junest:
-
-    ARCH=<one of "x86_64", "x86", "arm">
-    mkdir ~/.junest
-    curl https://s3-eu-west-1.amazonaws.com/junest-repo/junest/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
-    export PATH=~/.junest/opt/junest/bin:$PATH
+## Installing Junest
+$ junest -i junest-[date]-x86_64.tar.gz ## Replace date with the latest date available; This junest-[date]-x86_64.tar.gz is the custom junest system image from this repository.
+$ cd ~ && rm -rf junest_build_image ## Delete this repo git clone from your system
+```
 
 Usage
 =====
