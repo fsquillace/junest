@@ -101,7 +101,7 @@ section below.
 ## Method ##
 Install junest using the latest junest build image maintained in [srgk26/junest_build_image](https://github.com/srgk26/junest_build_image) repo.
 
-Firstly, you will need to have git-lfs installed on your system. This is necessary to be able to download the junest build images uploaded to this GitHub repo using git-lfs. Download it from https://git-lfs.github.com/, or use your package manager (if you have permission). For Arch Linux, this would be sudo pacman -S git-lfs.
+Firstly, you will need to have git-lfs installed on your system. This is necessary to be able to download the junest build images uploaded to this GitHub repo using git-lfs. Download it from https://git-lfs.github.com/, or use your package manager (if you have permission). For Arch Linux, this would be `sudo pacman -S git-lfs`.
 
 This would be the instructions for you to install junest (which are also in Filippo's documentation) using my custom built junest build image:
 
