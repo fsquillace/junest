@@ -99,17 +99,21 @@ crash. For further information, read the [Troubleshooting](#troubleshooting)
 section below.
 
 ## Method ##
-Install junest using the latest junest build image maintained in [srgk26/junest_build_image](https://github.com/srgk26/junest_build_image) repo:
+Install junest using the latest junest build image maintained in [srgk26/junest_build_image](https://github.com/srgk26/junest_build_image) repo.
+
+Firstly, you will need to have git-lfs installed on your system. This is necessary to be able to download the junest build images uploaded to this GitHub repo using git-lfs. Download it from https://git-lfs.github.com/, or use your package manager (if you have permission). For Arch Linux, this would be sudo pacman -S git-lfs.
+
+This would be the instructions for you to install junest (which are also in Filippo's documentation) using my custom built junest build image:
 
 ```
 ## Downloading Junest
 $ git clone git://github.com/fsquillace/junest ~/.local/share/junest ## Downloads junest in your local system
 
-## Add this line to ~/.bashrc configuration to add junest to PATH
-$ vim ~/.bashrc
+## Add this line to ~/.bash_profile configuration to add junest to PATH
+$ vim ~/.bash_profile
 export PATH=~/.local/share/junest/bin:$PATH ## Adds junest to PATH
 
-$ source ~/.bashrc
+$ source ~/.bash_profile
 
 ## Downloading the latest junest system build image from this repo
 $ git clone https://github.com/srgk26/junest_build_image.git ## Clone repo
