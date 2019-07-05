@@ -106,6 +106,9 @@ Firstly, you will need to have git-lfs installed on your system and in your PATH
 This would be the instructions for you to install junest (which are also in Filippo's documentation) using my custom built junest build image:
 
 ```
+## Make sure that git-lfs is initialised
+[guest@pc ~]$ git lfs install
+
 ## Downloading Junest
 $ git clone git://github.com/fsquillace/junest ~/.local/share/junest ## Downloads junest in your local system
 
