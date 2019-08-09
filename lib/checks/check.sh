@@ -37,9 +37,15 @@ trap "[[ -e /etc/pacman.d/gnupg/S.gpg-agent ]] && gpg-connect-agent -S /etc/pacm
 
 echo "Server = ${DEFAULT_MIRROR}" >> /etc/pacman.d/mirrorlist
 pacman --noconfirm -Syy
-pacman --noconfirm -S archlinux-keyring
+
 pacman-key --init
+
+pacman --noconfirm -S archlinux-keyring
 pacman-key --populate archlinux
+
+pacman --noconfirm -S archlinuxarm-keyring || echo "No ARM keyring detected"
+pacman-key --populate archlinuxarm || echo "No ARM keyring detected"
+
 pacman --noconfirm -Su
 pacman --noconfirm -S grep coreutils
 pacman --noconfirm -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
