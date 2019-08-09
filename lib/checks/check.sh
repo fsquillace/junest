@@ -44,7 +44,7 @@ pacman --noconfirm -Su
 pacman --noconfirm -S grep coreutils
 pacman --noconfirm -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
 
-info "Checking essential executables work..."
+info "Checking basic executables work..."
 pacman -Qi pacman 1> /dev/null
 yogurt -V 1> /dev/null
 /opt/proot/proot-$ARCH --help 1> /dev/null
@@ -63,11 +63,10 @@ pacman --noconfirm -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
 then
-    aur_package=cower
+    aur_package=aurutils
     info "Checking ${aur_package} package from AUR repo..."
-    gpg --recv-key --keyserver hkp://pgp.mit.edu 1EB2638FF56C0C53
     yogurt -A --noconfirm -S ${aur_package}
-    ${aur_package} --help
+    aur search aur 1> /dev/null
     pacman --noconfirm -Rsn ${aur_package}
 fi
 
