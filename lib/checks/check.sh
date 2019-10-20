@@ -52,7 +52,7 @@ pacman --noconfirm -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
 
 info "Checking basic executables work..."
 pacman -Qi pacman 1> /dev/null
-yogurt -V 1> /dev/null
+/opt/makepkg/bin/makepkg --help 1> /dev/null
 /opt/proot/proot-$ARCH --help 1> /dev/null
 
 repo_package1=tree
@@ -71,7 +71,13 @@ if ! $SKIP_AUR_TESTS
 then
     aur_package=aurutils
     info "Checking ${aur_package} package from AUR repo..."
-    yogurt -A --noconfirm -S ${aur_package}
+    maindir=$(mktemp -d -t ${CMD}.XXXXXXXXXX)
+    builtin cd ${maindir}
+    curl -L -J -O -k "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${aur_package}"
+    curl -L -J -O -k "https://aur.archlinux.org/cgit/aur.git/plain/${aur_package}.install?h=${aur_package}"
+    /opt/makepkg/bin/makepkg -sfcd
+
+    pacman --noconfirm -U ${aur_package}*.pkg.tar.xz
     aur search aur 1> /dev/null
     pacman --noconfirm -Rsn ${aur_package}
 fi

@@ -54,30 +54,26 @@ function build_image_env(){
     info "Installing pacman and its dependencies..."
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
-    # yaourt requires sed
-    # localedef (called by locale-gen) requires gzip
     # unshare command belongs to util-linux
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring sed gzip util-linux
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring util-linux
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
     sudo mkdir -p ${maindir}/root/run/lock
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
-    info "Compiling and installing yaourt..."
-    _install_pkg_from_aur ${maindir} "package-query"
-    _install_pkg_from_aur ${maindir} "yaourt"
     _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
 
     info "Install ${NAME} script..."
-    sudo pacman --noconfirm --root ${maindir}/root -S git
     _install_pkg_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
-    sudo pacman --noconfirm --root ${maindir}/root -Rsn git
 
     info "Generating the locales..."
     # sed command is required for locale-gen
+    # localedef (called by locale-gen) requires gzip
+    sudo pacman --noconfirm --root ${maindir}/root -S sed gzip
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
     sudo ${maindir}/root/opt/junest/bin/groot ${maindir}/root locale-gen
     sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
+    sudo pacman --noconfirm --root ${maindir}/root -Rsn sed gzip
 
     info "Setting up the pacman keyring (this might take a while!)..."
     sudo ${maindir}/root/opt/junest/bin/groot -b /dev ${maindir}/root bash -c \
@@ -95,8 +91,9 @@ function build_image_env(){
     then
         mkdir -p ${maindir}/root_test
         $TAR -zxpf ${imagefile} -C "${maindir}/root_test"
-        JUNEST_HOME="${maindir}/root_test" ${maindir}/root_test/opt/${CMD}/bin/${CMD} -f ${JUNEST_BASE}/lib/checks/check.sh
-        JUNEST_HOME="${maindir}/root_test" sudo -E ${maindir}/root_test/opt/${CMD}/bin/${CMD} -g ${JUNEST_BASE}/lib/checks/check.sh --run-root-tests
+        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} proot -f ${JUNEST_BASE}/lib/checks/check.sh
+        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} ns ${JUNEST_BASE}/lib/checks/check.sh
+        JUNEST_HOME="${maindir}/root_test" sudo -E ${JUNEST_BASE}/bin/${CMD} groot ${JUNEST_BASE}/lib/checks/check.sh --run-root-tests
     fi
 
     sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}

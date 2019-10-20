@@ -19,8 +19,7 @@ source "${JUNEST_BASE}/lib/core/namespace.sh"
 source "${JUNEST_BASE}/lib/core/proot.sh"
 
 
-# TODO give more flexibility for userns to allow not to copy passwd/grops file, etc
-# TODO think about removing yaourt
+# TODO Add test that checks that no_copy files works
 
 ###################################
 ### General functions           ###
@@ -35,31 +34,36 @@ usage() {
     echo -e "-V, --version                              Show the $NAME version"
     echo
     echo -e "Actions and options:"
-    echo -e "  [s]etup                                  "
-    echo -e "            -i, --from-file <image>  Setup the $NAME image in ${JUNEST_HOME}"
+    echo -e "  s[etup]                                  "
+    echo -e "            -i, --from-file <image>        Setup the $NAME image in ${JUNEST_HOME}"
     echo -e "            -a, --arch <arch>              $NAME architecture to download (x86_64, arm)"
     echo -e "                                           Defaults to the host architecture ($ARCH)"
     echo -e "            -d, --delete                   Delete $NAME from ${JUNEST_HOME}"
     echo
-    echo -e "  [n]s                                     Access via Linux Namespaces using GRoot (Default action)"
+    echo -e "  n[s]                                     Access via Linux Namespaces using GRoot (Default action)"
     echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
     echo -e "                                           ($CMD groot -p \"--help\" to check out the GRoot options)"
+    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
-    echo -e "  [p]root                                  Access via PRoot"
+    echo -e "  p[root]                                  Access via PRoot"
     echo -e "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
     echo -e "            -b, --backend-args <args>      Arguments for PRoot backend program"
     echo -e "                                           ($CMD proot -p \"--help\" to check out the PRoot options)"
+    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
-    echo -e "  [g]root                                  Access with root privileges via GRoot"
+    echo -e "  g[root]                                  Access with root privileges via GRoot"
     echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
     echo -e "                                           ($CMD groot -p \"--help\" to check out the GRoot options)"
+    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
-    echo -e "  [r]oot                                   Access with root privileges via classic chroot"
+    echo -e "  r[oot]                                   Access with root privileges via classic chroot"
     echo -e "            -b, --backend-args <args>      Arguments for chroot backend program"
     echo -e "                                           ($CMD root -p \"--help\" to check out the chroot options)"
+    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
-    echo -e "  [b]uild                                  Build a $NAME image (must run in ArchLinux)"
-    echo -e "            -n, --disable-validation       Disable the $NAME image validation"
+    echo -e "  b[uild]                                  Build a $NAME image (must run in ArchLinux)"
+    echo -e "            -n, --disable-check            Disable the $NAME image check"
+    echo
 }
 
 version() {
@@ -67,9 +71,9 @@ version() {
 }
 
 function parse_arguments(){
-	# Actions
-	ACT_SETUP=false
-	ACT_BUILD=false
+    # Actions
+    ACT_SETUP=false
+    ACT_BUILD=false
     ACT_NAMESPACE=false
     ACT_PROOT=false
     ACT_GROOT=false
@@ -77,48 +81,74 @@ function parse_arguments(){
     ACT_HELP=false
     ACT_VERSION=false
 
-	case "$1" in
-		s|setup) ACT_SETUP=true ; shift ;;
-		b|build) ACT_BUILD=true ; shift ;;
-		n|ns) ACT_NAMESPACE=true ; shift ;;
-		p|proot) ACT_PROOT=true ; shift ;;
-		g|groot) ACT_GROOT=true ; shift ;;
-		r|root) ACT_ROOT=true ; shift ;;
-		-h|--help) ACT_HELP=true ; shift ;;
-		-V|--version) ACT_VERSION=true ; shift ;;
-		*) ACT_NAMESPACE=true ;;
-	esac
+    case "$1" in
+        s|setup) ACT_SETUP=true ; shift ;;
+        b|build) ACT_BUILD=true ; shift ;;
+        n|ns) ACT_NAMESPACE=true ; shift ;;
+        p|proot) ACT_PROOT=true ; shift ;;
+        g|groot) ACT_GROOT=true ; shift ;;
+        r|root) ACT_ROOT=true ; shift ;;
+        -h|--help) ACT_HELP=true ; shift ;;
+        -V|--version) ACT_VERSION=true ; shift ;;
+        *) ACT_NAMESPACE=true ;;
+    esac
 
-	if $ACT_SETUP
-	then
-		_parse_setup_opts "$@"
-	elif $ACT_BUILD
-	then
-		_parse_build_opts "$@"
-	elif $ACT_NAMESPACE
-	then
-		_parse_general_opts "$@"
-	elif $ACT_PROOT
-	then
-		_parse_proot_opts "$@"
-	elif $ACT_GROOT
-	then
-		_parse_general_opts "$@"
-	elif $ACT_ROOT
-	then
-		_parse_general_opts "$@"
-	fi
+    if $ACT_SETUP
+    then
+        _parse_setup_opts "$@"
+    elif $ACT_BUILD
+    then
+        _parse_build_opts "$@"
+    elif $ACT_NAMESPACE
+    then
+        _parse_ns_opts "$@"
+    elif $ACT_PROOT
+    then
+        _parse_proot_opts "$@"
+    elif $ACT_GROOT
+    then
+        _parse_root_opts "$@"
+    elif $ACT_ROOT
+    then
+        _parse_root_opts "$@"
+    fi
 }
 
-function _parse_general_opts() {
-	# Options:
+function _parse_root_opts() {
+    # Options:
     OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
+    OPT_NO_COPY_FILES=false
 
-	while [[ -n "$1" ]]
+    while [[ -n "$1" ]]
     do
         case "$1" in
-            -p|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -b|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
+            --) shift ; break ;;
+            -*) die "Invalid option $1" ;;
+            *) break ;;
+        esac
+    done
+
+    ARGS=()
+    for arg in "$@"
+    do
+        ARGS+=("$arg")
+    done
+}
+
+function _parse_ns_opts() {
+    # Options:
+    OPT_BACKEND_ARGS=false
+    BACKEND_ARGS=""
+    OPT_NO_COPY_FILES=false
+
+    while [[ -n "$1" ]]
+    do
+        case "$1" in
+            -b|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
             --) shift ; break ;;
             -*) die "Invalid option $1" ;;
             *) break ;;
@@ -133,16 +163,18 @@ function _parse_general_opts() {
 }
 
 function _parse_proot_opts() {
-	# Options:
+    # Options:
     OPT_FAKEROOT=false
     OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
+    OPT_NO_COPY_FILES=false
 
-	while [[ -n "$1" ]]
+    while [[ -n "$1" ]]
     do
         case "$1" in
             -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-            -p|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -b|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
             --) shift ; break ;;
             -*) die "Invalid option $1" ;;
             *) break ;;
@@ -157,26 +189,26 @@ function _parse_proot_opts() {
 }
 
 function _parse_build_opts() {
-    OPT_DISABLE_VALIDATION=false
-	while [[ -n "$1" ]]
+    OPT_DISABLE_CHECK=false
+    while [[ -n "$1" ]]
     do
         case "$1" in
-            -n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
+            -n|--disable-check) OPT_DISABLE_CHECK=true ; shift ;;
             *) die "Invalid option $1" ;;
         esac
     done
 }
 
 function _parse_setup_opts() {
-    OPT_SETUP_FROM_FILE=false
+    OPT_FROM_FILE=false
     IMAGE_FILE=""
     OPT_ARCH=false
     ARCH_ARG=""
     OPT_DELETE=false
-	while [[ -n "$1" ]]
+    while [[ -n "$1" ]]
     do
         case "$1" in
-            -i|--from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
+            -i|--from-file) OPT_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
             -a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
             -d|--delete) OPT_DELETE=true ; shift ;;
             *) die "Invalid option $1" ;;
@@ -189,33 +221,33 @@ function execute_operation() {
     $ACT_VERSION && version && return
 
     if $ACT_BUILD; then
-        build_image_env $OPT_DISABLE_VALIDATION
+        build_image_env $OPT_DISABLE_CHECK
         return
-	fi
-    
-	if $ACT_SETUP; then
-		if $OPT_DELETE; then
+    fi
+
+    if $ACT_SETUP; then
+        if $OPT_DELETE; then
             delete_env
-		else
-			if is_env_installed
-			then
-				die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
-			fi
+        else
+            if is_env_installed
+            then
+                die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
+            fi
 
-			if $OPT_SETUP_FROM_FILE; then
-				setup_env_from_file $IMAGE_FILE
-			else
-				setup_env $ARCH_ARG
-			fi
-		fi
+            if $OPT_FROM_FILE; then
+                setup_env_from_file $IMAGE_FILE
+            else
+                setup_env $ARCH_ARG
+            fi
+        fi
 
-		return
+        return
     fi
 
 
     if ! is_env_installed
     then
-		die "Error: The image is still not installed in $JUNEST_HOME. Run this first: $CMD setup"
+        die "Error: The image is still not installed in $JUNEST_HOME. Run this first: $CMD setup"
     fi
 
     local run_env
@@ -224,16 +256,16 @@ function execute_operation() {
     elif $ACT_PROOT; then
         if $OPT_FAKEROOT; then
             run_env=run_env_as_fakeroot
-		else
+        else
             run_env=run_env_as_user
-		fi
+        fi
     elif $ACT_GROOT; then
         run_env=run_env_as_groot
     elif $ACT_ROOT; then
         run_env=run_env_as_chroot
     fi
 
-    $run_env "${BACKEND_ARGS}" "${ARGS[@]}"
+    $run_env "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
 
 }
 

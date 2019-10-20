@@ -49,7 +49,9 @@ function _run_env_with_qemu(){
 #   SH (RO)                   : Contains the default command to run in JuNest.
 # Arguments:
 #   backend_args ($1)         : The arguments to pass to proot
-#   cmd ($2-?)                : The command to run inside JuNest environment.
+#   no_copy_files ($2?)      : If false it will copy some files in /etc
+#                              from host to JuNest environment.
+#   cmd ($3-?)                : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
 #   $ROOT_ACCESS_ERROR        : If the user is the real root.
@@ -62,9 +64,13 @@ function run_env_as_fakeroot(){
     check_nested_env
 
     local backend_args="$1"
-    shift
+    local no_copy_files="$2"
+    shift 2
 
-    copy_common_files
+    if ! $no_copy_files
+    then
+        copy_common_files
+    fi
 
     provide_common_bindings
     local bindings=${RESULT}
@@ -84,7 +90,9 @@ function run_env_as_fakeroot(){
 #   SH (RO)                  : Contains the default command to run in JuNest.
 # Arguments:
 #   backend_args ($1)        : The arguments to pass to proot
-#   cmd ($2-?)               : The command to run inside JuNest environment.
+#   no_copy_files ($2?)      : If false it will copy some files in /etc
+#                              from host to JuNest environment.
+#   cmd ($3-?)               : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
 #   $ROOT_ACCESS_ERROR       : If the user is the real root.
@@ -97,19 +105,23 @@ function run_env_as_user(){
     check_nested_env
 
     local backend_args="$1"
-    shift
+    local no_copy_files="$2"
+    shift 2
 
-    # Files to bind are visible in `proot --help`.
-    # This function excludes /etc/mtab file so that
-    # it will not give conflicts with the related
-    # symlink in the Arch Linux image.
-    copy_common_files
-    copy_file /etc/hosts.equiv
-    copy_file /etc/netgroup
-    copy_file /etc/networks
-    # No need for localtime as it is setup during the image build
-    #copy_file /etc/localtime
-    copy_passwd_and_group
+    if ! $no_copy_files
+    then
+        # Files to bind are visible in `proot --help`.
+        # This function excludes /etc/mtab file so that
+        # it will not give conflicts with the related
+        # symlink in the Arch Linux image.
+        copy_common_files
+        copy_file /etc/hosts.equiv
+        copy_file /etc/netgroup
+        copy_file /etc/networks
+        # No need for localtime as it is setup during the image build
+        #copy_file /etc/localtime
+        copy_passwd_and_group
+    fi
 
     provide_common_bindings
     local bindings=${RESULT}

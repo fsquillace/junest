@@ -32,7 +32,7 @@ an isolated GNU/Linux environment inside any generic host GNU/Linux OS
 and without the need to have root privileges for installing packages.
 
 JuNest contains mainly the package managers (called [pacman](https://wiki.archlinux.org/index.php/Pacman)
-and a simple [yaourt](https://wiki.archlinux.org/index.php/Yaourt) wrapper called yogurt) that allows to access
+that allows to access
 to a wide range of packages from the Arch Linux repositories.
 
 The main advantages on using JuNest are:
@@ -40,7 +40,7 @@ The main advantages on using JuNest are:
 - Install packages without root privileges.
 - Partial isolated environment which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
-- Available for x86\_64 and ARM architectures but you can build your own image from scratch too!
+- Available for `x86_64` and `arm` architectures but you can build your own image from scratch too!
 - Run on a different architecture from the host OS via QEMU
 - All Arch Linux lovers can have their favourite distro everywhere!
 
@@ -103,6 +103,15 @@ Have fun!
 
 If you are new on Arch Linux and you are not familiar with `pacman` package manager
 visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
+
+JuNest provides a modified version of `makepkg` in `/opt/makepkg/bin` that
+allows you to build packages from [AUR](https://aur.archlinux.org/) repository.
+Remember that in order to build package `base-devel` package group is required
+first:
+
+```sh
+pacman -Sy base-devel
+```
 
 Installation
 ============
@@ -217,7 +226,7 @@ junest build [-n]
 ```
 
 The script will create a directory containing all the essentials
-files in order to make JuNest working properly (such as pacman, yogurt and proot).
+files in order to make JuNest working properly (such as `pacman` and `proot`).
 The option `-n` will skip the final validation tests if they are not needed.
 Remember that the script to build the image must run in an Arch Linux OS with
 arch-install-scripts and the base-devel packages installed.
@@ -323,12 +332,12 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 
 ## Cannot use AUR repository ##
 
-> **Q**: Why do I get the following error when I try to install a package with yogurt?
+> **Q**: Why do I get the following error when I try to install a package?
 
     Cannot find the gzip binary required for compressing man and info pages.
 
 > **A**: JuNest comes with a very basic number of packages.
-> In order to install AUR packages via yogurt you need to install the package group `base-devel` first
+> In order to install AUR packages you need to install the package group `base-devel` first
 > that contains all the essential packages for compiling from source code (such as gcc, make, patch, etc):
 
     #> pacman -S --ignore sudo base-devel
