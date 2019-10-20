@@ -13,148 +13,112 @@ source "${JUNEST_BASE}/lib/utils/utils.sh"
 source "${JUNEST_BASE}/lib/core/common.sh"
 
 source "${JUNEST_BASE}/lib/core/build.sh"
+source "${JUNEST_BASE}/lib/core/setup.sh"
 source "${JUNEST_BASE}/lib/core/chroot.sh"
 source "${JUNEST_BASE}/lib/core/namespace.sh"
 source "${JUNEST_BASE}/lib/core/proot.sh"
-source "${JUNEST_BASE}/lib/core/setup.sh"
 
+
+# TODO give more flexibility for userns to allow not to copy passwd/grops file, etc
+# TODO think about removing yaourt
 
 ###################################
 ### General functions           ###
 ###################################
-
 usage() {
     echo -e "$NAME (v$(cat $JUNEST_BASE/VERSION)): $DESCRIPTION"
     echo
-    echo -e "Usage: $CMD [options] [--] [command]"
+    echo -e "Usage: $CMD [action] [options] [--] [command]"
     echo
-    echo -e "Setup options:"
-    echo -e "-i, --setup-from-file <image>  Setup the $NAME image in ${JUNEST_HOME}"
-    echo -e "-a, --arch <arch>              $NAME architecture to download (x86_64, x86, arm)"
-    echo -e "                               Defaults to the host architecture ($ARCH)"
-    echo -e "-d, --delete                   Delete $NAME from ${JUNEST_HOME}"
+    echo -e "General:"
+    echo -e "-h, --help                                 Show this help message"
+    echo -e "-V, --version                              Show the $NAME version"
     echo
-    echo -e "Access options:"
-    echo -e "-f, --fakeroot                 Run $NAME with fakeroot privileges"
-    echo -e "-g, --groot                    Run $NAME with root privileges via GRoot"
-    echo -e "-r, --root                     Run $NAME with root privileges via classic chroot"
-    echo -e "-u, --namespace                Use Linux Namespace (with GRoot) instead of PRoot"
-    echo -e "-p, --backend-args <args>      Arguments for backend program (PRoot or GRoot)"
-    echo -e "                               ($CMD -p \"--help\" to check out the PRoot options"
-    echo -e "                                $CMD -g -p \"--help\" to check out the GRoot options"
-    echo -e "                                $CMD -r -p \"--help\" to check out the chroot options)"
+    echo -e "Actions and options:"
+    echo -e "  [s]etup                                  "
+    echo -e "            -i, --from-file <image>  Setup the $NAME image in ${JUNEST_HOME}"
+    echo -e "            -a, --arch <arch>              $NAME architecture to download (x86_64, arm)"
+    echo -e "                                           Defaults to the host architecture ($ARCH)"
+    echo -e "            -d, --delete                   Delete $NAME from ${JUNEST_HOME}"
     echo
-    echo -e "Building options:"
-    echo -e "-b, --build-image              Build a $NAME image (must run in ArchLinux)"
-    echo -e "-n, --disable-validation       Disable the $NAME image validation"
+    echo -e "  [n]s                                     Access via Linux Namespaces using GRoot (Default action)"
+    echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
+    echo -e "                                           ($CMD groot -p \"--help\" to check out the GRoot options)"
     echo
-    echo -e "General options:"
-    echo -e "-h, --help                     Show this help message"
-    echo -e "-V, --version                  Show the $NAME version"
+    echo -e "  [p]root                                  Access via PRoot"
+    echo -e "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
+    echo -e "            -b, --backend-args <args>      Arguments for PRoot backend program"
+    echo -e "                                           ($CMD proot -p \"--help\" to check out the PRoot options)"
+    echo
+    echo -e "  [g]root                                  Access with root privileges via GRoot"
+    echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
+    echo -e "                                           ($CMD groot -p \"--help\" to check out the GRoot options)"
+    echo
+    echo -e "  [r]oot                                   Access with root privileges via classic chroot"
+    echo -e "            -b, --backend-args <args>      Arguments for chroot backend program"
+    echo -e "                                           ($CMD root -p \"--help\" to check out the chroot options)"
+    echo
+    echo -e "  [b]uild                                  Build a $NAME image (must run in ArchLinux)"
+    echo -e "            -n, --disable-validation       Disable the $NAME image validation"
 }
 
 version() {
     echo -e "$NAME $(cat $JUNEST_BASE/VERSION)"
 }
 
-check_cli(){
-    if $OPT_BUILD_IMAGE
-    then
-        if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT
-        then
-            die "The build image option must be used exclusively"
-        fi
-    fi
-    if $OPT_DISABLE_VALIDATION
-    then
-        if $OPT_DELETE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT
-        then
-            die "The disable validation option must be used with the build image option only"
-        fi
-    fi
-    if $OPT_DELETE
-    then
-        if $OPT_BUILD_IMAGE || $OPT_HELP || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
-        then
-            die "The $NAME delete option must be used exclusively"
-        fi
-    fi
-    if $OPT_HELP
-    then
-        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_VERSION || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
-        then
-            die "The $NAME help option must be used exclusively"
-        fi
-    fi
-    if $OPT_VERSION
-    then
-        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
-            $OPT_FAKEROOT || $OPT_ROOT || $OPT_DISABLE_VALIDATION
-        then
-            die "The $NAME version option must be used exclusively"
-        fi
-    fi
-    if $OPT_FAKEROOT && $OPT_ROOT
-    then
-        die "You must access to $NAME with either fakeroot or root permissions"
-    fi
-    if $OPT_BACKEND_ARGS || $OPT_ARCH
-    then
-        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || \
-            $OPT_ROOT || $OPT_VERSION || $OPT_DISABLE_VALIDATION
-        then
-            die "Invalid syntax: Proot and arch args are not allowed with the other options"
-        fi
-    fi
-    if [ "$ARGS" != "" ]
-    then
-        if $OPT_BUILD_IMAGE || $OPT_DELETE || $OPT_HELP || $OPT_SETUP_FROM_FILE || \
-            $OPT_VERSION || $OPT_DISABLE_VALIDATION
-        then
-            die "No arguments are needed. For the CLI syntax run: $CMD --help"
-        fi
-    fi
+function parse_arguments(){
+	# Actions
+	ACT_SETUP=false
+	ACT_BUILD=false
+    ACT_NAMESPACE=false
+    ACT_PROOT=false
+    ACT_GROOT=false
+    ACT_ROOT=false
+    ACT_HELP=false
+    ACT_VERSION=false
 
-    return 0
+	case "$1" in
+		s|setup) ACT_SETUP=true ; shift ;;
+		b|build) ACT_BUILD=true ; shift ;;
+		n|ns) ACT_NAMESPACE=true ; shift ;;
+		p|proot) ACT_PROOT=true ; shift ;;
+		g|groot) ACT_GROOT=true ; shift ;;
+		r|root) ACT_ROOT=true ; shift ;;
+		-h|--help) ACT_HELP=true ; shift ;;
+		-V|--version) ACT_VERSION=true ; shift ;;
+		*) ACT_NAMESPACE=true ;;
+	esac
+
+	if $ACT_SETUP
+	then
+		_parse_setup_opts "$@"
+	elif $ACT_BUILD
+	then
+		_parse_build_opts "$@"
+	elif $ACT_NAMESPACE
+	then
+		_parse_general_opts "$@"
+	elif $ACT_PROOT
+	then
+		_parse_proot_opts "$@"
+	elif $ACT_GROOT
+	then
+		_parse_general_opts "$@"
+	elif $ACT_ROOT
+	then
+		_parse_general_opts "$@"
+	fi
 }
 
-
-function parse_arguments(){
-    OPT_SETUP_FROM_FILE=false
-    IMAGE_FILE=""
-    OPT_FAKEROOT=false
-    OPT_ROOT=false
-    OPT_GROOT=false
-    OPT_USER_NAMESPACE=false
+function _parse_general_opts() {
+	# Options:
     OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
-    OPT_ARCH=false
-    ARCH_ARG=""
-    OPT_BUILD_IMAGE=false
-    OPT_DISABLE_VALIDATION=false
-    CHECK_ARG=""
-    OPT_DELETE=false
-    OPT_HELP=false
-    OPT_VERSION=false
-    for opt in "$@"
+
+	while [[ -n "$1" ]]
     do
         case "$1" in
-            -i|--setup-from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
-            -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-            -r|--root) OPT_ROOT=true ; shift ;;
-            -g|--groot) OPT_GROOT=true ; shift ;;
-            -u|--namespace) OPT_USER_NAMESPACE=true ; shift ;;
             -p|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
-            -a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
-            -b|--build-image) OPT_BUILD_IMAGE=true ; shift ;;
-            -n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
-            -d|--delete) OPT_DELETE=true ; shift ;;
-            -h|--help) OPT_HELP=true ; shift ;;
-            -V|--version) OPT_VERSION=true ; shift ;;
             --) shift ; break ;;
             -*) die "Invalid option $1" ;;
             *) break ;;
@@ -168,44 +132,105 @@ function parse_arguments(){
     done
 }
 
-function execute_operation(){
-    $OPT_HELP && usage && return
-    $OPT_VERSION && version && return
+function _parse_proot_opts() {
+	# Options:
+    OPT_FAKEROOT=false
+    OPT_BACKEND_ARGS=false
+    BACKEND_ARGS=""
 
-    if $OPT_BUILD_IMAGE; then
+	while [[ -n "$1" ]]
+    do
+        case "$1" in
+            -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
+            -p|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            --) shift ; break ;;
+            -*) die "Invalid option $1" ;;
+            *) break ;;
+        esac
+    done
+
+    ARGS=()
+    for arg in "$@"
+    do
+        ARGS+=("$arg")
+    done
+}
+
+function _parse_build_opts() {
+    OPT_DISABLE_VALIDATION=false
+	while [[ -n "$1" ]]
+    do
+        case "$1" in
+            -n|--disable-validation) OPT_DISABLE_VALIDATION=true ; shift ;;
+            *) die "Invalid option $1" ;;
+        esac
+    done
+}
+
+function _parse_setup_opts() {
+    OPT_SETUP_FROM_FILE=false
+    IMAGE_FILE=""
+    OPT_ARCH=false
+    ARCH_ARG=""
+    OPT_DELETE=false
+	while [[ -n "$1" ]]
+    do
+        case "$1" in
+            -i|--from-file) OPT_SETUP_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
+            -a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
+            -d|--delete) OPT_DELETE=true ; shift ;;
+            *) die "Invalid option $1" ;;
+        esac
+    done
+}
+
+function execute_operation() {
+    $ACT_HELP && usage && return
+    $ACT_VERSION && version && return
+
+    if $ACT_BUILD; then
         build_image_env $OPT_DISABLE_VALIDATION
         return
-    elif $OPT_DELETE; then
-        delete_env
-        return
+	fi
+    
+	if $ACT_SETUP; then
+		if $OPT_DELETE; then
+            delete_env
+		else
+			if is_env_installed
+			then
+				die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
+			fi
+
+			if $OPT_SETUP_FROM_FILE; then
+				setup_env_from_file $IMAGE_FILE
+			else
+				setup_env $ARCH_ARG
+			fi
+		fi
+
+		return
     fi
+
 
     if ! is_env_installed
     then
-        if $OPT_SETUP_FROM_FILE; then
-            setup_env_from_file $IMAGE_FILE
-        else
-            setup_env $ARCH_ARG
-            unset ARCH_ARG
-        fi
-    elif $OPT_SETUP_FROM_FILE; then
-        die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
+		die "Error: The image is still not installed in $JUNEST_HOME. Run this first: $CMD setup"
     fi
 
-    [ -z "${ARCH_ARG}" ] || \
-        die "The option --arch cannot be specified since JuNest has already been downloaded in $JUNEST_HOME"
-
     local run_env
-    if $OPT_USER_NAMESPACE; then
+    if $ACT_NAMESPACE; then
         run_env=run_env_with_namespace
-    elif $OPT_FAKEROOT; then
-        run_env=run_env_as_fakeroot
-    elif $OPT_ROOT; then
-        run_env=run_env_as_chroot
-    elif $OPT_GROOT; then
+    elif $ACT_PROOT; then
+        if $OPT_FAKEROOT; then
+            run_env=run_env_as_fakeroot
+		else
+            run_env=run_env_as_user
+		fi
+    elif $ACT_GROOT; then
         run_env=run_env_as_groot
-    else
-        run_env=run_env_as_user
+    elif $ACT_ROOT; then
+        run_env=run_env_as_chroot
     fi
 
     $run_env "${BACKEND_ARGS}" "${ARGS[@]}"
@@ -214,7 +239,6 @@ function execute_operation(){
 
 function main() {
     parse_arguments "$@"
-    check_cli
     execute_operation
 }
 

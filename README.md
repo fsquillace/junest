@@ -40,7 +40,7 @@ The main advantages on using JuNest are:
 - Install packages without root privileges.
 - Partial isolated environment which you can install packages without affecting a production system.
 - Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
-- Available for x86\_64, x86 (deprecating) and ARM architectures but you can build your own image from scratch too!
+- Available for x86\_64 and ARM architectures but you can build your own image from scratch too!
 - Run on a different architecture from the host OS via QEMU
 - All Arch Linux lovers can have their favourite distro everywhere!
 
@@ -63,20 +63,43 @@ any processes belonging to the host OS.
 
 Quickstart
 ==========
-The basic way to run JuNest is via the [Proot](https://wiki.archlinux.org/index.php/Proot) as the backend program:
 
-- As normal user - Allow to make basic operations: ```junest```
+Setup environment
+-----------------
 
-- As fakeroot - Allow to install/remove packages: ```junest -f```
+The first operation required is to install the JuNest environment in the
+location of your choice (by default `~/.junest`, configurable via the environment variable `JUNEST_HOME`):
 
+```sh
+junest setup
+```
+
+The script will download the image from the repository and will place it to the default directory `~/.junest`.
+
+Access to environment
+---------------------
+
+By default, JuNest run via the Linux namespaces (aka `ns`) as the backend program. To access via `ns` just type:
+
+```sh
+junest
+```
+
+Another execution mode is via [Proot](https://wiki.archlinux.org/index.php/Proot):
+
+```sh
+junest proot [-f]
+```
+
+Where `-f` allow fakeroot access to install/remove packages.
+
+There are multiple backend programs, each with its own pros/cons.
 To know more about the JuNest execution modes depending on the backend program
 used, see the [Usage](#usage) section below.
 
-After running JuNest
---------------------
-If the JuNest image has not been downloaded yet, the script will download
-the image from the repository and will place it to the default directory `~/.junest`.
-You can change the default directory by changing the environment variable `JUNEST_HOME`.
+
+Have fun!
+---------
 
 If you are new on Arch Linux and you are not familiar with `pacman` package manager
 visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
@@ -106,15 +129,13 @@ Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
     export PATH=~/.local/share/junest/bin:$PATH
 
 ### Installation using AUR (Arch Linux only) ###
-If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/):
-
-    yaourt -S junest-git
-    export PATH=/opt/junest/bin:$PATH
+If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/packages/junest-git/).
+After installing junest will be located in `/opt/junest/`
 
 ## Method two ##
-Alternatively, another installation method would be to directly download the JuNest image and place it to the default directory ~/.junest:
+Alternatively, another installation method would be to directly download the JuNest image and place it to the default directory `~/.junest`:
 
-    ARCH=<one of "x86_64", "x86", "arm">
+    ARCH=<one of "x86_64", "arm">
     mkdir ~/.junest
     curl https://s3-eu-west-1.amazonaws.com/junest-repo/junest/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
     export PATH=~/.junest/opt/junest/bin:$PATH
@@ -122,6 +143,27 @@ Alternatively, another installation method would be to directly download the JuN
 Usage
 =====
 There are three different ways you can run JuNest depending on the backend program you decide to use.
+
+Linux namespaces based
+----------------------
+The [Linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html)
+represents the default backend program for JuNest.
+The requirements for having Linux namespaces working are:
+
+1. Kernel starting from Linux 3.8 allows unprivileged processes to create
+user and mount namespaces.
+1. The Linux kernel distro must have the user namespace enabled.
+
+In the last years, the majority of GNU/Linux distros have the user namespace
+enabled by default. This means that you do not need to have root privileges to
+access to the JuNest environment via this method.
+This
+[wiki](https://github.com/fsquillace/junest/wiki/Linux-distros-with-user-namespace-enabled-by-default)
+provides the state of the user namespace on several GNU/Linux distros.
+
+In order to run JuNest via Linux namespaces:
+
+- As fakeroot - Allow to install/remove packages: `junest ns` or `junest`
 
 PRoot based
 -----------
@@ -134,24 +176,9 @@ supported anymore, therefore, Proot bugs may no longer be fixed.
 
 In order to run JuNest via Proot:
 
-- As normal user - Allow to make basic operations: ```junest```
+- As normal user - Allow to make basic operations: `junest proot`
 
-- As fakeroot - Allow to install/remove packages: ```junest -f```
-
-Linux namespaces based
-----------------------
-The [Linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html)
-represents the next generation backend program for JuNest.
-The major drawback about the namespace is portability, as certain requirements
-need to be satisfied: 1) Only starting from Linux 3.8, unprivileged processes can
-create the required user and mount namespaces.
-2) Moreover, the Linux kernel distro must have the user namespace enabled.
-Hopefully, in the future the major GNU/Linux distros will start enabling such feature by default.
-For instance, Ubuntu (version 12.04+) already has such feature enabled.
-
-In order to run JuNest via Linux namespaces:
-
-- As fakeroot - Allow to install/remove packages: ```junest -u```
+- As fakeroot - Allow to install/remove packages: `junest proot -f`
 
 Chroot based
 ------------
@@ -159,16 +186,16 @@ This solution suits only for privileged users. JuNest provides the possibility
 to run the environment via `chroot` program.
 In particular, it uses a special program called `GRoot`, an enhanced `chroot`
 wrapper that allows to bind mount directories specified by the user, such as
-/proc, /sys, /dev, /tmp and $HOME, before
+`/proc`, `/sys`, `/dev`, `/tmp` and `$HOME`, before
 executing any programs inside the JuNest sandbox. In case the mounting will not
 work, JuNest is even providing the possibility to run the environment directly via
 the pure `chroot` command.
 
 In order to run JuNest via `chroot` solutions:
 
-- As root via `GRoot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -g```
+- As root via `GRoot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): `junest groot`
 
-- As root via `chroot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): ```junest -r```
+- As root via `chroot` - Allow to have fully root privileges inside JuNest environment (you need to be root for executing this): `junest root`
 
 Execution modes comparison table
 ----------------
@@ -185,7 +212,9 @@ Advanced usage
 ## Build image ##
 You can build a new JuNest image from scratch by running the following command:
 
-    junest -b [-n]
+```sh
+junest build [-n]
+```
 
 The script will create a directory containing all the essentials
 files in order to make JuNest working properly (such as pacman, yogurt and proot).
@@ -194,9 +223,11 @@ Remember that the script to build the image must run in an Arch Linux OS with
 arch-install-scripts and the base-devel packages installed.
 To change the build directory just use the `JUNEST_TEMPDIR` (by default /tmp).
 
-After creating the image junest-x86\_64.tar.gz you can install it by running:
+After creating the image `junest-x86_64.tar.gz` you can install it by running:
 
-    junest -i junest-x86_64.tar.gz
+```sh
+junest setup -i junest-x86_64.tar.gz
+```
 
 For more details, you can also take a look at
 [junest-builder](https://github.com/fsquillace/junest-builder)
@@ -209,20 +240,28 @@ Related wiki page:
 
 ## Run JuNest using a different architecture via QEMU ##
 The following command will download the ARM JuNest image and will run QEMU in
-case the host OS runs on either x86\_64 or x86 architectures:
+case the host OS runs on either `x86_64` or `x86` architectures:
 
-    $> JUNEST_HOME=~/.junest-arm junest -a arm -- uname -m
-    armv7l
+```sh
+$> export JUNEST_HOME=~/.junest-arm
+$> junest setup -a arm
+$> junest -- uname -m
+armv7l
+```
 
 ## Bind directories ##
 To bind a host directory to a guest location, you can use proot arguments:
 
-    junest -p "-b /mnt/mydata:/home/user/mydata"
+```sh
+junest proot `-b` "-b /mnt/mydata:/home/user/mydata"
+```
 
-This will works with PRoot, Namespace and GRoot backend programs.
+The option `-b` to provide options to the backeng program will work with PRoot, Namespace and GRoot backend programs.
 Check out the backend program options by passing `--help` option:
 
-    junest [-u|-g] -p "--help"
+```sh
+junest [u|g|p] -b "--help"
+```
 
 ## Systemd integration ##
 Although JuNest has not been designed to be a complete container, it is even possible to
@@ -234,7 +273,9 @@ and the container can only be executed using root privileges.
 
 To boot a JuNest container:
 
-    sudo systemd-nspawn -bD ~/.junest
+```sh
+sudo systemd-nspawn -bD ~/.junest
+```
 
 Related wiki page:
 
@@ -250,7 +291,7 @@ allows unprivileged users to execute programs inside a sandbox and
 GRoot, a small and portable version of
 [arch-chroot](https://wiki.archlinux.org/index.php/Chroot) which is an
 enhanced chroot for privileged users that mounts the primary directories
-(i.e. /proc, /sys, /dev and /run) before executing any programs inside
+(i.e. `/proc`, `/sys`, `/dev` and `/run`) before executing any programs inside
 the sandbox.
 
 ## Automatic fallback to classic chroot ##
@@ -259,14 +300,16 @@ mount one of the directories),
 JuNest automatically tries to fallback to the classic chroot.
 
 ## Automatic fallback for all the dependent host OS executables ##
-JuNest attempt first to run the executables in the host OS located in different
-positions (/usr/bin, /bin, /usr/sbin and /sbin).
+JuNest attempts first to run the executables in the host OS located in different
+positions (`/usr/bin`, `/bin`, `/usr/sbin` and `/sbin`).
 As a fallback it tries to run the same executable if it is available in the JuNest
-image.
+environment.
 
 ## Automatic building of the JuNest images ##
 There is not periodic automation build of the JuNest images yet.
 This was due to the difficulty to automate builds for arm architecture.
+The JuNest image for the `x86_64` is built periodically every once every three
+months.
 
 ## Static QEMU binaries ##
 There are static QEMU binaries included in JuNest image that allows to run JuNest
@@ -343,7 +386,7 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 > on to PRoot when *-p* is prepended. For example, to fake a kernel version of
 > 3.10, issue the following command:
 
-    $> junest -p "-k 3.10"
+    $> junest proot -b "-k 3.10"
 
 > As Arch Linux ships binaries for kernel version 2.6.32, the above error is
 > not unique to the precompiled package from JuNest. It will also appear when
@@ -433,7 +476,7 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 
 > **Q**: Why do I get this warning when I run JuNest via Linux namespaces?
 
-    $> junest -u
+    $> junest ns
     Unprivileged user namespace is disabled at kernel compile time or kernel too old (<3.8). Proceeding anyway...
 
 > **A**: This means that JuNest detected that the host OS either
@@ -446,7 +489,7 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 
 > **Q**: Why do I get this warning when I run JuNest via Linux namespaces?
 
-    $> junest -u
+    $> junest ns
     Unprivileged user namespace disabled. Root permissions are required to enable it: sudo sysctl kernel.unprivileged_userns_clone=1
 
 > **A**: This means that JuNest detected that the host OS either
