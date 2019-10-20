@@ -10,8 +10,10 @@ before_install:
 
 install:
   - PATH=$PWD/bin:$PATH
+  - junest setup
   - junest -- echo "Installing JuNest (\$(uname -m))"
-  - JUNEST_HOME=~/.junest-arm junest -a arm -- echo "Installing JuNest (\$(uname -m))"
+  - JUNEST_HOME=~/.junest-arm junest setup --arch arm
+  - JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- echo "Installing JuNest (\$(uname -m))"
 
 script:
   - bash --version
@@ -19,12 +21,11 @@ script:
   - bash ./tests/unit-tests/unit-tests.sh
 
   # Multiple tests against different execution modes:
-  # TODO AUR installation check is currently disabled
-  - junest -f -- ${PWD}/lib/checks/check.sh
-  - junest -u -- ${PWD}/lib/checks/check.sh
-  - sudo -E ${PWD}/bin/junest -g -- ${PWD}/lib/checks/check.sh
-  - yes | junest --delete
+  - junest proot --fakeroot -- ${PWD}/lib/checks/check.sh
+  - junest ns -- ${PWD}/lib/checks/check.sh
+  - sudo -E ${PWD}/bin/junest groot -- ${PWD}/lib/checks/check.sh --run-root-tests
+  - yes | junest setup --delete
 
   # Disable arm because it fails when exiting from check.sh for apparent no reason
-  #- JUNEST_HOME=~/.junest-arm junest -f -- ./lib/checks/check.sh --skip-aur-tests
-  #- yes | JUNEST_HOME=~/.junest-arm junest --delete
+  #- JUNEST_HOME=~/.junest-arm junest proot -f -- ./lib/checks/check.sh --skip-aur-tests
+  #- yes | JUNEST_HOME=~/.junest-arm junest setup --delete

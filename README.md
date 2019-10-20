@@ -11,7 +11,7 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 
 |Project Status|Donation|Communication|
 |:------------:|:------:|:-----------:|
-| [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![PayPal](https://img.shields.io/badge/PayPal-Donate%20a%20beer-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) [![Gratipay](https://img.shields.io/badge/Gratipay-Donate%20to%20JuNest-green.svg)](https://gratipay.com/junest/) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Join the IRC chat at https://webchat.freenode.net/?channels=junest](https://img.shields.io/badge/IRC-JuNest-yellow.svg)](https://webchat.freenode.net/?channels=junest) [![Join the group at https://groups.google.com/d/forum/junest](https://img.shields.io/badge/GoogleGroups-JuNest-red.svg)](https://groups.google.com/d/forum/junest) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
+| [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![PayPal](https://img.shields.io/badge/PayPal-Donate%20a%20beer-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
 
 **Table of Contents**
 - [Description](#description)
@@ -23,7 +23,7 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 - [Troubleshooting](#troubleshooting)
 - [More documentation](#more-documentation)
 - [Contributing](#contributing)
-- [Author](#author)
+- [Authors](#authors)
 
 Description
 ===========
@@ -106,11 +106,11 @@ visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rose
 
 JuNest provides a modified version of `makepkg` in `/opt/makepkg/bin` that
 allows you to build packages from [AUR](https://aur.archlinux.org/) repository.
-Remember that in order to build package `base-devel` package group is required
+Remember that in order to build packages, `base-devel` package group is required
 first:
 
 ```sh
-pacman -Sy base-devel
+pacman -Sy --ignore sudo base-devel
 ```
 
 Installation
@@ -124,8 +124,8 @@ Before installing JuNest be sure that all dependencies are properly installed in
 - [bash (>=4.0)](https://www.gnu.org/software/bash/)
 - [GNU coreutils](https://www.gnu.org/software/coreutils/)
 
-The minimum recommended Linux kernel of the host OS is 2.6.32 on x86 (32-bit
-and 64 bit) and ARM architectures. It is still possible to run JuNest on lower
+The minimum recommended Linux kernel of the host OS is 2.6.32 on x86 (64 bit)
+and ARM architectures. It is still possible to run JuNest on lower
 2.6.x host OS kernels but errors may appear, and some applications may
 crash. For further information, read the [Troubleshooting](#troubleshooting)
 section below.
@@ -176,10 +176,8 @@ In order to run JuNest via Linux namespaces:
 
 PRoot based
 -----------
-[Proot](https://wiki.archlinux.org/index.php/Proot) represents the default
-program used for accessing to the JuNest environments.
-The main reason to choose Proot as default backend program is because
-it represents a portable solution that works well in most of GNU/Linux distros available.
+[Proot](https://wiki.archlinux.org/index.php/Proot) represents a portable
+solution that works well in most of GNU/Linux distros available.
 One of the major drawbacks is the fact that Proot is not officially
 supported anymore, therefore, Proot bugs may no longer be fixed.
 
@@ -194,7 +192,7 @@ Chroot based
 This solution suits only for privileged users. JuNest provides the possibility
 to run the environment via `chroot` program.
 In particular, it uses a special program called `GRoot`, an enhanced `chroot`
-wrapper that allows to bind mount directories specified by the user, such as
+wrapper, that allows to bind mount directories specified by the user, such as
 `/proc`, `/sys`, `/dev`, `/tmp` and `$HOME`, before
 executing any programs inside the JuNest sandbox. In case the mounting will not
 work, JuNest is even providing the possibility to run the environment directly via
@@ -212,8 +210,8 @@ The following table shows the capabilities that each backend program is able to 
 
 |     | QEMU | Root privileges required | Manage Official Packages | Manage AUR Packages | Portability | Support | User modes |
 | --- | ---- | ------------------------ | ------------------------ | ------------------- | ----------- | ------- | ---------- |
-| **Proot** | YES | NO | YES | YES | YES | Poor | Normal user and `fakeroot` |
 | **Linux Namespaces** | NO | NO | YES | YES | Poor | YES | `fakeroot` only |
+| **Proot** | YES | NO | YES | YES | YES | Poor | Normal user and `fakeroot` |
 | **Chroot** | NO | YES | YES | YES | YES | YES | `root` only |
 
 Advanced usage
@@ -249,12 +247,12 @@ Related wiki page:
 
 ## Run JuNest using a different architecture via QEMU ##
 The following command will download the ARM JuNest image and will run QEMU in
-case the host OS runs on either `x86_64` or `x86` architectures:
+case the host OS runs on `x86_64` architecture:
 
 ```sh
 $> export JUNEST_HOME=~/.junest-arm
 $> junest setup -a arm
-$> junest -- uname -m
+$> junest proot -- uname -m
 armv7l
 ```
 
@@ -262,7 +260,7 @@ armv7l
 To bind a host directory to a guest location, you can use proot arguments:
 
 ```sh
-junest proot `-b` "-b /mnt/mydata:/home/user/mydata"
+junest proot -b "-b /mnt/mydata:/home/user/mydata"
 ```
 
 The option `-b` to provide options to the backeng program will work with PRoot, Namespace and GRoot backend programs.
@@ -514,13 +512,16 @@ There are additional tutorials in the
 
 Contributing
 ============
-You could help improving JuNest in the following ways:
+Contributions are welcome! You could help improving JuNest in the following ways:
 
 - [Reporting Bugs](CONTRIBUTING.md#reporting-bugs)
 - [Suggesting Enhancements](CONTRIBUTING.md#suggesting-enhancements)
 - [Writing Code](CONTRIBUTING.md#your-first-code-contribution)
 
-Author
-======
-Filippo Squillace <feel.sqoox@gmail.com>
+Authors
+=======
+JuNest was originally created in late 2014 by [Filippo Squillace (feel.sqoox@gmail.com)](https://github.com/fsquillace).
 
+Here is a list of [**really appreciated contributors**](https://github.com/fsquillace/junest/graphs/contributors)!
+
+[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/0)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/0)[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/1)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/1)[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/2)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/2)[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/3)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/3)[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/4)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/4)[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/5)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/5)[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/6)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/6)[![](https://sourcerer.io/fame/fsquillace/fsquillace/junest/images/7)](https://sourcerer.io/fame/fsquillace/fsquillace/junest/links/7)

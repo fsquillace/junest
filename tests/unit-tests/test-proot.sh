@@ -62,6 +62,35 @@ function test_run_env_as_user(){
     _test_copy_remaining_files
 }
 
+function test_run_env_as_user_no_copy(){
+    _run_env_with_qemu() {
+        echo $@
+    }
+    assertCommandSuccess run_env_as_user "-k 3.10" "true" "/usr/bin/mkdir" "-v" "/newdir2"
+    assertEquals "-b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat $STDOUTF)"
+
+    [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/host.conf ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/nsswitch.conf ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/resolv.conf ]]
+    assertEquals 0 $?
+
+    [[ ! -e ${JUNEST_HOME}/etc/hosts.equiv ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/netgroup ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/networks ]]
+    assertEquals 0 $?
+
+    [[ ! -e ${JUNEST_HOME}/etc/passwd ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/group ]]
+    assertEquals 0 $?
+}
+
 function test_run_env_as_user_nested_env(){
     JUNEST_ENV=1
     assertCommandFailOnStatus 106 run_env_as_user "" "false"

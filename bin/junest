@@ -19,8 +19,6 @@ source "${JUNEST_BASE}/lib/core/namespace.sh"
 source "${JUNEST_BASE}/lib/core/proot.sh"
 
 
-# TODO Add test that checks that no_copy files works
-
 ###################################
 ### General functions           ###
 ###################################
@@ -34,7 +32,7 @@ usage() {
     echo -e "-V, --version                              Show the $NAME version"
     echo
     echo -e "Actions and options:"
-    echo -e "  s[etup]                                  "
+    echo -e "  s[etup]                                  Setup $NAME in ${JUNEST_HOME} either from repo or from file"
     echo -e "            -i, --from-file <image>        Setup the $NAME image in ${JUNEST_HOME}"
     echo -e "            -a, --arch <arch>              $NAME architecture to download (x86_64, arm)"
     echo -e "                                           Defaults to the host architecture ($ARCH)"
