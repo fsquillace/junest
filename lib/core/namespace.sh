@@ -84,8 +84,10 @@ function _run_env_with_namespace(){
 #   GROOT (RO)               : The groot program.
 #   SH (RO)                  : Contains the default command to run in JuNest.
 # Arguments:
-#   backend_args ($1)        : The arguments to pass to proot
-#   cmd ($2-?)               : The command to run inside JuNest environment.
+#   backend_args ($1)        : The arguments to pass to groot
+#   no_copy_files ($2?)      : If false it will copy some files in /etc
+#                              from host to JuNest environment.
+#   cmd ($3-?)               : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
 #   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
@@ -97,18 +99,23 @@ function run_env_with_namespace() {
     check_nested_env
 
     local backend_args="$1"
-    shift
+    local no_copy_files="$2"
+    shift 2
+
     _check_user_namespace
 
     check_same_arch
 
-    copy_common_files
-    copy_file /etc/hosts.equiv
-    copy_file /etc/netgroup
-    copy_file /etc/networks
-    # No need for localtime as it is setup during the image build
-    #copy_file /etc/localtime
-    copy_passwd_and_group
+    if ! $no_copy_files
+    then
+        copy_common_files
+        copy_file /etc/hosts.equiv
+        copy_file /etc/netgroup
+        copy_file /etc/networks
+        # No need for localtime as it is setup during the image build
+        #copy_file /etc/localtime
+        copy_passwd_and_group
+    fi
 
     _run_env_with_namespace "$backend_args" "$@"
 }
