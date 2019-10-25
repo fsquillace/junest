@@ -82,7 +82,7 @@ function build_image_env(){
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
     # This is needed on system with busybox tar command.
     # If the file does not have write permission, the tar command to extract files fails.
-    sudo chmod -R u+rw ${maindir}/root/etc/ca-certificates/extracted/cadir
+    sudo chmod -R u+rw ${maindir}/root/
 
     mkdir -p ${maindir}/output
     builtin cd ${maindir}/output
