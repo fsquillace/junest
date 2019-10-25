@@ -80,6 +80,9 @@ function build_image_env(){
         "pacman-key --init; pacman-key --populate archlinux; [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye"
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
+    # This is needed on system with busybox tar command.
+    # If the file does not have write permission, the tar command to extract files fails.
+    sudo chmod -R u+rw ${maindir}/root/etc/ca-certificates/extracted/cadir
 
     mkdir -p ${maindir}/output
     builtin cd ${maindir}/output
