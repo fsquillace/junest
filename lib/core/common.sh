@@ -152,7 +152,7 @@ function proot_cmd(){
     elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
     then
         warn "Warn: Proot is not properly working. Disabling SECCOMP and expect the application to run slowly in particular when it uses syscalls intensively."
-        warn "Try to use Linux namespace instead as it is more reliable: junest -u"
+        warn "Try to use Linux namespace instead as it is more reliable: junest ns"
         PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${@}"
     else
         die "Error: Something went wrong with proot command. Exiting"
