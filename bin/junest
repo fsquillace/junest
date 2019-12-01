@@ -40,23 +40,23 @@ usage() {
     echo
     echo -e "  n[s]                                     Access via Linux Namespaces using GRoot (Default action)"
     echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
-    echo -e "                                           ($CMD groot -p \"--help\" to check out the GRoot options)"
+    echo -e "                                           ($CMD groot -b \"--help\" to check out the GRoot options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  p[root]                                  Access via PRoot"
     echo -e "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
     echo -e "            -b, --backend-args <args>      Arguments for PRoot backend program"
-    echo -e "                                           ($CMD proot -p \"--help\" to check out the PRoot options)"
+    echo -e "                                           ($CMD proot -b \"--help\" to check out the PRoot options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  g[root]                                  Access with root privileges via GRoot"
     echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
-    echo -e "                                           ($CMD groot -p \"--help\" to check out the GRoot options)"
+    echo -e "                                           ($CMD groot -b \"--help\" to check out the GRoot options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  r[oot]                                   Access with root privileges via classic chroot"
     echo -e "            -b, --backend-args <args>      Arguments for chroot backend program"
-    echo -e "                                           ($CMD root -p \"--help\" to check out the chroot options)"
+    echo -e "                                           ($CMD root -b \"--help\" to check out the chroot options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  b[uild]                                  Build a $NAME image (must run in ArchLinux)"

@@ -69,16 +69,14 @@ pacman --noconfirm -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
 then
-    aur_package=aurutils
+    aur_package=tcptraceroute
     info "Checking ${aur_package} package from AUR repo..."
     maindir=$(mktemp -d -t ${CMD}.XXXXXXXXXX)
     builtin cd ${maindir}
     curl -L -J -O -k "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${aur_package}"
-    curl -L -J -O -k "https://aur.archlinux.org/cgit/aur.git/plain/${aur_package}.install?h=${aur_package}"
-    /opt/makepkg/bin/makepkg -sfcd
+    /opt/makepkg/bin/makepkg -sfc  --noconfirm
 
     pacman --noconfirm -U ${aur_package}*.pkg.tar.xz
-    aur search aur 1> /dev/null
     pacman --noconfirm -Rsn ${aur_package}
 fi
 
