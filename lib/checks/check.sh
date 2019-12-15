@@ -64,7 +64,7 @@ pacman --noconfirm -Rsn ${repo_package1}
 repo_package2=iftop
 info "Checking ${repo_package2} package from official repo..."
 pacman --noconfirm -S ${repo_package2}
-$RUN_ROOT_TESTS && iftop -t -s 5 -i lo
+$RUN_ROOT_TESTS && iftop -t -s 5
 pacman --noconfirm -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
