@@ -55,7 +55,9 @@ function build_image_env(){
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # unshare command belongs to util-linux
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring util-linux
+    local arm_keyring=""
+    [[ $(uname -m) == *"arm"* ]] && arm_keyring="archlinuxarm-keyring"
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring $arm_keyring util-linux
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
     sudo mkdir -p ${maindir}/root/run/lock
 
@@ -76,8 +78,17 @@ function build_image_env(){
     sudo pacman --noconfirm --root ${maindir}/root -Rsn sed gzip
 
     info "Setting up the pacman keyring (this might take a while!)..."
-    sudo ${maindir}/root/opt/junest/bin/groot -b /dev ${maindir}/root bash -c \
-        "pacman-key --init; pacman-key --populate archlinux; [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye"
+    # gawk command is required for pacman-key
+    sudo pacman --noconfirm --root ${maindir}/root -S gawk
+    sudo ${maindir}/root/opt/junest/bin/groot -b /dev ${maindir}/root bash -c '
+    pacman-key --init;
+    for keyring_file in /usr/share/pacman/keyrings/*.gpg;
+    do
+        keyring=$(basename $keyring_file | cut -f 1 -d ".");
+        pacman-key --populate $keyring;
+    done;
+    [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye'
+    sudo pacman --noconfirm --root ${maindir}/root -Rsn gawk
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
     # This is needed on system with busybox tar command.

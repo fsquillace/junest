@@ -64,7 +64,7 @@ pacman --noconfirm -Rsn ${repo_package1}
 repo_package2=iftop
 info "Checking ${repo_package2} package from official repo..."
 pacman --noconfirm -S ${repo_package2}
-$RUN_ROOT_TESTS && iftop -t -s 5
+$RUN_ROOT_TESTS && iftop -t -s 5 -i lo
 pacman --noconfirm -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
@@ -74,7 +74,8 @@ then
     maindir=$(mktemp -d -t ${CMD}.XXXXXXXXXX)
     builtin cd ${maindir}
     curl -L -J -O -k "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${aur_package}"
-    /opt/makepkg/bin/makepkg -sfc  --noconfirm
+    # -A allows to ignore arch for ARM
+    /opt/makepkg/bin/makepkg -Asfc  --noconfirm
 
     pacman --noconfirm -U ${aur_package}*.pkg.tar.xz
     pacman --noconfirm -Rsn ${aur_package}
