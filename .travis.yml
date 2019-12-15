@@ -27,7 +27,4 @@ script:
   - yes | junest setup --delete
 
   - JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- ${PWD}/lib/checks/check.sh
-  - JUNEST_HOME=~/.junest-arm junest ns -- ${PWD}/lib/checks/check.sh
-  # Do not run root test because iftop does not work well in arm
-  - JUNEST_HOME=~/.junest-arm sudo -E ${PWD}/bin/junest groot -- ${PWD}/lib/checks/check.sh 
   - yes | JUNEST_HOME=~/.junest-arm junest setup --delete
