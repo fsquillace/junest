@@ -26,6 +26,5 @@ script:
   - sudo -E ${PWD}/bin/junest groot -- ${PWD}/lib/checks/check.sh --run-root-tests
   - yes | junest setup --delete
 
-  # Disable arm because it fails when exiting from check.sh for apparent no reason
-  #- JUNEST_HOME=~/.junest-arm junest proot -f -- ./lib/checks/check.sh --skip-aur-tests
-  #- yes | JUNEST_HOME=~/.junest-arm junest setup --delete
+  - JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- ${PWD}/lib/checks/check.sh
+  - yes | JUNEST_HOME=~/.junest-arm junest setup --delete

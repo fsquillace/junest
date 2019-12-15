@@ -74,7 +74,8 @@ then
     maindir=$(mktemp -d -t ${CMD}.XXXXXXXXXX)
     builtin cd ${maindir}
     curl -L -J -O -k "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${aur_package}"
-    /opt/makepkg/bin/makepkg -sfc  --noconfirm
+    # -A allows to ignore arch for ARM
+    /opt/makepkg/bin/makepkg -Asfc  --noconfirm
 
     pacman --noconfirm -U ${aur_package}*.pkg.tar.xz
     pacman --noconfirm -Rsn ${aur_package}
