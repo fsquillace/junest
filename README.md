@@ -11,7 +11,7 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 
 |Project Status|Donation|Communication|
 |:------------:|:------:|:-----------:|
-| [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![PayPal](https://img.shields.io/badge/PayPal-Donate%20a%20beer-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
+| [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![Github Sponsors](https://img.shields.io/badge/GitHub-Sponsors-orange.svg)](https://github.com/sponsors/fsquillace) [![PayPal](https://img.shields.io/badge/PayPal-Donation-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
 
 **Table of Contents**
 - [Description](#description)
@@ -23,6 +23,7 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 - [Troubleshooting](#troubleshooting)
 - [More documentation](#more-documentation)
 - [Contributing](#contributing)
+- [Donating](#donating)
 - [Authors](#authors)
 
 Description
@@ -517,6 +518,11 @@ Contributions are welcome! You could help improving JuNest in the following ways
 - [Reporting Bugs](CONTRIBUTING.md#reporting-bugs)
 - [Suggesting Enhancements](CONTRIBUTING.md#suggesting-enhancements)
 - [Writing Code](CONTRIBUTING.md#your-first-code-contribution)
+
+Donating
+========
+To sustain the project please consider funding by donations through
+the [GitHub Sponsors page](https://github.com/sponsors/fsquillace/).
 
 Authors
 =======
