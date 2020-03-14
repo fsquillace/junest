@@ -15,8 +15,8 @@ function oneTimeSetUp(){
 
 ## Mock functions ##
 function init_mocks() {
-    function unshare_cmd(){
-        echo "unshare $@"
+    function bwrap_cmd(){
+        echo "bwrap $@"
     }
 }
 
@@ -99,17 +99,24 @@ function test_is_user_namespace_enabled_with_userns_clone_file_enabled(){
     assertCommandSuccess _is_user_namespace_enabled
 }
 
-function test_run_env_with_namespace() {
-    assertCommandSuccess run_env_with_namespace "" "false" ""
-    assertEquals "unshare --mount --user --map-root-user $GROOT --no-umount --recursive -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login" "$(cat $STDOUTF)"
+function test_run_env_as_bwrap_fakeroot() {
+    assertCommandSuccess run_env_as_bwrap_fakeroot "" "false"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --uid 0 /bin/sh --login" "$(cat $STDOUTF)"
+
+    _test_copy_common_files
+}
+
+function test_run_env_as_bwrap_user() {
+    assertCommandSuccess run_env_as_bwrap_user "" "false"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
 }
 
-function test_run_env_with_namespace_no_copy() {
-    assertCommandSuccess run_env_with_namespace "" "true" ""
-    assertEquals "unshare --mount --user --map-root-user $GROOT --no-umount --recursive -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login" "$(cat $STDOUTF)"
+function test_run_env_as_bwrap_fakeroot_no_copy() {
+    assertCommandSuccess run_env_as_bwrap_fakeroot "" "true" ""
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --uid 0 /bin/sh --login" "$(cat $STDOUTF)"
 
     [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
     assertEquals 0 $?
@@ -133,33 +140,86 @@ function test_run_env_with_namespace_no_copy() {
     assertEquals 0 $?
 }
 
-function test_run_env_with_namespace_with_bindings() {
-    assertCommandSuccess run_env_with_namespace "-b /usr -b /lib:/tmp/lib" "false" ""
-    assertEquals "unshare --mount --user --map-root-user $GROOT --no-umount --recursive -b $HOME -b /tmp -b /proc -b /sys -b /dev -b /usr -b /lib:/tmp/lib $JUNEST_HOME /bin/sh --login" "$(cat $STDOUTF)"
+function test_run_env_as_bwrap_user_no_copy() {
+    assertCommandSuccess run_env_as_bwrap_user "" "true" ""
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try /bin/sh --login" "$(cat $STDOUTF)"
+
+    [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/host.conf ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/nsswitch.conf ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/resolv.conf ]]
+    assertEquals 0 $?
+
+    [[ ! -e ${JUNEST_HOME}/etc/hosts.equiv ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/netgroup ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/networks ]]
+    assertEquals 0 $?
+
+    [[ ! -e ${JUNEST_HOME}/etc/passwd ]]
+    assertEquals 0 $?
+    [[ ! -e ${JUNEST_HOME}/etc/group ]]
+    assertEquals 0 $?
+}
+
+function test_run_env_as_bwrap_fakeroot_with_backend_args() {
+    assertCommandSuccess run_env_as_bwrap_fakeroot "--bind /usr /usr" "false"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --uid 0 --bind /usr /usr /bin/sh --login" "$(cat $STDOUTF)"
+
+    _test_copy_common_files
+}
+
+function test_run_env_as_bwrap_user_with_backend_args() {
+    assertCommandSuccess run_env_as_bwrap_user "--bind /usr /usr" "false"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --bind /usr /usr /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
 }
 
-function test_run_env_with_namespace_with_command() {
-    assertCommandSuccess run_env_with_namespace "" "false" "ls -la"
-    assertEquals "unshare --mount --user --map-root-user $GROOT --no-umount --recursive -b $HOME -b /tmp -b /proc -b /sys -b /dev $JUNEST_HOME /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+function test_run_env_as_bwrap_fakeroot_with_command() {
+    assertCommandSuccess run_env_as_bwrap_fakeroot "" "false" "ls -la"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --uid 0 /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+
+    _test_copy_common_files
+}
+
+function test_run_env_as_bwrap_user_with_command() {
+    assertCommandSuccess run_env_as_bwrap_user "" "false" "ls -la"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
 }
 
-function test_run_env_with_namespace_with_bindings_and_command() {
-    assertCommandSuccess run_env_with_namespace "-b /usr -b /lib:/tmp/lib" "false" "ls -la"
-    assertEquals "unshare --mount --user --map-root-user $GROOT --no-umount --recursive -b $HOME -b /tmp -b /proc -b /sys -b /dev -b /usr -b /lib:/tmp/lib $JUNEST_HOME /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+function test_run_env_as_bwrap_fakeroot_with_backend_args_and_command() {
+    assertCommandSuccess run_env_as_bwrap_fakeroot "--bind /usr /usr" "false" "ls -la"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --uid 0 --bind /usr /usr /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+
+    _test_copy_common_files
+}
+
+function test_run_env_as_bwrap_user_with_backend_args_and_command() {
+    assertCommandSuccess run_env_as_bwrap_user "--bind /usr /usr" "false" "ls -la"
+    assertEquals "bwrap --bind $JUNEST_HOME / --bind $HOME $HOME --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --bind /usr /usr /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
 }
 
-function test_run_env_with_namespace_nested_env(){
+function test_run_env_as_bwrap_fakeroot_nested_env(){
     JUNEST_ENV=1
-    assertCommandFailOnStatus 106 run_env_with_namespace "" "false" ""
+    assertCommandFailOnStatus 106 run_env_as_bwrap_fakeroot "" "false" ""
+    unset JUNEST_ENV
+}
+
+function test_run_env_as_bwrap_user_nested_env(){
+    JUNEST_ENV=1
+    assertCommandFailOnStatus 106 run_env_as_bwrap_user "" "false" ""
     unset JUNEST_ENV
 }
 

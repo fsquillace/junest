@@ -58,7 +58,7 @@ function _run_env_with_qemu(){
 # Output:
 #   -                         : The command output.
 #######################################
-function run_env_as_fakeroot(){
+function run_env_as_proot_fakeroot(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
     check_nested_env
@@ -99,7 +99,7 @@ function run_env_as_fakeroot(){
 # Output:
 #   -                        : The command output.
 #######################################
-function run_env_as_user(){
+function run_env_as_proot_user(){
     (( EUID == 0 )) && \
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
     check_nested_env

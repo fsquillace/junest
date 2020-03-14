@@ -38,9 +38,9 @@ usage() {
     echo -e "                                           Defaults to the host architecture ($ARCH)"
     echo -e "            -d, --delete                   Delete $NAME from ${JUNEST_HOME}"
     echo
-    echo -e "  n[s]                                     Access via Linux Namespaces using GRoot (Default action)"
+    echo -e "  n[s]                                     Access via Linux Namespaces using BubbleWrap (Default action)"
     echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
-    echo -e "                                           ($CMD groot -b \"--help\" to check out the GRoot options)"
+    echo -e "                                           ($CMD groot -b \"--help\" to check out the bwrap options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  p[root]                                  Access via PRoot"
@@ -138,6 +138,7 @@ function _parse_root_opts() {
 
 function _parse_ns_opts() {
     # Options:
+    OPT_FAKEROOT=false
     OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
     OPT_NO_COPY_FILES=false
@@ -145,6 +146,7 @@ function _parse_ns_opts() {
     while [[ -n "$1" ]]
     do
         case "$1" in
+            -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
             -b|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
             -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
             --) shift ; break ;;
@@ -250,12 +252,16 @@ function execute_operation() {
 
     local run_env
     if $ACT_NAMESPACE; then
-        run_env=run_env_with_namespace
+        if $OPT_FAKEROOT; then
+            run_env=run_env_as_bwrap_fakeroot
+        else
+            run_env=run_env_as_bwrap_user
+        fi
     elif $ACT_PROOT; then
         if $OPT_FAKEROOT; then
-            run_env=run_env_as_fakeroot
+            run_env=run_env_as_proot_fakeroot
         else
-            run_env=run_env_as_user
+            run_env=run_env_as_proot_user
         fi
     elif $ACT_GROOT; then
         run_env=run_env_as_groot

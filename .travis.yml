@@ -21,10 +21,12 @@ script:
   - bash ./tests/unit-tests/unit-tests.sh
 
   # Multiple tests against different execution modes:
-  - junest proot --fakeroot -- ${PWD}/lib/checks/check.sh
-  - junest ns -- ${PWD}/lib/checks/check.sh
-  - sudo -E ${PWD}/bin/junest groot -- ${PWD}/lib/checks/check.sh --run-root-tests
+  - junest proot --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
+  - junest proot -- ${PWD}/lib/checks/check.sh --skip-aur-tests --use-sudo
+  - junest ns --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
+  - junest ns -- ${PWD}/lib/checks/check.sh --use-sudo
+  - sudo -E ${PWD}/bin/junest groot -- ${PWD}/lib/checks/check.sh --run-root-tests --skip-aur-tests
   - yes | junest setup --delete
 
-  - JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- ${PWD}/lib/checks/check.sh
+  - JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
   - yes | JUNEST_HOME=~/.junest-arm junest setup --delete

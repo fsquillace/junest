@@ -81,6 +81,7 @@ CP=cp
 # Used for checking user namespace in config.gz file
 ZGREP=zgrep
 UNSHARE=unshare
+BWRAP=bwrap
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -139,7 +140,17 @@ function unshare_cmd(){
     then
         $UNSHARE "$@"
     else
-        die "Error: Something went wrong with unshare command. Exiting"
+        die "Error: Something went wrong while executing unshare command. Exiting"
+    fi
+}
+
+function bwrap_cmd(){
+    # TODO re-evaluate this strategy:
+    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP  --dev-bind / / "${SH[0]}" "-c" ":"
+    then
+        $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP "${@}"
+    else
+        die "Error: Something went wrong while executing bwrap command. Exiting"
     fi
 }
 

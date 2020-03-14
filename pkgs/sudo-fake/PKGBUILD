@@ -12,7 +12,7 @@ arch=('any')
 url=""
 license=('GPL')
 groups=()
-depends=()
+depends=('fakeroot' 'fakechroot')
 makedepends=()
 provides=('sudo')
 conflicts=('sudo')
@@ -36,7 +36,7 @@ do
     esac
 done
 
-[[ -z "\${@}" ]] || "\${@}"
+[[ -z "\${@}" ]] || fakechroot fakeroot "\${@}"
 EOF
 
     chmod 755 "${pkgdir}/usr/bin/sudo"

@@ -8,13 +8,6 @@
 #
 # vim: ft=sh
 
-function _check_package(){
-    if ! pacman -Qq $1 > /dev/null
-    then
-        die "Package $1 must be installed"
-    fi
-}
-
 function _install_pkg_from_aur(){
     local maindir=$1
     local pkgname=$2
@@ -35,15 +28,50 @@ function _install_pkg(){
     sudo pacman --noconfirm --root ${maindir}/root -U *.pkg.tar.xz
 }
 
+function _prepare() {
+    # ArchLinux System initialization
+    sudo pacman --noconfirm -Syu
+    sudo pacman -S --noconfirm base-devel
+    sudo pacman -S --noconfirm git arch-install-scripts
+}
+
+function _install_proot_and_qemu(){
+    local maindir="$1"
+    local main_repo=https://s3-eu-west-1.amazonaws.com/${CMD}-repo
+    proot_link=${main_repo}/proot
+    qemu_link=${main_repo}/qemu
+
+    info "Installing proot static binaries"
+    sudo bash -c "
+        mkdir -p '${maindir}/root/opt/proot/'
+        curl '$proot_link/proot-x86_64' > '${maindir}/root/opt/proot/proot-x86_64'
+        curl '$proot_link/proot-arm' > '${maindir}/root/opt/proot/proot-arm'
+        chmod -R 755 '${maindir}/root/opt/proot/'
+    "
+
+    info "Installing qemu static binaries"
+    sudo bash -c "
+    mkdir -p '${maindir}/root/opt/qemu/'
+        if [[ $ARCH == 'arm' ]]
+        then
+            curl '${qemu_link}/arm/qemu-arm-static-x86_64' > '${maindir}/root/opt/qemu/qemu-arm-static-x86_64'
+        elif [[ $ARCH == 'x86_64' ]]
+        then
+            curl '${qemu_link}/x86_64/qemu-x86_64-static-arm' > '${maindir}/root/opt/qemu/qemu-x86_64-static-arm'
+        fi
+        chmod -R 755 '${maindir}/root/opt/qemu/'
+    "
+}
+
 function build_image_env(){
     umask 022
 
     # The function must runs on ArchLinux with non-root privileges.
+    # This is because installing AUR packages can be done by normal users only.
     (( EUID == 0 )) && \
         die "You cannot build with root privileges."
 
-    _check_package arch-install-scripts
-    _check_package gcc
+    _prepare
 
     local disable_validation=$1
 
@@ -54,33 +82,41 @@ function build_image_env(){
     info "Installing pacman and its dependencies..."
     # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
-    # unshare command belongs to util-linux
+    # bwrap command belongs to bubblewrap
     local arm_keyring=""
     [[ $(uname -m) == *"arm"* ]] && arm_keyring="archlinuxarm-keyring"
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring $arm_keyring util-linux
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring $arm_keyring bubblewrap
     sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
     sudo mkdir -p ${maindir}/root/run/lock
 
     # AUR packages requires non-root user to be compiled. proot fakes the user to 10
     _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
 
-    info "Install ${NAME} script..."
-    _install_pkg_from_aur ${maindir} "${CMD}-git" "${CMD}.install"
+    info "Install yay..."
+    sudo pacman --noconfirm -S go
+    _install_pkg_from_aur ${maindir} "yay"
+
+    _install_proot_and_qemu "${maindir}"
+
+    echo "Generating the metadata info"
+    sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
+    sudo bash -c "echo 'JUNEST_ARCH=$ARCH' > ${maindir}/root/etc/${CMD}/info"
 
     info "Generating the locales..."
-    # sed command is required for locale-gen
+    # sed command is required for locale-gen but it is required by fakeroot
+    # and cannot be removed
     # localedef (called by locale-gen) requires gzip
     sudo pacman --noconfirm --root ${maindir}/root -S sed gzip
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
-    sudo ${maindir}/root/opt/junest/bin/groot ${maindir}/root locale-gen
+    sudo ${JUNEST_BASE}/bin/groot ${maindir}/root locale-gen
     sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
-    sudo pacman --noconfirm --root ${maindir}/root -Rsn sed gzip
+    sudo pacman --noconfirm --root ${maindir}/root -Rsn gzip
 
     info "Setting up the pacman keyring (this might take a while!)..."
     # gawk command is required for pacman-key
     sudo pacman --noconfirm --root ${maindir}/root -S gawk
-    sudo ${maindir}/root/opt/junest/bin/groot -b /dev ${maindir}/root bash -c '
+    sudo ${JUNEST_BASE}/bin/groot -b /dev ${maindir}/root bash -c '
     pacman-key --init;
     for keyring_file in /usr/share/pacman/keyrings/*.gpg;
     do
@@ -105,9 +141,11 @@ function build_image_env(){
     then
         mkdir -p ${maindir}/root_test
         $TAR -zxpf ${imagefile} -C "${maindir}/root_test"
-        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} proot -f ${JUNEST_BASE}/lib/checks/check.sh
-        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} ns ${JUNEST_BASE}/lib/checks/check.sh
-        JUNEST_HOME="${maindir}/root_test" sudo -E ${JUNEST_BASE}/bin/${CMD} groot ${JUNEST_BASE}/lib/checks/check.sh --run-root-tests
+        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} proot --fakeroot ${JUNEST_BASE}/lib/checks/check.sh --skip-aur-tests
+        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} proot ${JUNEST_BASE}/lib/checks/check.sh --skip-aur-tests --use-sudo
+        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} ns --fakeroot ${JUNEST_BASE}/lib/checks/check.sh --skip-aur-tests
+        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} ns ${JUNEST_BASE}/lib/checks/check.sh --use-sudo
+        JUNEST_HOME="${maindir}/root_test" sudo -E ${JUNEST_BASE}/bin/${CMD} groot ${JUNEST_BASE}/lib/checks/check.sh --run-root-tests --skip-aur-tests
     fi
 
     sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}

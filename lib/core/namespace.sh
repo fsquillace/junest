@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 #
-# This module contains all namespace functionalities for JuNest.
+# This module contains functionalities for accessing to JuNest via bubblewrap.
 #
-# http://man7.org/linux/man-pages/man7/namespaces.7.html
-# http://man7.org/linux/man-pages/man2/unshare.2.html
+# https://github.com/containers/bubblewrap
 #
 # Dependencies:
 # - lib/utils/utils.sh
@@ -56,46 +55,75 @@ function _check_user_namespace() {
     set -e
 }
 
-function _run_env_with_namespace(){
+function _run_env_with_bwrap(){
     local backend_args="$1"
     shift
 
-    provide_common_bindings
-    local bindings=${RESULT}
-    unset RESULT
-
-    # Use option -n in groot because umount do not work sometimes.
-    # As soon as the process terminates, the namespace
-    # will terminate too with its own mounted directories.
     if [[ "$1" != "" ]]
     then
-        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT --no-umount --recursive $bindings $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 bwrap_cmd --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        JUNEST_ENV=1 unshare_cmd --mount --user --map-root-user $GROOT --no-umount --recursive $bindings $backend_args "$JUNEST_HOME" "${SH[@]}"
+        JUNEST_ENV=1 bwrap_cmd --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}"
     fi
+
+}
+
+#######################################
+# Run JuNest as fakeroot via bwrap
+#
+# Globals:
+#   JUNEST_HOME (RO)          : The JuNest home directory.
+#   SH (RO)                   : Contains the default command to run in JuNest.
+# Arguments:
+#   backend_args ($1)         : The arguments to pass to bwrap
+#   no_copy_files ($2?)       : If false it will copy some files in /etc
+#                               from host to JuNest environment.
+#   cmd ($3-?)                : The command to run inside JuNest environment.
+#                               Default command is defined by SH variable.
+# Returns:
+#   $ARCHITECTURE_MISMATCH    : If host and JuNest architecture are different.
+#   $ROOT_ACCESS_ERROR        : If the user is the real root.
+# Output:
+#   -                         : The command output.
+#######################################
+function run_env_as_bwrap_fakeroot(){
+    check_nested_env
+
+    local backend_args="$1"
+    local no_copy_files="$2"
+    shift 2
+
+    _check_user_namespace
+
+    check_same_arch
+
+    if ! $no_copy_files
+    then
+        copy_common_files
+    fi
+
+    _run_env_with_bwrap "--uid 0 $backend_args" "$@"
 }
 
 
 #######################################
-# Run JuNest as fakeroot user via user namespace.
+# Run JuNest as normal user via bwrap.
 #
 # Globals:
 #   JUNEST_HOME (RO)         : The JuNest home directory.
-#   GROOT (RO)               : The groot program.
 #   SH (RO)                  : Contains the default command to run in JuNest.
 # Arguments:
-#   backend_args ($1)        : The arguments to pass to groot
+#   backend_args ($1)        : The arguments to pass to bwrap
 #   no_copy_files ($2?)      : If false it will copy some files in /etc
 #                              from host to JuNest environment.
 #   cmd ($3-?)               : The command to run inside JuNest environment.
 #                              Default command is defined by SH variable.
 # Returns:
 #   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
-#   Depends on the unshare command outcome.
 # Output:
 #   -                        : The command output.
 #######################################
-function run_env_with_namespace() {
+function run_env_as_bwrap_user() {
     check_nested_env
 
     local backend_args="$1"
@@ -117,5 +145,9 @@ function run_env_with_namespace() {
         copy_passwd_and_group
     fi
 
-    _run_env_with_namespace "$backend_args" "$@"
+    _run_env_with_bwrap "$backend_args" "$@"
 }
+
+
+
+

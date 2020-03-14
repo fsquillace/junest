@@ -28,8 +28,9 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 
 Description
 ===========
-**JuNest** (Jailed User NEST) is a lightweight Arch Linux based distribution that allows to have
-an isolated GNU/Linux environment inside any generic host GNU/Linux OS
+**JuNest** (Jailed User NEST) is a lightweight Arch Linux based distribution
+that allows to have disposable and isolated GNU/Linux environments
+within any generic GNU/Linux host OS
 and without the need to have root privileges for installing packages.
 
 JuNest contains mainly the package managers (called [pacman](https://wiki.archlinux.org/index.php/Pacman)
@@ -86,13 +87,21 @@ By default, JuNest run via the Linux namespaces (aka `ns`) as the backend progra
 junest
 ```
 
+You can use the command `sudo` to acquire fakeroot privileges and
+install/remove packages.
+
+Alternatively, you can access root privileges without using `sudo` with the
+`-f` option:
+
+```sh
+junest -f
+```
+
 Another execution mode is via [Proot](https://wiki.archlinux.org/index.php/Proot):
 
 ```sh
 junest proot [-f]
 ```
-
-Where `-f` allow fakeroot access to install/remove packages.
 
 There are multiple backend programs, each with its own pros/cons.
 To know more about the JuNest execution modes depending on the backend program
@@ -105,14 +114,19 @@ Have fun!
 If you are new on Arch Linux and you are not familiar with `pacman` package manager
 visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
 
-JuNest provides a modified version of `makepkg` in `/opt/makepkg/bin` that
-allows you to build packages from [AUR](https://aur.archlinux.org/) repository.
-Remember that in order to build packages, `base-devel` package group is required
+In `ns` mode, you can easily install package from [AUR](https://aur.archlinux.org/) repository
+using the already available [`yay`](https://aur.archlinux.org/packages/yay/)
+command. In `proot` mode, JuNest does no longer support the building of AUR packages.
+
+**Remember** that in order to build packages from source, `base-devel` package group is required
 first:
 
 ```sh
 pacman -Sy --ignore sudo base-devel
 ```
+
+JuNest uses a modified version of `sudo`. That's why the original `sudo`
+package has to be ignored in the previous command.
 
 Installation
 ============
@@ -125,14 +139,14 @@ Before installing JuNest be sure that all dependencies are properly installed in
 - [bash (>=4.0)](https://www.gnu.org/software/bash/)
 - [GNU coreutils](https://www.gnu.org/software/coreutils/)
 
-The minimum recommended Linux kernel of the host OS is 2.6.32 on x86 (64 bit)
+In `proot` mode, the minimum recommended Linux kernel for the host OS is 2.6.32 on x86 (64 bit)
 and ARM architectures. It is still possible to run JuNest on lower
 2.6.x host OS kernels but errors may appear, and some applications may
 crash. For further information, read the [Troubleshooting](#troubleshooting)
 section below.
 
 
-## Method one (Recommended) ##
+## Installation from git repository ##
 Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 
     git clone git://github.com/fsquillace/junest ~/.local/share/junest
@@ -141,14 +155,6 @@ Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 ### Installation using AUR (Arch Linux only) ###
 If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/packages/junest-git/).
 After installing junest will be located in `/opt/junest/`
-
-## Method two ##
-Alternatively, another installation method would be to directly download the JuNest image and place it to the default directory `~/.junest`:
-
-    ARCH=<one of "x86_64", "arm">
-    mkdir ~/.junest
-    curl https://s3-eu-west-1.amazonaws.com/junest-repo/junest/junest-${ARCH}.tar.gz | tar -xz -C ~/.junest
-    export PATH=~/.junest/opt/junest/bin:$PATH
 
 Usage
 =====
@@ -173,7 +179,12 @@ provides the state of the user namespace on several GNU/Linux distros.
 
 In order to run JuNest via Linux namespaces:
 
-- As fakeroot - Allow to install/remove packages: `junest ns` or `junest`
+- As normal user - Allow to make basic operations or install/remove packages
+with `sudo` command: `junest ns` or `junest`
+- As fakeroot - Allow to install/remove packages: `junest ns -f` or `junest -f`
+
+This mode is based on the fantastic
+[`bubblewrap`](https://github.com/containers/bubblewrap) command.
 
 PRoot based
 -----------
@@ -211,8 +222,8 @@ The following table shows the capabilities that each backend program is able to 
 
 |     | QEMU | Root privileges required | Manage Official Packages | Manage AUR Packages | Portability | Support | User modes |
 | --- | ---- | ------------------------ | ------------------------ | ------------------- | ----------- | ------- | ---------- |
-| **Linux Namespaces** | NO | NO | YES | YES | Poor | YES | `fakeroot` only |
-| **Proot** | YES | NO | YES | YES | YES | Poor | Normal user and `fakeroot` |
+| **Linux Namespaces** | NO | NO | YES | YES | Poor | YES | Normal user and `fakeroot` |
+| **Proot** | YES | NO | YES | NO | YES | Poor | Normal user and `fakeroot` |
 | **Chroot** | NO | YES | YES | YES | YES | YES | `root` only |
 
 Advanced usage
@@ -342,6 +353,17 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
     #> pacman -S --ignore sudo base-devel
 
 > Remember to ignore `sudo` as it conflicts with `sudo-fake` package.
+
+## Can't set user and group as root
+
+> **Q**: In ns mode when installing package I get the following error:
+
+    warning: warning given when extracting /usr/file... (Can't set user=0/group=0 for
+    /usr/file...)
+
+> **A**: This is because as fakeroot is not possible to set the owner/group of
+> files as root. The package will still be installed correctly even though this
+> message is showed.
 
 ## No servers configured for repository ##
 

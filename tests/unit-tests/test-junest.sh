@@ -37,11 +37,11 @@ function setup_env_from_file(){
 function setup_env(){
     echo "setup_env($1)"
 }
-function run_env_as_fakeroot(){
+function run_env_as_proot_fakeroot(){
     local backend_args="$1"
     local no_copy_files="$2"
     shift 2
-    echo "run_env_as_fakeroot($backend_args,$no_copy_files,$@)"
+    echo "run_env_as_proot_fakeroot($backend_args,$no_copy_files,$@)"
 }
 function run_env_as_groot(){
     local backend_args="$1"
@@ -55,17 +55,23 @@ function run_env_as_chroot(){
     shift 2
     echo "run_env_as_chroot($backend_args,$no_copy_files,$@)"
 }
-function run_env_as_user(){
+function run_env_as_proot_user(){
     local backend_args="$1"
     local no_copy_files="$2"
     shift 2
-    echo "run_env_as_user($backend_args,$no_copy_files,$@)"
+    echo "run_env_as_proot_user($backend_args,$no_copy_files,$@)"
 }
-function run_env_with_namespace(){
+function run_env_as_bwrap_fakeroot(){
     local backend_args="$1"
     local no_copy_files="$2"
     shift 2
-    echo "run_env_with_namespace($backend_args,$no_copy_files,$@)"
+    echo "run_env_as_bwrap_fakeroot($backend_args,$no_copy_files,$@)"
+}
+function run_env_as_bwrap_user(){
+    local backend_args="$1"
+    local no_copy_files="$2"
+    shift 2
+    echo "run_env_as_bwrap_user($backend_args,$no_copy_files,$@)"
 }
 
 function test_help(){
@@ -131,22 +137,22 @@ function test_setup_env(){
     assertCommandFail main setup -a arm
 }
 
-function test_run_env_as_fakeroot(){
+function test_run_env_as_proot_fakeroot(){
     assertCommandSuccess main p -f
-    assertEquals "run_env_as_fakeroot(,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_fakeroot(,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main proot --fakeroot
-    assertEquals "run_env_as_fakeroot(,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_fakeroot(,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main p -f -n
-    assertEquals "run_env_as_fakeroot(,true,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_fakeroot(,true,)" "$(cat $STDOUTF)"
 
     assertCommandSuccess main proot -f -b "-b arg"
-    assertEquals "run_env_as_fakeroot(-b arg,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_fakeroot(-b arg,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main proot -f -b "-b arg" -- command -kv
-    assertEquals "run_env_as_fakeroot(-b arg,false,command -kv)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_fakeroot(-b arg,false,command -kv)" "$(cat $STDOUTF)"
     assertCommandSuccess main proot -f command --as
-    assertEquals "run_env_as_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
     assertCommandSuccess main proot -f  -- command --as
-    assertEquals "run_env_as_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
 
     is_env_installed(){
         return 1
@@ -156,18 +162,18 @@ function test_run_env_as_fakeroot(){
 
 function test_run_env_as_user(){
     assertCommandSuccess main proot
-    assertEquals "run_env_as_user(,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_user(,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main p -n
-    assertEquals "run_env_as_user(,true,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_user(,true,)" "$(cat $STDOUTF)"
 
     assertCommandSuccess main proot -b "-b arg"
-    assertEquals "run_env_as_user(-b arg,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_user(-b arg,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main proot -b "-b arg" -- command -ll
-    assertEquals "run_env_as_user(-b arg,false,command -ll)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_user(-b arg,false,command -ll)" "$(cat $STDOUTF)"
     assertCommandSuccess main proot command -ls
-    assertEquals "run_env_as_user(,false,command -ls)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_user(,false,command -ls)" "$(cat $STDOUTF)"
     assertCommandSuccess main proot -- command -ls
-    assertEquals "run_env_as_user(,false,command -ls)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_proot_user(,false,command -ls)" "$(cat $STDOUTF)"
 
     is_env_installed(){
         return 1
@@ -209,36 +215,73 @@ function test_run_env_as_chroot(){
     assertCommandFail main root -f
 }
 
-function test_run_env_with_namespace(){
+function test_run_env_as_bwrap_fakeroot(){
+    assertCommandSuccess main n -f
+    assertEquals "run_env_as_bwrap_fakeroot(,false,)" "$(cat $STDOUTF)"
+    assertCommandSuccess main ns -f
+    assertEquals "run_env_as_bwrap_fakeroot(,false,)" "$(cat $STDOUTF)"
+    assertCommandSuccess main ns -n -f
+    assertEquals "run_env_as_bwrap_fakeroot(,true,)" "$(cat $STDOUTF)"
+
+    assertCommandSuccess main ns -f -b "-b arg"
+    assertEquals "run_env_as_bwrap_fakeroot(-b arg,false,)" "$(cat $STDOUTF)"
+    assertCommandSuccess main ns -f -b "-b arg" -- command -kv
+    assertEquals "run_env_as_bwrap_fakeroot(-b arg,false,command -kv)" "$(cat $STDOUTF)"
+    assertCommandSuccess main ns -f command --as
+    assertEquals "run_env_as_bwrap_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
+    assertCommandSuccess main ns -f -- command --as
+    assertEquals "run_env_as_bwrap_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
+
+    assertCommandSuccess main -f
+    assertEquals "run_env_as_bwrap_fakeroot(,false,)" "$(cat $STDOUTF)"
+    assertCommandSuccess main -f
+    assertEquals "run_env_as_bwrap_fakeroot(,false,)" "$(cat $STDOUTF)"
+
+    assertCommandSuccess main -f -b "-b arg"
+    assertEquals "run_env_as_bwrap_fakeroot(-b arg,false,)" "$(cat $STDOUTF)"
+    assertCommandSuccess main -f -b "-b arg" -- command -kv
+    assertEquals "run_env_as_bwrap_fakeroot(-b arg,false,command -kv)" "$(cat $STDOUTF)"
+    assertCommandSuccess main -f command --as
+    assertEquals "run_env_as_bwrap_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
+    assertCommandSuccess main -f -- command --as
+    assertEquals "run_env_as_bwrap_fakeroot(,false,command --as)" "$(cat $STDOUTF)"
+
+    is_env_installed(){
+        return 1
+    }
+    assertCommandFail main ns -f
+}
+
+function test_run_env_as_bwrap_user(){
     assertCommandSuccess main n
-    assertEquals "run_env_with_namespace(,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main ns
-    assertEquals "run_env_with_namespace(,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main ns -n
-    assertEquals "run_env_with_namespace(,true,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,true,)" "$(cat $STDOUTF)"
 
     assertCommandSuccess main ns -b "-b arg"
-    assertEquals "run_env_with_namespace(-b arg,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(-b arg,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main ns -b "-b arg" -- command -kv
-    assertEquals "run_env_with_namespace(-b arg,false,command -kv)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(-b arg,false,command -kv)" "$(cat $STDOUTF)"
     assertCommandSuccess main ns command --as
-    assertEquals "run_env_with_namespace(,false,command --as)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,command --as)" "$(cat $STDOUTF)"
     assertCommandSuccess main ns -- command --as
-    assertEquals "run_env_with_namespace(,false,command --as)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,command --as)" "$(cat $STDOUTF)"
 
     assertCommandSuccess main
-    assertEquals "run_env_with_namespace(,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main
-    assertEquals "run_env_with_namespace(,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,)" "$(cat $STDOUTF)"
 
     assertCommandSuccess main -b "-b arg"
-    assertEquals "run_env_with_namespace(-b arg,false,)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(-b arg,false,)" "$(cat $STDOUTF)"
     assertCommandSuccess main -b "-b arg" -- command -kv
-    assertEquals "run_env_with_namespace(-b arg,false,command -kv)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(-b arg,false,command -kv)" "$(cat $STDOUTF)"
     assertCommandSuccess main command --as
-    assertEquals "run_env_with_namespace(,false,command --as)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,command --as)" "$(cat $STDOUTF)"
     assertCommandSuccess main -- command --as
-    assertEquals "run_env_with_namespace(,false,command --as)" "$(cat $STDOUTF)"
+    assertEquals "run_env_as_bwrap_user(,false,command --as)" "$(cat $STDOUTF)"
 
     is_env_installed(){
         return 1
