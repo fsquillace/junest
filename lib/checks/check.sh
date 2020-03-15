@@ -46,24 +46,26 @@ info "Initial JuNest setup..."
 # otherwise it is not possible to exit from the session
 trap "[[ -e /etc/pacman.d/gnupg/S.gpg-agent ]] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye" QUIT EXIT ABRT KILL TERM INT
 
-$SUDO pacman --noconfirm -Syy
+PACMAN_OPTIONS="--noconfirm --disable-download-timeout"
+
+$SUDO pacman $PACMAN_OPTIONS -Syy
 
 # Awk is required for pacman-key
-$SUDO pacman --noconfirm -S gawk
+$SUDO pacman $PACMAN_OPTIONS -S gawk
 $SUDO pacman-key --init
 
 if [[ $(uname -m) == *"arm"* ]]
 then
-    $SUDO pacman --noconfirm -S archlinuxarm-keyring
+    $SUDO pacman $PACMAN_OPTIONS -S archlinuxarm-keyring
     $SUDO pacman-key --populate archlinuxarm
 else
-    $SUDO pacman --noconfirm -S archlinux-keyring
+    $SUDO pacman $PACMAN_OPTIONS -S archlinux-keyring
     $SUDO pacman-key --populate archlinux
 fi
 
-$SUDO pacman --noconfirm -Su
-$SUDO pacman --noconfirm -S grep coreutils
-$SUDO pacman --noconfirm -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
+$SUDO pacman $PACMAN_OPTIONS -Su
+$SUDO pacman $PACMAN_OPTIONS -S grep coreutils
+$SUDO pacman $PACMAN_OPTIONS -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
 
 info "Checking basic executables work..."
 $SUDO pacman -Qi pacman 1> /dev/null
@@ -71,22 +73,22 @@ $SUDO pacman -Qi pacman 1> /dev/null
 
 repo_package1=tree
 echo "Checking ${repo_package1} package from official repo..."
-$SUDO pacman --noconfirm -S ${repo_package1}
+$SUDO pacman $PACMAN_OPTIONS -S ${repo_package1}
 tree -L 1
-$SUDO pacman --noconfirm -Rsn ${repo_package1}
+$SUDO pacman $PACMAN_OPTIONS -Rsn ${repo_package1}
 
 repo_package2=iftop
 info "Checking ${repo_package2} package from official repo..."
-$SUDO pacman --noconfirm -S ${repo_package2}
+$SUDO pacman $PACMAN_OPTIONS -S ${repo_package2}
 $RUN_ROOT_TESTS && $SUDO iftop -t -s 5
-$SUDO pacman --noconfirm -Rsn ${repo_package2}
+$SUDO pacman $PACMAN_OPTIONS -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
 then
     aur_package=tcptraceroute
     info "Checking ${aur_package} package from AUR repo..."
     yay --noconfirm -S ${aur_package}
-    $SUDO pacman --noconfirm -Rsn ${aur_package}
+    $SUDO pacman $PACMAN_OPTIONS -Rsn ${aur_package}
 fi
 
 # The following ensures that the gpg agent gets killed (if exists)
