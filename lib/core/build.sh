@@ -83,11 +83,17 @@ function build_image_env(){
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # bwrap command belongs to bubblewrap
     sudo pacstrap -G -M -d ${maindir}/root pacman coreutils bubblewrap
+
+    if [[ $(uname -m) != *"arm"* ]]
+    then
+        # x86_64 does not have any mirror set by default...
+        sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
+    fi
     sudo mkdir -p ${maindir}/root/run/lock
 
     _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
 
-    info "Install yay..."
+    info "Installing yay..."
     sudo pacman --noconfirm -S go
     _install_pkg_from_aur ${maindir} "yay"
 
