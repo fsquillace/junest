@@ -46,16 +46,20 @@ info "Initial JuNest setup..."
 # otherwise it is not possible to exit from the session
 trap "[[ -e /etc/pacman.d/gnupg/S.gpg-agent ]] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye" QUIT EXIT ABRT KILL TERM INT
 
-echo "Server = ${DEFAULT_MIRROR}" >> /etc/pacman.d/mirrorlist
 $SUDO pacman --noconfirm -Syy
 
+# Awk is required for pacman-key
+$SUDO pacman --noconfirm -S gawk
 $SUDO pacman-key --init
 
-$SUDO pacman --noconfirm -S archlinux-keyring
-$SUDO pacman-key --populate archlinux
-
-$SUDO pacman --noconfirm -S archlinuxarm-keyring || echo "No ARM keyring detected"
-$SUDO pacman-key --populate archlinuxarm || echo "No ARM keyring detected"
+if [[ $(uname -m) == *"arm"* ]]
+then
+    $SUDO pacman --noconfirm -S archlinuxarm-keyring
+    $SUDO pacman-key --populate archlinuxarm
+else
+    $SUDO pacman --noconfirm -S archlinux-keyring
+    $SUDO pacman-key --populate archlinux
+fi
 
 $SUDO pacman --noconfirm -Su
 $SUDO pacman --noconfirm -S grep coreutils

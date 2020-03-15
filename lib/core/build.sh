@@ -80,16 +80,11 @@ function build_image_env(){
     trap - QUIT EXIT ABRT KILL TERM INT
     trap "sudo rm -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
     info "Installing pacman and its dependencies..."
-    # The archlinux-keyring and libunistring are due to missing dependencies declaration in ARM archlinux
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # bwrap command belongs to bubblewrap
-    local arm_keyring=""
-    [[ $(uname -m) == *"arm"* ]] && arm_keyring="archlinuxarm-keyring"
-    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils libunistring archlinux-keyring $arm_keyring bubblewrap
-    sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
+    sudo pacstrap -G -M -d ${maindir}/root pacman coreutils bubblewrap
     sudo mkdir -p ${maindir}/root/run/lock
 
-    # AUR packages requires non-root user to be compiled. proot fakes the user to 10
     _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
 
     info "Install yay..."

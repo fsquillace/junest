@@ -52,7 +52,6 @@ function _setup_env(){
 
     mkdir_cmd -p "${JUNEST_HOME}"
     $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
-    info "The default mirror URL is ${DEFAULT_MIRROR}."
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
     info "${NAME} installed successfully"
@@ -70,7 +69,6 @@ function _setup_env(){
 #                           the JuNest system from the image.
 #   ENV_REPO (RO)         : URL of the site containing JuNest images.
 #   NAME (RO)             : The JuNest name.
-#   DEFAULT_MIRROR (RO)   : Arch Linux URL mirror.
 # Arguments:
 #   arch ($1?)            : The JuNest architecture image to download.
 #                           Defaults to the host architecture
@@ -105,7 +103,6 @@ function setup_env(){
 #   JUNEST_HOME (RO)      : The JuNest home directory in which JuNest needs
 #                           to be installed.
 #   NAME (RO)             : The JuNest name.
-#   DEFAULT_MIRROR (RO)   : Arch Linux URL mirror.
 # Arguments:
 #   imagefile ($1)        : The JuNest image file.
 # Returns:
