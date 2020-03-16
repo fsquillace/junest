@@ -145,8 +145,7 @@ function unshare_cmd(){
 }
 
 function bwrap_cmd(){
-    # TODO re-evaluate this strategy:
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP  --dev-bind / / "${SH[0]}" "-c" ":"
+    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP --dev-bind / / "${SH[0]}" "-c" ":"
     then
         $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP "${@}"
     else

@@ -34,6 +34,11 @@ function setUp(){
     }
     UNSHARE=unshare_mock
 
+    bwrap_mock() {
+        echo "bwrap $@"
+    }
+    BWRAP=bwrap_mock
+
 }
 
 function test_ln(){
@@ -134,6 +139,13 @@ function test_unshare(){
     assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/unshare_mock --user /bin/sh -c :\nunshare --user /bin/sh -c :\nunshare new_program")" "$(cat $STDOUTF)"
 
     UNSHARE=false LD_EXEC=false assertCommandFail unshare_cmd new_program
+}
+
+function test_bwrap(){
+    assertCommandSuccess bwrap_cmd new_program
+    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/$BWRAP --dev-bind / / /bin/sh -c :\nld_exec ${JUNEST_HOME}/usr/bin/$BWRAP new_program")" "$(cat $STDOUTF)"
+
+    BWRAP=false LD_EXEC=false assertCommandFail bwrap_cmd new_program
 }
 
 function test_chroot(){

@@ -142,11 +142,7 @@ function build_image_env(){
     then
         mkdir -p ${maindir}/root_test
         $TAR -zxpf ${imagefile} -C "${maindir}/root_test"
-        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} proot --fakeroot ${JUNEST_BASE}/lib/checks/check.sh --skip-aur-tests
-        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} proot ${JUNEST_BASE}/lib/checks/check.sh --skip-aur-tests --use-sudo
-        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} ns --fakeroot ${JUNEST_BASE}/lib/checks/check.sh --skip-aur-tests
-        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/bin/${CMD} ns ${JUNEST_BASE}/lib/checks/check.sh --use-sudo
-        JUNEST_HOME="${maindir}/root_test" sudo -E ${JUNEST_BASE}/bin/${CMD} groot ${JUNEST_BASE}/lib/checks/check.sh --run-root-tests --skip-aur-tests
+        JUNEST_HOME="${maindir}/root_test" ${JUNEST_BASE}/lib/checks/check_all.sh
     fi
 
     sudo cp ${maindir}/output/${imagefile} ${ORIGIN_WD}
