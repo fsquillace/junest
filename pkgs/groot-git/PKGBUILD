@@ -1,0 +1,58 @@
+# Maintainer: Filippo Squillace <feel dot sqoox at gmail dot com>
+# More details on how to change this file:
+# https://wiki.archlinux.org/index.php/PKGBUILD
+# https://wiki.archlinux.org/index.php/Creating_packages
+# https://wiki.archlinux.org/index.php/Arch_User_Repository#Submitting_packages
+
+pkgname=groot-git
+pkgver=1.0.1
+pkgrel=1
+pkgdesc=""
+arch=('any')
+url="https://github.com/fsquillace/groot"
+license=('GPL')
+groups=()
+depends=('coreutils')
+makedepends=()
+provides=('groot')
+conflicts=()
+replaces=()
+backup=()
+options=()
+#install=
+noextract=()
+
+
+source=('groot::git+https://github.com/fsquillace/groot.git#branch=master')
+md5sums=('SKIP')
+
+
+pkgver() {
+	cd "$srcdir/${pkgname%-git}"
+
+# The examples below are not absolute and need to be adapted to each repo. The
+# primary goal is to generate version numbers that will increase according to
+# pacman's version comparisons with later commits to the repo. The format
+# VERSION='VER_NUM.rREV_NUM.HASH', or a relevant subset in case VER_NUM or HASH
+# are not available, is recommended.
+
+# Git, tags available
+	printf "%s" "$(git describe --tags | sed 's/\([^-]*-\)g/r\1/;s/-/./g')"
+
+# Git, no tags available
+#	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+
+}
+
+build() {
+  :
+}
+
+package() {
+    cd "$srcdir/${pkgname%-git}"
+
+    install -d -m 755 "${pkgdir}/usr/bin"
+    install -m 755 "${srcdir}/${pkgname%-git}/bin/groot" ${pkgdir}/usr/bin/groot
+}
+
+# vim:set ts=2 sw=2 et:

@@ -21,7 +21,6 @@ NO_CONFIG_FOUND=108
 UNPRIVILEGED_USERNS_DISABLED=109
 
 JUNEST_HOME=${JUNEST_HOME:-~/.${CMD}}
-JUNEST_BASE=${JUNEST_BASE:-${JUNEST_HOME}/opt/junest}
 JUNEST_TEMPDIR=${JUNEST_TEMPDIR:-/tmp}
 
 # The update of the variable PATH ensures that the executables are
@@ -34,15 +33,17 @@ UNAME=uname
 
 ARCH_LIST=('x86_64' 'x86' 'arm')
 HOST_ARCH=$($UNAME -m)
-if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
+# To check all available architectures look here:
+# https://wiki.archlinux.org/index.php/PKGBUILD#arch
+if [[ $HOST_ARCH == "i686" ]] || [[ $HOST_ARCH == "i386" ]]
 then
     ARCH="x86"
     LD_LIB="${JUNEST_HOME}/lib/ld-linux.so.2"
-elif [ $HOST_ARCH == "x86_64" ]
+elif [[ $HOST_ARCH == "x86_64" ]]
 then
     ARCH="x86_64"
     LD_LIB="${JUNEST_HOME}/lib64/ld-linux-x86-64.so.2"
-elif [[ $HOST_ARCH =~ .*(arm).* ]]
+elif [[ $HOST_ARCH =~ .*(arm).* ]] || [[ $HOST_ARCH == "aarch64" ]]
 then
     ARCH="arm"
     LD_LIB="${JUNEST_HOME}/lib/ld-linux-armhf.so.3"
@@ -66,8 +67,8 @@ ORIGIN_WD=$(pwd)
 SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
-PROOT="${JUNEST_HOME}/opt/proot/proot-${ARCH}"
-GROOT=${JUNEST_BASE}/bin/groot
+PROOT="${JUNEST_HOME}/usr/bin/proot"
+GROOT="${JUNEST_HOME}/usr/bin/groot"
 CLASSIC_CHROOT=chroot
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"

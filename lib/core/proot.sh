@@ -33,7 +33,7 @@ function _run_env_with_qemu(){
 
         warn "Emulating $NAME via QEMU..."
         [ -e ${qemu_symlink} ] || \
-            ln_cmd -s ${JUNEST_HOME}/opt/qemu/${qemu_bin} ${qemu_symlink}
+            ln_cmd -s ${JUNEST_HOME}/bin/${qemu_bin} ${qemu_symlink}
         proot_args="-q ${qemu_symlink} $proot_args"
     fi
     shift

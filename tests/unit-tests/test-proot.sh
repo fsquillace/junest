@@ -153,7 +153,7 @@ function test_qemu() {
     }
 
     RANDOM=100 ARCH=x86_64 assertCommandSuccess _run_env_with_qemu ""
-    assertEquals "$(echo -e "-s $JUNEST_HOME/opt/qemu/qemu-arm-static-x86_64 /tmp/qemu-arm-static-x86_64-100\n-q /tmp/qemu-arm-static-x86_64-100")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "-s $JUNEST_HOME/bin/qemu-arm-static-x86_64 /tmp/qemu-arm-static-x86_64-100\n-q /tmp/qemu-arm-static-x86_64-100")" "$(cat $STDOUTF)"
 }
 
 source $JUNEST_ROOT/tests/utils/shunit2

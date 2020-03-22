@@ -39,8 +39,8 @@ usage() {
     echo -e "            -d, --delete                   Delete $NAME from ${JUNEST_HOME}"
     echo
     echo -e "  n[s]                                     Access via Linux Namespaces using BubbleWrap (Default action)"
-    echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
-    echo -e "                                           ($CMD groot -b \"--help\" to check out the bwrap options)"
+    echo -e "            -b, --backend-args <args>      Arguments for bwrap backend program"
+    echo -e "                                           ($CMD ns -b \"--help\" to check out the bwrap options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  p[root]                                  Access via PRoot"

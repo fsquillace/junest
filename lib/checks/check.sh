@@ -69,7 +69,8 @@ $SUDO pacman $PACMAN_OPTIONS -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep
 
 info "Checking basic executables work..."
 $SUDO pacman -Qi pacman 1> /dev/null
-/opt/proot/proot-$ARCH --help 1> /dev/null
+/usr/bin/proot --help 1> /dev/null
+/usr/bin/groot --help 1> /dev/null
 
 repo_package1=tree
 echo "Checking ${repo_package1} package from official repo..."

@@ -23,8 +23,12 @@ function _install_pkg_from_aur(){
 function _install_pkg(){
     local maindir=$1
     local pkgbuilddir=$2
-    builtin cd ${pkgbuilddir}
+    # Generate a working directory because sources will be downloaded to there
+    working_dir=$(TMPDIR=/tmp mktemp -d -t junest-wd.XXXXXXXXXX)
+    cp -R "$pkgbuilddir"/* "$working_dir"
+    builtin cd ${working_dir}
     makepkg -sfcd
+    makepkg --printsrcinfo > ${pkgbuilddir}/.SRCINFO
     sudo pacman --noconfirm --root ${maindir}/root -U *.pkg.tar.xz
 }
 
@@ -33,34 +37,6 @@ function _prepare() {
     sudo pacman --noconfirm -Syu
     sudo pacman -S --noconfirm base-devel
     sudo pacman -S --noconfirm git arch-install-scripts
-}
-
-function _install_proot_and_qemu(){
-    local maindir="$1"
-    local main_repo=https://s3-eu-west-1.amazonaws.com/${CMD}-repo
-    proot_link=${main_repo}/proot
-    qemu_link=${main_repo}/qemu
-
-    info "Installing proot static binaries"
-    sudo bash -c "
-        mkdir -p '${maindir}/root/opt/proot/'
-        curl '$proot_link/proot-x86_64' > '${maindir}/root/opt/proot/proot-x86_64'
-        curl '$proot_link/proot-arm' > '${maindir}/root/opt/proot/proot-arm'
-        chmod -R 755 '${maindir}/root/opt/proot/'
-    "
-
-    info "Installing qemu static binaries"
-    sudo bash -c "
-    mkdir -p '${maindir}/root/opt/qemu/'
-        if [[ $ARCH == 'arm' ]]
-        then
-            curl '${qemu_link}/arm/qemu-arm-static-x86_64' > '${maindir}/root/opt/qemu/qemu-arm-static-x86_64'
-        elif [[ $ARCH == 'x86_64' ]]
-        then
-            curl '${qemu_link}/x86_64/qemu-x86_64-static-arm' > '${maindir}/root/opt/qemu/qemu-x86_64-static-arm'
-        fi
-        chmod -R 755 '${maindir}/root/opt/qemu/'
-    "
 }
 
 function build_image_env(){
@@ -84,7 +60,7 @@ function build_image_env(){
     # bwrap command belongs to bubblewrap
     sudo pacstrap -G -M -d ${maindir}/root pacman coreutils bubblewrap
 
-    if [[ $(uname -m) != *"arm"* ]]
+    if [[ ${ARCH} != "arm" ]]
     then
         # x86_64 does not have any mirror set by default...
         sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
@@ -92,12 +68,13 @@ function build_image_env(){
     sudo mkdir -p ${maindir}/root/run/lock
 
     _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
+    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/proot-static"
+    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/qemu-static"
+    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/groot-git"
 
     info "Installing yay..."
     sudo pacman --noconfirm -S go
     _install_pkg_from_aur ${maindir} "yay"
-
-    _install_proot_and_qemu "${maindir}"
 
     echo "Generating the metadata info"
     sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
