@@ -56,14 +56,17 @@ function _check_user_namespace() {
 }
 
 function _run_env_with_bwrap(){
-    local backend_args="$1"
-    shift
+    local backend_command="$1"
+    local backend_args="$2"
+    shift 2
+
+    [[ -z "$backend_command" ]] && backend_command=bwrap_cmd
 
     if [[ "$1" != "" ]]
     then
-        JUNEST_ENV=1 bwrap_cmd --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 "$backend_command" --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        JUNEST_ENV=1 bwrap_cmd --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}"
+        JUNEST_ENV=1 "$backend_command" --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}"
     fi
 
 }
@@ -89,9 +92,10 @@ function _run_env_with_bwrap(){
 function run_env_as_bwrap_fakeroot(){
     check_nested_env
 
-    local backend_args="$1"
-    local no_copy_files="$2"
-    shift 2
+    local backend_command="$1"
+    local backend_args="$2"
+    local no_copy_files="$3"
+    shift 3
 
     _check_user_namespace
 
@@ -102,7 +106,7 @@ function run_env_as_bwrap_fakeroot(){
         copy_common_files
     fi
 
-    _run_env_with_bwrap "--uid 0 $backend_args" "$@"
+    _run_env_with_bwrap "$backend_command" "--uid 0 $backend_args" "$@"
 }
 
 
@@ -126,9 +130,10 @@ function run_env_as_bwrap_fakeroot(){
 function run_env_as_bwrap_user() {
     check_nested_env
 
-    local backend_args="$1"
-    local no_copy_files="$2"
-    shift 2
+    local backend_command="$1"
+    local backend_args="$2"
+    local no_copy_files="$3"
+    shift 3
 
     _check_user_namespace
 
@@ -145,7 +150,7 @@ function run_env_as_bwrap_user() {
         copy_passwd_and_group
     fi
 
-    _run_env_with_bwrap "$backend_args" "$@"
+    _run_env_with_bwrap "$backend_command" "$backend_args" "$@"
 }
 
 

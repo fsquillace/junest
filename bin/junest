@@ -39,22 +39,27 @@ usage() {
     echo -e "            -d, --delete                   Delete $NAME from ${JUNEST_HOME}"
     echo
     echo -e "  n[s]                                     Access via Linux Namespaces using BubbleWrap (Default action)"
+    echo -e "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
+    echo -e "            --backend-command <cmd>        Bwrap command to use"
     echo -e "            -b, --backend-args <args>      Arguments for bwrap backend program"
     echo -e "                                           ($CMD ns -b \"--help\" to check out the bwrap options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  p[root]                                  Access via PRoot"
     echo -e "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
+    echo -e "            --backend-command <cmd>        PRoot command to use"
     echo -e "            -b, --backend-args <args>      Arguments for PRoot backend program"
     echo -e "                                           ($CMD proot -b \"--help\" to check out the PRoot options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  g[root]                                  Access with root privileges via GRoot"
+    echo -e "            --backend-command <cmd>        GRoot command to use"
     echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
     echo -e "                                           ($CMD groot -b \"--help\" to check out the GRoot options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
     echo
     echo -e "  r[oot]                                   Access with root privileges via classic chroot"
+    echo -e "            --backend-command <cmd>        Chroot command to use"
     echo -e "            -b, --backend-args <args>      Arguments for chroot backend program"
     echo -e "                                           ($CMD root -b \"--help\" to check out the chroot options)"
     echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
@@ -114,15 +119,16 @@ function parse_arguments(){
 
 function _parse_root_opts() {
     # Options:
-    OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
     OPT_NO_COPY_FILES=false
+    BACKEND_COMMAND=""
 
     while [[ -n "$1" ]]
     do
         case "$1" in
-            -b|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -b|--backend-args) shift ; BACKEND_ARGS=$1; shift ;;
             -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
+            --backend-command) shift; BACKEND_COMMAND="$1"; shift ;;
             --) shift ; break ;;
             -*) die "Invalid option $1" ;;
             *) break ;;
@@ -139,16 +145,17 @@ function _parse_root_opts() {
 function _parse_ns_opts() {
     # Options:
     OPT_FAKEROOT=false
-    OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
     OPT_NO_COPY_FILES=false
+    BACKEND_COMMAND=""
 
     while [[ -n "$1" ]]
     do
         case "$1" in
             -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-            -b|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -b|--backend-args) shift ; BACKEND_ARGS=$1; shift ;;
             -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
+            --backend-command) shift; BACKEND_COMMAND="$1"; shift ;;
             --) shift ; break ;;
             -*) die "Invalid option $1" ;;
             *) break ;;
@@ -165,16 +172,17 @@ function _parse_ns_opts() {
 function _parse_proot_opts() {
     # Options:
     OPT_FAKEROOT=false
-    OPT_BACKEND_ARGS=false
     BACKEND_ARGS=""
     OPT_NO_COPY_FILES=false
+    BACKEND_COMMAND=""
 
     while [[ -n "$1" ]]
     do
         case "$1" in
             -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-            -b|--backend-args) OPT_BACKEND_ARGS=true ; shift ; BACKEND_ARGS=$1; shift ;;
+            -b|--backend-args) shift ; BACKEND_ARGS=$1; shift ;;
             -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
+            --backend-command) shift; BACKEND_COMMAND="$1"; shift ;;
             --) shift ; break ;;
             -*) die "Invalid option $1" ;;
             *) break ;;
@@ -269,7 +277,7 @@ function execute_operation() {
         run_env=run_env_as_chroot
     fi
 
-    $run_env "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
+    $run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
 
 }
 

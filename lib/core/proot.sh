@@ -9,19 +9,25 @@
 # vim: ft=sh
 
 function _run_env_with_proot(){
-    local proot_args="$1"
-    shift
+    local backend_command="$1"
+    local backend_args="$2"
+    shift 2
+
+    [[ -z "$backend_command" ]] && backend_command=proot_cmd
 
     if [ "$1" != "" ]
     then
-        JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
+        JUNEST_ENV=1 "${backend_command}" "${backend_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
     else
-        JUNEST_ENV=1 proot_cmd "${proot_args}" "${SH[@]}"
+        JUNEST_ENV=1 "${backend_command}" "${backend_args}" "${SH[@]}"
     fi
 }
 
 function _run_env_with_qemu(){
-    local proot_args="$1"
+    local backend_command="$1"
+    local backend_args="$2"
+    shift 2
+
     source ${JUNEST_HOME}/etc/junest/info
 
     if [ "$JUNEST_ARCH" != "$ARCH" ]
@@ -34,10 +40,10 @@ function _run_env_with_qemu(){
         warn "Emulating $NAME via QEMU..."
         [ -e ${qemu_symlink} ] || \
             ln_cmd -s ${JUNEST_HOME}/bin/${qemu_bin} ${qemu_symlink}
-        proot_args="-q ${qemu_symlink} $proot_args"
+        backend_args="-q ${qemu_symlink} $backend_args"
     fi
-    shift
-    _run_env_with_proot "$proot_args" "${@}"
+
+    _run_env_with_proot "$backend_args" "${@}"
 }
 
 #######################################
@@ -63,9 +69,10 @@ function run_env_as_proot_fakeroot(){
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
     check_nested_env
 
-    local backend_args="$1"
-    local no_copy_files="$2"
-    shift 2
+    local backend_command="$1"
+    local backend_args="$2"
+    local no_copy_files="$3"
+    shift 3
 
     if ! $no_copy_files
     then
@@ -78,7 +85,7 @@ function run_env_as_proot_fakeroot(){
 
     # An alternative is via -S option:
     #_run_env_with_qemu "-S ${JUNEST_HOME} $1" "${@:2}"
-    _run_env_with_qemu "-0 ${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
+    _run_env_with_qemu "$backend_command" "-0 ${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
 }
 
 #######################################
@@ -104,9 +111,10 @@ function run_env_as_proot_user(){
         die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
     check_nested_env
 
-    local backend_args="$1"
-    local no_copy_files="$2"
-    shift 2
+    local backend_command="$1"
+    local backend_args="$2"
+    local no_copy_files="$3"
+    shift 3
 
     if ! $no_copy_files
     then
@@ -127,5 +135,5 @@ function run_env_as_proot_user(){
     local bindings=${RESULT}
     unset RESULT
 
-    _run_env_with_qemu "${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
+    _run_env_with_qemu "$backend_command" "${bindings} -r ${JUNEST_HOME} $backend_args" "$@"
 }

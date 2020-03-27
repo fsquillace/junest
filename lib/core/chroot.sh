@@ -58,15 +58,18 @@ function _run_env_as_xroot(){
 function run_env_as_groot(){
     check_nested_env
 
-    local backend_args="$1"
-    local no_copy_files="$2"
-    shift 2
+    local backend_command="$1"
+    local backend_args="$2"
+    local no_copy_files="$3"
+    shift 3
+
+    [[ -z "$backend_command" ]] && backend_command="$GROOT"
 
     provide_common_bindings
     local bindings=${RESULT}
     unset RESULT
 
-    _run_env_as_xroot "$GROOT $bindings" "$backend_args" "$no_copy_files" "$@"
+    _run_env_as_xroot "$backend_command $bindings" "$backend_args" "$no_copy_files" "$@"
 }
 
 #######################################
@@ -92,9 +95,12 @@ function run_env_as_groot(){
 function run_env_as_chroot(){
     check_nested_env
 
-    local backend_args="$1"
-    local no_copy_files="$2"
-    shift 2
+    local backend_command="$1"
+    local backend_args="$2"
+    local no_copy_files="$3"
+    shift 3
 
-    _run_env_as_xroot chroot_cmd "$backend_args" "$no_copy_files" "$@"
+    [[ -z "$backend_command" ]] && backend_command=chroot_cmd
+
+    _run_env_as_xroot "$backend_command" "$backend_args" "$no_copy_files" "$@"
 }
