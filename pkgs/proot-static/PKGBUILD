@@ -29,10 +29,19 @@ PROOT_LINK=${MAIN_REPO}/proot
 
 source_x86_64=("${_pkgname}"::"$PROOT_LINK/proot-x86_64")
 source_i686=("${_pkgname}"::"$PROOT_LINK/proot-x86")
+
 source_arm=("${_pkgname}"::"$PROOT_LINK/proot-arm")
+source_armv6h=("${_pkgname}"::"$PROOT_LINK/proot-arm")
+source_armv7h=("${_pkgname}"::"$PROOT_LINK/proot-arm")
+source_aarch64=("${_pkgname}"::"$PROOT_LINK/proot-arm")
+
 md5sums_x86_64=('14080705dd45a6bafa20e909a68072cb')
 md5sums_i686=('b1c08236b56d121e04e9e29b197d0eeb')
+
 md5sums_arm=('8218c5f00e77e2e6e04c372ced27c7e7')
+md5sums_armv6h=('8218c5f00e77e2e6e04c372ced27c7e7')
+md5sums_armv7h=('8218c5f00e77e2e6e04c372ced27c7e7')
+md5sums_aarch64=('8218c5f00e77e2e6e04c372ced27c7e7')
 
 package() {
     echo "Installing proot static binaries"
