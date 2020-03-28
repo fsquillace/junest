@@ -67,7 +67,7 @@ ORIGIN_WD=$(pwd)
 SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
-PROOT="${JUNEST_HOME}/usr/bin/proot"
+PROOT="${JUNEST_HOME}/usr/bin/proot-${ARCH}"
 GROOT="${JUNEST_HOME}/usr/bin/groot"
 CLASSIC_CHROOT=chroot
 WGET="wget --no-check-certificate"
