@@ -43,7 +43,7 @@ function _run_env_with_qemu(){
         backend_args="-q ${qemu_symlink} $backend_args"
     fi
 
-    _run_env_with_proot "$backend_args" "${@}"
+    _run_env_with_proot "${backend_command}" "$backend_args" "${@}"
 }
 
 #######################################

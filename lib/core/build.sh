@@ -87,14 +87,14 @@ function build_image_env(){
     sudo pacman --noconfirm --root ${maindir}/root -S sed gzip
     sudo ln -sf /usr/share/zoneinfo/posix/UTC ${maindir}/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
-    sudo ${JUNEST_BASE}/bin/groot ${maindir}/root locale-gen
+    sudo ${maindir}/root/bin/groot ${maindir}/root locale-gen
     sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
     sudo pacman --noconfirm --root ${maindir}/root -Rsn gzip
 
     info "Setting up the pacman keyring (this might take a while!)..."
     # gawk command is required for pacman-key
     sudo pacman --noconfirm --root ${maindir}/root -S gawk
-    sudo ${JUNEST_BASE}/bin/groot -b /dev ${maindir}/root bash -c '
+    sudo ${maindir}/root/bin/groot -b /dev ${maindir}/root bash -c '
     pacman-key --init;
     for keyring_file in /usr/share/pacman/keyrings/*.gpg;
     do
