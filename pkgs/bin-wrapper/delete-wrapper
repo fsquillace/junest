@@ -1,0 +1,4 @@
+#!/usr/bin/bash
+while read input; do
+	[[ -n "$input" ]] && /usr/bin/rm -f /wrappers/$(/usr/bin/basename "$input")
+done

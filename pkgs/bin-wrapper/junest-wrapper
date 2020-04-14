@@ -1,0 +1,2 @@
+#!/bin/bash
+exec junest ns -n -b "$JUNEST_BINDS" -- /usr/bin/$(/usr/bin/basename $0) $@
