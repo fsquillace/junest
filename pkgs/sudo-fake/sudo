@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+for opt in "$@"
+do
+	case "$1" in
+		--) shift ; break ;;
+		-*) shift ;;
+		*) break ;;
+	esac
+done
+
+[[ -z "${@}" ]] || fakechroot fakeroot "${@}"
+
