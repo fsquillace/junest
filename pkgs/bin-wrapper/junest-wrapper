@@ -1,2 +1,6 @@
 #!/bin/bash
-exec junest ns -n -b "$JUNEST_BINDS" -- /usr/bin/$(/usr/bin/basename $0) $(printf " %q" "$@")
+
+declare args
+[[ $@ ]] && args=$(printf " %q" "$@")
+
+exec junest ns -n -b "$JUNEST_BINDS" -- /usr/bin/$(/usr/bin/basename $0) $args
