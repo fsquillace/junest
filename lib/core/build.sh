@@ -17,7 +17,7 @@ function _install_pkg_from_aur(){
     $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}"
     [ -z "${installname}" ] || $CURL "https://aur.archlinux.org/cgit/aur.git/plain/${installname}?h=${pkgname}"
     makepkg -sfcd
-    sudo pacman --noconfirm --root ${maindir}/root -U ${pkgname}*.pkg.tar.xz
+    sudo pacman --noconfirm --root ${maindir}/root -U ${pkgname}*.pkg.tar.*
 }
 
 function _install_pkg(){
@@ -29,7 +29,7 @@ function _install_pkg(){
     builtin cd ${working_dir}
     makepkg -sfcd
     makepkg --printsrcinfo > ${pkgbuilddir}/.SRCINFO
-    sudo pacman --noconfirm --root ${maindir}/root -U *.pkg.tar.xz
+    sudo pacman --noconfirm --root ${maindir}/root -U *.pkg.tar.*
 }
 
 function _prepare() {
