@@ -24,7 +24,8 @@ script:
   - ${PWD}/lib/checks/check_all.sh
   - yes | junest setup --delete
 
-  - export JUNEST_HOME=~/.junest-arm
-  - junest proot --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
-  - junest proot -- ${PWD}/lib/checks/check.sh --skip-aur-tests --use-sudo
-  - yes | junest setup --delete
+  # ARM with qemu does seem to work properly. Disabling integ tests for ARM for now.
+  #- export JUNEST_HOME=~/.junest-arm
+  #- junest proot --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
+  #- junest proot -- ${PWD}/lib/checks/check.sh --skip-aur-tests --use-sudo
+  #- yes | junest setup --delete
