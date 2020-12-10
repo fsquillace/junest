@@ -269,7 +269,13 @@ armv7l
 ```
 
 ## Bind directories ##
-To bind a host directory to a guest location, you can use proot arguments:
+To bind a host directory to a guest location:
+
+```sh
+junest -b "--bind /home/user/mydata /mnt/mydata"
+```
+
+Or using proot arguments:
 
 ```sh
 junest proot -b "-b /mnt/mydata:/home/user/mydata"
