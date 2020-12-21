@@ -1,31 +1,78 @@
-language: bash
-
 sudo: required
+os: linux
 
-env:
-  - TRAVIS_BASH_VERSION="4.0"
+cache:
+  directories:
+  - ~/.ccache
+  - ~/.pkg-cache
 
-before_install:
-  - ./tests/integ-tests/install-bash.sh "$TRAVIS_BASH_VERSION"
+services:
+- docker
 
-install:
-  - PATH=$PWD/bin:$PATH
-  - junest setup
-  - junest -- echo "Installing JuNest (\$(uname -m))"
-  - JUNEST_HOME=~/.junest-arm junest setup --arch arm
-  - JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- echo "Installing JuNest (\$(uname -m))"
+archlinux:
+  mount:
+  - ~/.ccache:~/.ccache
+  - ~/.pkg-cache:/var/cache/pacman/pkg
+  repos:
+  - bartus=https://github.com/bartoszek/AUR-repo/raw/master
+  packages:
+  # pacman packages
+  - git
+  - ccache
+  - haveged
+  - aws-cli
+
+  before_install:
+# 1.Override `package-cleanup.hook` to preserve cache for travis.
+# 2.Enable ccache
+# 3.Multithreaded build and compress
+# 4.Suppress all gcc warnings
+  - |
+     sudo mkdir /etc/pacman.d/hooks/
+     sudo ln -s /dev/null /etc/pacman.d/hooks/package-cleanup.hook
+     sudo sed -i '/^BUILDENV/s/\!ccache/ccache/' /etc/makepkg.conf
+     sudo sed -i '/#MAKEFLAGS=/c MAKEFLAGS="-j2"' /etc/makepkg.conf
+     sudo sed -i '/^COMPRESSXZ/s/\xz/xz -T 2/' /etc/makepkg.conf
+     sudo sed -i '$a   CFLAGS="$CFLAGS -w"'   /etc/makepkg.conf
+     sudo sed -i '$a CXXFLAGS="$CXXFLAGS -w"' /etc/makepkg.conf
+  # TODO this is not used
+  script:
+  - "./bin/junest build -n"
 
 script:
-  - bash --version
-  - bash ./tests/checkstyle/checkstyle.sh
-  - bash ./tests/unit-tests/unit-tests.sh
+- "curl -s https://raw.githubusercontent.com/bartoszek/arch-travis/master/arch-travis.sh | bash"
+- "echo pacman pkg cache size: $(du -h ~/.pkg-cache|cut -f1) in $(ls ~/.pkg-cache|wc -l) files"
 
-  - export JUNEST_HOME=~/.junest
-  - ${PWD}/lib/checks/check_all.sh
-  - yes | junest setup --delete
 
-  # ARM with qemu does seem to work properly. Disabling integ tests for ARM for now.
-  #- export JUNEST_HOME=~/.junest-arm
-  #- junest proot --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
-  #- junest proot -- ${PWD}/lib/checks/check.sh --skip-aur-tests --use-sudo
+
+#language: bash
+
+#sudo: required
+
+#env:
+  #- TRAVIS_BASH_VERSION="4.0"
+
+#before_install:
+  #- ./tests/integ-tests/install-bash.sh "$TRAVIS_BASH_VERSION"
+
+#install:
+  #- PATH=$PWD/bin:$PATH
+  #- junest setup
+  #- junest -- echo "Installing JuNest (\$(uname -m))"
+  #- JUNEST_HOME=~/.junest-arm junest setup --arch arm
+  #- JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- echo "Installing JuNest (\$(uname -m))"
+
+#script:
+  #- bash --version
+  #- bash ./tests/checkstyle/checkstyle.sh
+  #- bash ./tests/unit-tests/unit-tests.sh
+
+  #- export JUNEST_HOME=~/.junest
+  #- ${PWD}/lib/checks/check_all.sh
   #- yes | junest setup --delete
+
+  ## ARM with qemu does seem to work properly. Disabling integ tests for ARM for now.
+  ##- export JUNEST_HOME=~/.junest-arm
+  ##- junest proot --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
+  ##- junest proot -- ${PWD}/lib/checks/check.sh --skip-aur-tests --use-sudo
+  ##- yes | junest setup --delete
