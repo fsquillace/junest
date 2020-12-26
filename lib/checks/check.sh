@@ -80,7 +80,11 @@ $SUDO pacman $PACMAN_OPTIONS -Rsn ${repo_package1}
 repo_package2=iftop
 info "Checking ${repo_package2} package from official repo..."
 $SUDO pacman $PACMAN_OPTIONS -S ${repo_package2}
-$RUN_ROOT_TESTS && $SUDO iftop -t -s 5
+if $RUN_ROOT_TESTS
+then
+    # Time it out given that sometimes it gets stuck after few seconds.
+    $SUDO timeout 10 iftop -t -s 5 || true
+fi
 $SUDO pacman $PACMAN_OPTIONS -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
