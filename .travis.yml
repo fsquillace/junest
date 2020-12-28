@@ -15,7 +15,6 @@ archlinux:
   - ~/.pkg-cache:/var/cache/pacman/pkg
   packages:
   # Pacman packages
-  - aws-cli
   - ccache
   - git
   - haveged
@@ -34,14 +33,23 @@ archlinux:
      sudo sed -i '$a   CFLAGS="$CFLAGS -w"'   /etc/makepkg.conf
      sudo sed -i '$a CXXFLAGS="$CXXFLAGS -w"' /etc/makepkg.conf
   script:
+  # Here do not make any validation (-n) because it will be done later on in the Ubuntu host directly
   - ./bin/junest build -n
 
 
 env:
+  matrix:
   - TRAVIS_BASH_VERSION="4.0"
+  global:
+    # AWS_ACCESS_KEY_ID
+    - secure: "ZotyKKWH5ZrBXDdEnVmV22gbn86BBSiqDZn2d2jVAApgUQdDc3wa7/uYAZP1bts6oQ897nnkUSFHk3M3QAcIoPJerUITTU5D7yjKcFDejgHdpJ4t9XSajmpY9CgKftWapwliWG4wolAKwyAp5GnYqz4GGltHyGxbF/VzUNRF3lw="
+    # AWS_SECRET_ACCESS_KEY
+    - secure: "AWixvJmhr6+rfF4cspMWMjkvLuOsdfNanLK5wrqkgx/0ezDGBBThH0qVhn5Mp1QFM6wVF+LRA6UESNnj0wNwByZHdM6LddkJWlWHb/qkVK+AO4RKUsXJWNyPyOkCNj/WEFpZHQKKUAlEtC8m8AmAcuoi90cr6ih0PXIePRyPFrM="
 
 before_install:
-  - ./tests/integ-tests/install-bash.sh "$TRAVIS_BASH_VERSION"
+  - ./ci/install-bash.sh "$TRAVIS_BASH_VERSION"
+  - sudo apt-get update
+  - sudo apt-get -y install awscli
 
 install:
   - PATH=$PWD/bin:$PATH
@@ -56,28 +64,27 @@ script:
 
   # ARM with qemu does seem to work properly. Disabling integ tests for ARM for now.
   #- export JUNEST_HOME=~/.junest-arm
+  #- junest setup --arch arm
+  #- junest proot --fakeroot -- echo "Installing JuNest (\$(uname -m))"
   #- junest proot --fakeroot -- ${PWD}/lib/checks/check.sh --skip-aur-tests
   #- junest proot -- ${PWD}/lib/checks/check.sh --skip-aur-tests --use-sudo
   #- yes | junest setup --delete
 
   #######################
-  # Build and validation tests
+  # Build and validation
   #######################
   - "curl -s https://raw.githubusercontent.com/bartoszek/arch-travis/master/arch-travis.sh | bash"
   - "echo pacman pkg cache size: $(du -h ~/.pkg-cache|cut -f1) in $(ls ~/.pkg-cache|wc -l) files"
   - ls -l
-  - pwd
-
-  # TODO Test the new created JuNest image against Ubuntu host
-  #- junest setup
-  #- junest -- echo "Installing JuNest (\$(uname -m))"
-  #- JUNEST_HOME=~/.junest-arm junest setup --arch arm
-  #- JUNEST_HOME=~/.junest-arm junest proot --fakeroot -- echo "Installing JuNest (\$(uname -m))"
+  # Test the newly created JuNest image against Ubuntu host
   - export JUNEST_HOME=~/.junest
   - junest setup -i junest-x86_64.tar.gz
   - ${PWD}/lib/checks/check_all.sh
   - yes | junest setup --delete
 
-  # TODO test deployed image can be downloaded correctly
 
-
+after_success:
+  #######################
+  # Deploy and validation
+  #######################
+  - ./ci/deploy.sh ${PWD}/junest-x86_64.tar.gz

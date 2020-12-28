@@ -9,7 +9,7 @@
 #
 # vim: ft=sh
 
-set -e
+set -ex
 
 
 RUN_ROOT_TESTS=false
