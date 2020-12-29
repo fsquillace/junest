@@ -11,6 +11,7 @@ function cwdTearDown(){
 
 function junestSetUp(){
     JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t junest-home.XXXXXXXXXX)
+    mkdir -p ${JUNEST_HOME}/usr/bin
     mkdir -p ${JUNEST_HOME}/etc/junest
     echo "JUNEST_ARCH=x86_64" > ${JUNEST_HOME}/etc/junest/info
     mkdir -p ${JUNEST_HOME}/etc/ca-certificates
