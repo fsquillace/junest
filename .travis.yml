@@ -87,4 +87,4 @@ after_success:
   #######################
   # Deploy and validation
   #######################
-  - ./ci/deploy.sh ${PWD}/junest-x86_64.tar.gz
+  - ./ci/deploy.sh ./junest-x86_64.tar.gz

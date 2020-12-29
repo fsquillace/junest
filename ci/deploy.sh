@@ -4,7 +4,7 @@ set -e
 
 IMG_PATH=$1
 
-set -u
+set -ux
 
 MAX_OLD_IMAGES=30
 
@@ -24,21 +24,22 @@ else
     exit 11
 fi
 
-if [[ "$TRAVIS_BRANCH" == "master" ]]
+if [[ "$TRAVIS_BRANCH" == "deploy" ]]
 then
 
     export AWS_DEFAULT_REGION=eu-west-1
     # Upload image
     # The put is done via a temporary filename in order to prevent outage on the
     # production file for a longer period of time.
+    img_name=$(basename ${IMG_PATH})
     cp ${IMG_PATH} ${IMG_PATH}.temp
     aws s3 cp ${IMG_PATH}.temp s3://junest-repo/junest/
-    aws s3 mv s3://junest-repo/junest/${IMG_PATH}.temp s3://junest-repo/junest/${IMG_PATH}
-    aws s3api put-object-acl --acl public-read --bucket junest-repo --key junest/${IMG_PATH}
+    aws s3 mv s3://junest-repo/junest/$img_name.temp s3://junest-repo/junest/$img_name
+    aws s3api put-object-acl --acl public-read --bucket junest-repo --key junest/$img_name
 
     DATE=$(date +'%Y-%m-%d-%H-%M-%S')
 
-    aws s3 cp ${IMG_PATH} s3://junest-repo/junest/${IMG_PATH}.${DATE}
+    aws s3 cp s3://junest-repo/junest/$img_name s3://junest-repo/junest/${img_name}.${DATE}
 
     # Cleanup old images
     aws s3 ls s3://junest-repo/junest/junest-${ARCH}.tar.gz. | awk '{print $4}' | head -n -${MAX_OLD_IMAGES} | xargs -I {} s3 rm "s3://junest-repo/junest/{}"
