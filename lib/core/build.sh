@@ -80,6 +80,7 @@ function build_image_env(){
     sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
     sudo bash -c "echo 'JUNEST_ARCH=$ARCH' > ${maindir}/root/etc/${CMD}/info"
 
+    set -x
     info "Generating the locales..."
     # sed command is required for locale-gen but it is required by fakeroot
     # and cannot be removed
@@ -94,7 +95,7 @@ function build_image_env(){
     info "Setting up the pacman keyring (this might take a while!)..."
     # gawk command is required for pacman-key
     sudo pacman --noconfirm --root ${maindir}/root -S gawk
-    sudo ${maindir}/root/bin/groot -b /dev ${maindir}/root bash -c '
+    sudo ${maindir}/root/bin/groot --no-umount --avoid-bind -b /dev ${maindir}/root bash -c '
     pacman-key --init;
     for keyring_file in /usr/share/pacman/keyrings/*.gpg;
     do
@@ -102,6 +103,8 @@ function build_image_env(){
         pacman-key --populate $keyring;
     done;
     [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye'
+    sudo umount --force --recursive --lazy ${maindir}/root/dev
+    sudo umount --force --recursive ${maindir}/root
     sudo pacman --noconfirm --root ${maindir}/root -Rsn gawk
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*

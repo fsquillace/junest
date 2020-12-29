@@ -9,7 +9,7 @@
 #
 # vim: ft=sh
 
-set -e
+set -ex
 
 
 RUN_ROOT_TESTS=false
@@ -80,7 +80,11 @@ $SUDO pacman $PACMAN_OPTIONS -Rsn ${repo_package1}
 repo_package2=iftop
 info "Checking ${repo_package2} package from official repo..."
 $SUDO pacman $PACMAN_OPTIONS -S ${repo_package2}
-$RUN_ROOT_TESTS && $SUDO iftop -t -s 5
+if $RUN_ROOT_TESTS
+then
+    # Time it out given that sometimes it gets stuck after few seconds.
+    $SUDO timeout 10 iftop -t -s 5 || true
+fi
 $SUDO pacman $PACMAN_OPTIONS -Rsn ${repo_package2}
 
 if ! $SKIP_AUR_TESTS
@@ -89,14 +93,6 @@ then
     info "Checking ${aur_package} package from AUR repo..."
     yay --noconfirm -S ${aur_package}
     $SUDO pacman $PACMAN_OPTIONS -Rsn ${aur_package}
-fi
-
-# The following ensures that the gpg agent gets killed (if exists)
-# otherwise it is not possible to exit from the session
-if [[ -e /etc/pacman.d/gnupg/S.gpg-agent ]]
-then
-    gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye || echo "GPG agent did not close properly"
-    echo "GPG agent closed"
 fi
 
 exit 0

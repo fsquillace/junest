@@ -29,7 +29,7 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 Description
 ===========
 **JuNest** (Jailed User NEST) is a lightweight Arch Linux based distribution
-that allows to have disposable and isolated GNU/Linux environments
+that allows to have disposable and partial isolated GNU/Linux environments
 within any generic GNU/Linux host OS
 and without the need to have root privileges for installing packages.
 
@@ -41,7 +41,7 @@ The main advantages on using JuNest are:
 
 - Install packages without root privileges.
 - Partial isolated environment which you can install packages without affecting a production system.
-- Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
+- Access to a wide range of packages, in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
 - Available for `x86_64` and `arm` architectures but you can build your own image from scratch too!
 - Run on a different architecture from the host OS via QEMU
 - All Arch Linux lovers can have their favourite distro everywhere!
@@ -57,7 +57,7 @@ build a complete isolated environment but, conversely, is the ability to run
 programs as they were running natively from the host OS. Almost everything is shared
 between host OS and the JuNest sandbox (kernel, process subtree, network, mounting, etc)
 and only the root filesystem gets isolated
-(as the programs installed in JuNest need to reside elsewhere).
+(since the programs installed in JuNest need to reside elsewhere).
 
 This allows interaction between processes belonging to both host OS and JuNest.
 For instance, you can install `top` command in JuNest in order to monitor
@@ -107,6 +107,27 @@ There are multiple backend programs, each with its own pros/cons.
 To know more about the JuNest execution modes depending on the backend program
 used, see the [Usage](#usage) section below.
 
+Run commands installed in JuNest directly from host
+---------------------------------------
+
+Installed programs can be accessible directly from host.
+For instance, supposing the host OS is an Ubuntu distro you can directly
+run `pacman` by simply updating the `PATH` variable:
+
+```sh
+export PATH="$PATH:~/.junest/usr/bin_wrappers"
+pacman -S htop
+htop
+```
+
+By default the wrappers use `"ns --fakeroot"` but you can change it via `JUNEST_ARGS`.
+For instance, if you want to run `iftop` with real root privileges:
+
+```
+pacman -S iftop
+sudo JUNEST_ARGS="groot" iftop
+```
+
 
 Have fun!
 ---------
@@ -149,12 +170,22 @@ section below.
 ## Installation from git repository ##
 Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 
-    git clone git://github.com/fsquillace/junest ~/.local/share/junest
-    export PATH=~/.local/share/junest/bin:$PATH
+```sh
+git clone git://github.com/fsquillace/junest ~/.local/share/junest
+export PATH=~/.local/share/junest/bin:$PATH
+```
+
+Optionally you want to use the wrappers to run commands
+installed in JuNest directly from host:
+
+```sh
+export PATH="$PATH:~/.junest/usr/bin_wrappers"
+```
+Update your `~/.bashrc` or `~/.zshrc` to get always the wrappers available.
 
 ### Installation using AUR (Arch Linux only) ###
 If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/packages/junest-git/).
-After installing junest will be located in `/opt/junest/`
+JuNest will be located in `/opt/junest/`
 
 Usage
 =====
@@ -189,7 +220,8 @@ This mode is based on the fantastic
 PRoot based
 -----------
 [Proot](https://wiki.archlinux.org/index.php/Proot) represents a portable
-solution that works well in most of GNU/Linux distros available.
+solution which allows unprivileged users to execute programs inside a sandbox
+and works well in most of GNU/Linux distros available.
 One of the major drawbacks is the fact that Proot is not officially
 supported anymore, therefore, Proot bugs may no longer be fixed.
 
@@ -203,7 +235,9 @@ Chroot based
 ------------
 This solution suits only for privileged users. JuNest provides the possibility
 to run the environment via `chroot` program.
-In particular, it uses a special program called `GRoot`, an enhanced `chroot`
+In particular, it uses a special program called `GRoot`, a small and portable
+version of
+[arch-chroot](https://wiki.archlinux.org/index.php/Chroot)
 wrapper, that allows to bind mount directories specified by the user, such as
 `/proc`, `/sys`, `/dev`, `/tmp` and `$HOME`, before
 executing any programs inside the JuNest sandbox. In case the mounting will not
@@ -281,7 +315,7 @@ Or using proot arguments:
 junest proot -b "-b /mnt/mydata:/home/user/mydata"
 ```
 
-The option `-b` to provide options to the backeng program will work with PRoot, Namespace and GRoot backend programs.
+The option `-b` to provide options to the backend program will work with PRoot, Namespace and GRoot backend programs.
 Check out the backend program options by passing `--help` option:
 
 ```sh
@@ -309,21 +343,6 @@ Related wiki page:
 
 Internals
 =========
-
-There are two main chroot jail used in JuNest.
-The main one is [proot](https://wiki.archlinux.org/index.php/Proot) which
-allows unprivileged users to execute programs inside a sandbox and
-GRoot, a small and portable version of
-[arch-chroot](https://wiki.archlinux.org/index.php/Chroot) which is an
-enhanced chroot for privileged users that mounts the primary directories
-(i.e. `/proc`, `/sys`, `/dev` and `/run`) before executing any programs inside
-the sandbox.
-
-## Automatic fallback to classic chroot ##
-If GRoot fails for some reasons in the host system (i.e. it is not able to
-mount one of the directories),
-JuNest automatically tries to fallback to the classic chroot.
-
 ## Automatic fallback for all the dependent host OS executables ##
 JuNest attempts first to run the executables in the host OS located in different
 positions (`/usr/bin`, `/bin`, `/usr/sbin` and `/sbin`).
@@ -331,10 +350,10 @@ As a fallback it tries to run the same executable if it is available in the JuNe
 environment.
 
 ## Automatic building of the JuNest images ##
-There is not periodic automation build of the JuNest images yet.
-This was due to the difficulty to automate builds for arm architecture.
-The JuNest image for the `x86_64` is built periodically every once every three
-months.
+There is a periodic automation build of the JuNest images for `x86_64` arch
+only.
+The JuNest image for `arm` architecture may not be always up to date because
+the build is performed manually.
 
 ## Static QEMU binaries ##
 There are static QEMU binaries included in JuNest image that allows to run JuNest
