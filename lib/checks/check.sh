@@ -95,12 +95,4 @@ then
     $SUDO pacman $PACMAN_OPTIONS -Rsn ${aur_package}
 fi
 
-# The following ensures that the gpg agent gets killed (if exists)
-# otherwise it is not possible to exit from the session
-if [[ -e /etc/pacman.d/gnupg/S.gpg-agent ]]
-then
-    gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye || echo "GPG agent did not close properly"
-    echo "GPG agent closed"
-fi
-
 exit 0
