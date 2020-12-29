@@ -17,6 +17,7 @@ source "${JUNEST_BASE}/lib/core/setup.sh"
 source "${JUNEST_BASE}/lib/core/chroot.sh"
 source "${JUNEST_BASE}/lib/core/namespace.sh"
 source "${JUNEST_BASE}/lib/core/proot.sh"
+source "${JUNEST_BASE}/lib/core/wrappers.sh"
 
 
 ###################################
@@ -67,6 +68,12 @@ usage() {
     echo -e "  b[uild]                                  Build a $NAME image (must run in ArchLinux)"
     echo -e "            -n, --disable-check            Disable the $NAME image check"
     echo
+    echo -e "  c[reate-wrappers]                        Create wrappers in ${JUNEST_HOME}/usr/bin_wrappers of the executables under"
+    echo -e "                                           ${JUNEST_HOME}/usr/bin to be run directly from the host."
+    echo -e "                                           Use the variable JUNEST_ARGS to define how the wrapper will call $NAME (default "ns --fakeroot")."
+    echo -e "                                           Use PATH variable to point directly to the bin_wrappers directory from the host."
+    echo -e "            -r, --recreate-existing        Instead of skipping existing wrappers recreate them"
+    echo
 }
 
 version() {
@@ -80,6 +87,7 @@ function parse_arguments(){
     ACT_NAMESPACE=false
     ACT_PROOT=false
     ACT_GROOT=false
+    ACT_WRAPPERS=false
     ACT_ROOT=false
     ACT_HELP=false
     ACT_VERSION=false
@@ -91,6 +99,7 @@ function parse_arguments(){
         p|proot) ACT_PROOT=true ; shift ;;
         g|groot) ACT_GROOT=true ; shift ;;
         r|root) ACT_ROOT=true ; shift ;;
+        c|create-wrappers) ACT_WRAPPERS=true ; shift ;;
         -h|--help) ACT_HELP=true ; shift ;;
         -V|--version) ACT_VERSION=true ; shift ;;
         *) ACT_NAMESPACE=true ;;
@@ -114,7 +123,31 @@ function parse_arguments(){
     elif $ACT_ROOT
     then
         _parse_root_opts "$@"
+    elif $ACT_WRAPPERS
+    then
+        _parse_wrappers_opts "$@"
     fi
+}
+
+function _parse_wrappers_opts() {
+    # Options:
+    OPT_RECREATE_EXISTING=false
+
+    while [[ -n "$1" ]]
+    do
+        case "$1" in
+            -r|--recreate-existing) OPT_RECREATE_EXISTING=true ; shift ;;
+            --) shift ; break ;;
+            -*) die "Invalid option $1" ;;
+            *) break ;;
+        esac
+    done
+
+    ARGS=()
+    for arg in "$@"
+    do
+        ARGS+=("$arg")
+    done
 }
 
 function _parse_root_opts() {
@@ -247,6 +280,7 @@ function execute_operation() {
             else
                 setup_env $ARCH_ARG
             fi
+            create_wrappers false
         fi
 
         return
@@ -256,6 +290,11 @@ function execute_operation() {
     if ! is_env_installed
     then
         die "Error: The image is still not installed in $JUNEST_HOME. Run this first: $CMD setup"
+    fi
+
+    if $ACT_WRAPPERS; then
+        create_wrappers $OPT_RECREATE_EXISTING
+        return
     fi
 
     local run_env
@@ -279,6 +318,10 @@ function execute_operation() {
 
     $run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
 
+	# TODO use the run_env exit status
+
+    # Call create_wrappers in case new bin files have been created
+    create_wrappers false
 }
 
 function main() {
