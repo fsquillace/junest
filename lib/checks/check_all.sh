@@ -16,3 +16,6 @@ $JUNEST_SCRIPT proot -- "$CHECK_SCRIPT" --skip-aur-tests --use-sudo
 $JUNEST_SCRIPT ns --fakeroot -- "$CHECK_SCRIPT" --skip-aur-tests
 $JUNEST_SCRIPT ns -- "$CHECK_SCRIPT" --use-sudo
 sudo -E $JUNEST_SCRIPT groot -- "$CHECK_SCRIPT" --run-root-tests --skip-aur-tests
+
+# Test the wrappers work
+$JUNEST_HOME/usr/bin_wrappers/pacman --help
