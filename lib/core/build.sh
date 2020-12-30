@@ -21,6 +21,8 @@ function _install_pkg_from_aur(){
 }
 
 function _install_pkg(){
+    # This function allows to install packages from AUR.
+    # At the moment is not used.
     local maindir=$1
     local pkgbuilddir=$2
     # Generate a working directory because sources will be downloaded to there
@@ -40,6 +42,7 @@ function _prepare() {
 }
 
 function build_image_env(){
+    set -x
     umask 022
 
     # The function must runs on ArchLinux with non-root privileges.
@@ -67,10 +70,13 @@ function build_image_env(){
     fi
     sudo mkdir -p ${maindir}/root/run/lock
 
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/proot-static"
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/qemu-static"
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/groot-git"
+    sudo tee -a ${maindir}/root/etc/pacman.conf > /dev/null <<EOT
+
+[junest]
+SigLevel = Optional TrustedOnly
+Server = https://raw.githubusercontent.com/fsquillace/junest-repo/master/any
+EOT
+    sudo pacman --noconfirm --config ${maindir}/root/etc/pacman.conf --root ${maindir}/root -Sy sudo-fake groot-git proot-static qemu-static
 
     info "Installing yay..."
     sudo pacman --noconfirm -S go
@@ -80,7 +86,6 @@ function build_image_env(){
     sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
     sudo bash -c "echo 'JUNEST_ARCH=$ARCH' > ${maindir}/root/etc/${CMD}/info"
 
-    set -x
     info "Generating the locales..."
     # sed command is required for locale-gen but it is required by fakeroot
     # and cannot be removed
@@ -130,4 +135,6 @@ function build_image_env(){
     builtin cd ${ORIGIN_WD}
     trap - QUIT EXIT ABRT KILL TERM INT
     sudo rm -fr "$maindir"
+
+    set +x
 }
