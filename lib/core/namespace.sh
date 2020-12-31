@@ -106,7 +106,7 @@ function run_env_as_bwrap_fakeroot(){
         copy_common_files
     fi
 
-    _run_env_with_bwrap "$backend_command" "--uid 0 $backend_args" "$@"
+    _run_env_with_bwrap "$backend_command" "--uid 0 --gid 0 $backend_args" "$@"
 }
 
 
