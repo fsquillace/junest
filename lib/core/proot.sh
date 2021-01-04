@@ -9,18 +9,14 @@
 # vim: ft=sh
 
 function _run_env_with_proot(){
-    local backend_command="$1"
+    local backend_command="${1:-proot_cmd}"
     local backend_args="$2"
     shift 2
 
-    [[ -z "$backend_command" ]] && backend_command=proot_cmd
+    local args=()
+    [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    if [ "$1" != "" ]
-    then
-        JUNEST_ENV=1 "${backend_command}" "${backend_args}" "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
-    else
-        JUNEST_ENV=1 "${backend_command}" "${backend_args}" "${SH[@]}"
-    fi
+    JUNEST_ENV=1 "${backend_command}" "${backend_args}" "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 function _run_env_with_qemu(){
@@ -52,13 +48,13 @@ function _run_env_with_qemu(){
 # Globals:
 #   JUNEST_HOME (RO)          : The JuNest home directory.
 #   EUID (RO)                 : The user ID.
-#   SH (RO)                   : Contains the default command to run in JuNest.
+#   DEFAULT_SH (RO)           : Contains the default command to run in JuNest.
 # Arguments:
 #   backend_args ($1)         : The arguments to pass to proot
 #   no_copy_files ($2?)      : If false it will copy some files in /etc
 #                              from host to JuNest environment.
 #   cmd ($3-?)                : The command to run inside JuNest environment.
-#                              Default command is defined by SH variable.
+#                              Default command is defined by DEFAULT_SH variable.
 # Returns:
 #   $ROOT_ACCESS_ERROR        : If the user is the real root.
 # Output:
@@ -94,13 +90,13 @@ function run_env_as_proot_fakeroot(){
 # Globals:
 #   JUNEST_HOME (RO)         : The JuNest home directory.
 #   EUID (RO)                : The user ID.
-#   SH (RO)                  : Contains the default command to run in JuNest.
+#   DEFAULT_SH (RO)          : Contains the default command to run in JuNest.
 # Arguments:
 #   backend_args ($1)        : The arguments to pass to proot
 #   no_copy_files ($2?)      : If false it will copy some files in /etc
 #                              from host to JuNest environment.
 #   cmd ($3-?)               : The command to run inside JuNest environment.
-#                              Default command is defined by SH variable.
+#                              Default command is defined by DEFAULT_SH variable.
 # Returns:
 #   $ROOT_ACCESS_ERROR       : If the user is the real root.
 # Output:

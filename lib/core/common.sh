@@ -64,7 +64,7 @@ ORIGIN_WD=$(pwd)
 # different locations in the host OS.
 
 # List of executables that are run inside JuNest:
-SH=("/bin/sh" "--login")
+DEFAULT_SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
 PROOT="${JUNEST_HOME}/usr/bin/proot-${ARCH}"
@@ -132,12 +132,12 @@ function unshare_cmd(){
     # with --user option available.
     # Hence, give priority to the `unshare` executable in JuNest image.
     # Also, unshare provides an environment in which /bin/sh maps to dash shell,
-    # therefore it ignores all the remaining SH arguments (i.e. --login) as
+    # therefore it ignores all the remaining DEFAULT_SH arguments (i.e. --login) as
     # they are not supported by dash.
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${SH[0]}" "-c" ":"
+    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
     then
         $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE "${@}"
-    elif $UNSHARE --user "${SH[0]}" "-c" ":"
+    elif $UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
     then
         $UNSHARE "$@"
     else
@@ -146,7 +146,7 @@ function unshare_cmd(){
 }
 
 function bwrap_cmd(){
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP --dev-bind / / "${SH[0]}" "-c" ":"
+    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP --dev-bind / / "${DEFAULT_SH[0]}" "-c" ":"
     then
         $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP "${@}"
     else
@@ -157,10 +157,10 @@ function bwrap_cmd(){
 function proot_cmd(){
     local proot_args="$1"
     shift
-    if ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
+    if ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
     then
         ${PROOT} ${proot_args} "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
+    elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
     then
         warn "Warn: Proot is not properly working. Disabling SECCOMP and expect the application to run slowly in particular when it uses syscalls intensively."
         warn "Try to use Linux namespace instead as it is more reliable: junest ns"

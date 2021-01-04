@@ -20,8 +20,8 @@ function _run_env_as_xroot(){
     # SUDO_USER is more reliable compared to SUDO_UID
     [ -z $SUDO_USER ] || uid=$SUDO_USER:$SUDO_GID
 
-    local main_cmd="${SH[@]}"
-    [ "$1" != "" ] && main_cmd="$(insert_quotes_on_spaces "$@")"
+    local args=()
+    [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
     # With chown the ownership of the files is assigned to the real user
     trap - QUIT EXIT ABRT KILL TERM INT
@@ -32,7 +32,7 @@ function _run_env_as_xroot(){
         copy_common_files
     fi
 
-    JUNEST_ENV=1 $cmd $backend_args "$JUNEST_HOME" "${SH[@]}" "-c" "${main_cmd}"
+    JUNEST_ENV=1 $cmd $backend_args "$JUNEST_HOME" "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 #######################################
@@ -43,13 +43,13 @@ function _run_env_as_xroot(){
 #   UID (RO)                 : The user ID.
 #   SUDO_USER (RO)           : The sudo user ID.
 #   SUDO_GID (RO)            : The sudo group ID.
-#   SH (RO)                  : Contains the default command to run in JuNest.
+#   DEFAULT_SH (RO)          : Contains the default command to run in JuNest.
 # Arguments:
 #   backend_args ($1)        : The arguments to pass to backend program
 #   no_copy_files ($2?)      : If false it will copy some files in /etc
 #                              from host to JuNest environment.
 #   cmd ($3-?)               : The command to run inside JuNest environment.
-#                              Default command is defined by SH variable.
+#                              Default command is defined by DEFAULT_SH variable.
 # Returns:
 #   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
 # Output:
@@ -58,12 +58,10 @@ function _run_env_as_xroot(){
 function run_env_as_groot(){
     check_nested_env
 
-    local backend_command="$1"
+    local backend_command="${1:-$GROOT}"
     local backend_args="$2"
     local no_copy_files="$3"
     shift 3
-
-    [[ -z "$backend_command" ]] && backend_command="$GROOT"
 
     provide_common_bindings
     local bindings=${RESULT}
@@ -80,13 +78,13 @@ function run_env_as_groot(){
 #   UID (RO)                 : The user ID.
 #   SUDO_USER (RO)           : The sudo user ID.
 #   SUDO_GID (RO)            : The sudo group ID.
-#   SH (RO)                  : Contains the default command to run in JuNest.
+#   DEFAULT_SH (RO)          : Contains the default command to run in JuNest.
 # Arguments:
 #   backend_args ($1)        : The arguments to pass to backend program
 #   no_copy_files ($2?)      : If false it will copy some files in /etc
 #                              from host to JuNest environment.
 #   cmd ($3-?)               : The command to run inside JuNest environment.
-#                              Default command is defined by SH variable.
+#                              Default command is defined by DEFAULT_SH variable.
 # Returns:
 #   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
 # Output:
@@ -95,12 +93,10 @@ function run_env_as_groot(){
 function run_env_as_chroot(){
     check_nested_env
 
-    local backend_command="$1"
+    local backend_command="${1:-chroot_cmd}"
     local backend_args="$2"
     local no_copy_files="$3"
     shift 3
-
-    [[ -z "$backend_command" ]] && backend_command=chroot_cmd
 
     _run_env_as_xroot "$backend_command" "$backend_args" "$no_copy_files" "$@"
 }

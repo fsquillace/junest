@@ -392,18 +392,6 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 
 ## Could not change the root directory in pacman
 
-> **Q**: In ns fakeroot mode when installing package I get the following error:
-
-    could not change the root directory (Operation not permitted)
-    error: command failed to execute correctly
-
-> **A**: This is one of the last step executed in `pacman`.
-> In any case, the package will still be installed correctly even though this
-> message is showed.
-> If you use `sudo`
-> instead, the error should not appear given that the fake sudo script uses
-> `fakechroot` internally.
-
 ## No servers configured for repository ##
 
 > **Q**: Why I cannot install packages?

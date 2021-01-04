@@ -190,11 +190,7 @@ function _parse_proot_opts() {
         esac
     done
 
-    ARGS=()
-    for arg in "$@"
-    do
-        ARGS+=("$arg")
-    done
+    ARGS=("$@")
 }
 
 function _parse_build_opts() {
