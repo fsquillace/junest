@@ -10,6 +10,7 @@
 #
 # vim: ft=sh
 
+COMMON_BWRAP_OPTION="--bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --bind /sys /sys --bind /proc /proc --dev-bind-try /dev /dev --unshare-user-try"
 CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
 PROC_USERNS_CLONE_FILE="/proc/sys/kernel/unprivileged_userns_clone"
@@ -94,7 +95,7 @@ function run_env_as_bwrap_fakeroot(){
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    JUNEST_ENV=1 "$backend_command" --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
+    JUNEST_ENV=1 "$backend_command" $COMMON_BWRAP_OPTION --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 
@@ -141,7 +142,7 @@ function run_env_as_bwrap_user() {
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    JUNEST_ENV=1 "$backend_command" --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
+    JUNEST_ENV=1 "$backend_command" $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 

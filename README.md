@@ -144,6 +144,9 @@ first:
 
 ```sh
 pacman -Sy --ignore sudo base-devel
+:: sudo is in IgnorePkg/IgnoreGroup. Install anyway? [Y/n] n
+...
+...
 ```
 
 JuNest uses a modified version of `sudo`. That's why the original `sudo`
