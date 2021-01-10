@@ -81,7 +81,7 @@ The script will download the image from the repository and will place it to the 
 Access to environment
 ---------------------
 
-By default, JuNest run via the Linux namespaces (aka `ns`) as the backend program. To access via `ns` just type:
+JuNest uses the Linux namespaces (aka `ns`) as the default backend program. To access via `ns` just type:
 
 ```sh
 junest
@@ -90,8 +90,8 @@ junest
 You can use the command `sudo` to acquire fakeroot privileges and
 install/remove packages.
 
-Alternatively, you can access root privileges without using `sudo` with the
-`-f` option:
+Alternatively, you can access fakeroot privileges without using `sudo` all the
+time with the `-f` (or `--fakeroot`) option:
 
 ```sh
 junest -f
@@ -107,7 +107,7 @@ There are multiple backend programs, each with its own pros/cons.
 To know more about the JuNest execution modes depending on the backend program
 used, see the [Usage](#usage) section below.
 
-Run commands installed in JuNest directly from host
+Run JuNest installed programs directly from host OS
 ---------------------------------------
 
 Installed programs can be accessible directly from host.
@@ -120,7 +120,7 @@ pacman -S htop
 htop
 ```
 
-By default the wrappers use `"ns --fakeroot"` but you can change it via `JUNEST_ARGS`.
+By default the wrappers use `"ns --fakeroot"` but you can change it via `JUNEST_ARGS` environment variable.
 For instance, if you want to run `iftop` with real root privileges:
 
 ```
@@ -128,18 +128,14 @@ pacman -S iftop
 sudo JUNEST_ARGS="groot" iftop
 ```
 
-
-Have fun!
----------
-
-If you are new on Arch Linux and you are not familiar with `pacman` package manager
-visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
+Install packages from AUR
+-------------------------
 
 In `ns` mode, you can easily install package from [AUR](https://aur.archlinux.org/) repository
 using the already available [`yay`](https://aur.archlinux.org/packages/yay/)
 command. In `proot` mode, JuNest does no longer support the building of AUR packages.
 
-**Remember** that in order to build packages from source, `base-devel` package group is required
+**Remember** that in order to build packages from AUR, `base-devel` package group is required
 first:
 
 ```sh
@@ -150,7 +146,13 @@ pacman -Sy --ignore sudo base-devel
 ```
 
 JuNest uses a modified version of `sudo`. That's why the original `sudo`
-package has to be ignored in the previous command.
+package must be ignored in the previous command.
+
+Have fun!
+---------
+
+If you are new on Arch Linux and you are not familiar with `pacman` package manager
+visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
 
 Installation
 ============
