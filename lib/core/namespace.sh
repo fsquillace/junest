@@ -27,7 +27,9 @@ function _is_user_namespace_enabled() {
         return $NOT_EXISTING_FILE
     fi
 
-    if ! zgrep_cmd -q "CONFIG_USER_NS=y" $config_file
+    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+    # Use redirect to /dev/null instead
+    if ! zgrep_cmd "CONFIG_USER_NS=y" $config_file > /dev/null
     then
         return $NO_CONFIG_FOUND
     fi
@@ -37,7 +39,9 @@ function _is_user_namespace_enabled() {
         return 0
     fi
 
-    if ! zgrep_cmd -q "1" $PROC_USERNS_CLONE_FILE
+    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+    # Use redirect to /dev/null instead
+    if ! zgrep_cmd "1" $PROC_USERNS_CLONE_FILE > /dev/null
     then
         return $UNPRIVILEGED_USERNS_DISABLED
     fi

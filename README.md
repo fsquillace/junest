@@ -139,14 +139,14 @@ command. In `proot` mode, JuNest does no longer support the building of AUR pack
 first:
 
 ```sh
-pacman -Sy --ignore sudo base-devel
+pacman -Syu --ignore sudo base-devel
 :: sudo is in IgnorePkg/IgnoreGroup. Install anyway? [Y/n] n
 ...
 ...
 ```
 
 JuNest uses a modified version of `sudo`. That's why the original `sudo`
-package must be ignored in the previous command.
+package **must be ignored** in the previous command.
 
 Have fun!
 ---------
