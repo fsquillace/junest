@@ -19,7 +19,7 @@ function create_wrappers() {
 
 JUNEST_ARGS=\${JUNEST_ARGS:-ns --fakeroot}
 
-eval junest \${JUNEST_ARGS[@]} -- ${file} "\$@"
+eval junest \${JUNEST_ARGS} -- ${file} "\$@"
 EOF
         chmod +x ${JUNEST_HOME}/usr/bin_wrappers/${file}
     done
