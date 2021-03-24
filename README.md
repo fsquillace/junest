@@ -40,7 +40,7 @@ to a wide range of packages from the Arch Linux repositories.
 The main advantages on using JuNest are:
 
 - Install packages without root privileges.
-- Partial isolated environment which you can install packages without affecting a production system.
+- Partial isolated environment in which you can install packages without affecting a production system.
 - Access to a wide range of packages, in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
 - Available for `x86_64` and `arm` architectures but you can build your own image from scratch too!
 - Run on a different architecture from the host OS via QEMU
@@ -51,7 +51,7 @@ JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/
 How different is JuNest from Docker and Vagrant?
 ------------------------------------------------
 Although JuNest sounds similar to a virtualisation/Linux container -like system,
-JuNest differentiate a lot between Docker and Vagrant.
+JuNest is quite different from solutions like Docker or Vagrant.
 In fact, the purpose of JuNest is **not** to
 build a complete isolated environment but, conversely, is the ability to run
 programs as they were running natively from the host OS. Almost everything is shared
@@ -110,7 +110,8 @@ used, see the [Usage](#usage) section below.
 Run JuNest installed programs directly from host OS
 ---------------------------------------
 
-Installed programs can be accessible directly from host.
+Installed programs can be accessible directly from host without
+calling `junest` command.
 For instance, supposing the host OS is an Ubuntu distro you can directly
 run `pacman` by simply updating the `PATH` variable:
 
