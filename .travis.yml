@@ -45,6 +45,8 @@ env:
     - secure: "ZotyKKWH5ZrBXDdEnVmV22gbn86BBSiqDZn2d2jVAApgUQdDc3wa7/uYAZP1bts6oQ897nnkUSFHk3M3QAcIoPJerUITTU5D7yjKcFDejgHdpJ4t9XSajmpY9CgKftWapwliWG4wolAKwyAp5GnYqz4GGltHyGxbF/VzUNRF3lw="
     # AWS_SECRET_ACCESS_KEY
     - secure: "AWixvJmhr6+rfF4cspMWMjkvLuOsdfNanLK5wrqkgx/0ezDGBBThH0qVhn5Mp1QFM6wVF+LRA6UESNnj0wNwByZHdM6LddkJWlWHb/qkVK+AO4RKUsXJWNyPyOkCNj/WEFpZHQKKUAlEtC8m8AmAcuoi90cr6ih0PXIePRyPFrM="
+    # DOCKER_USERNAME
+    # DOCKER_PASSWORD
 
 before_install:
   - ./ci/install-bash.sh "$TRAVIS_BASH_VERSION"
@@ -73,7 +75,8 @@ script:
   #######################
   # Build and validation
   #######################
-  - "curl -s https://raw.githubusercontent.com/bartoszek/arch-travis/master/arch-travis.sh | bash"
+  #- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - "curl -s https://raw.githubusercontent.com/fsquillace/arch-travis/master/arch-travis.sh | bash"
   - "echo pacman pkg cache size: $(du -h ~/.pkg-cache|cut -f1) in $(ls ~/.pkg-cache|wc -l) files"
   - ls -l
   # Test the newly created JuNest image against Ubuntu host
