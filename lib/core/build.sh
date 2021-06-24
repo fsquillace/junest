@@ -101,6 +101,7 @@ EOT
     # gawk command is required for pacman-key
     sudo pacman --noconfirm --root ${maindir}/root -S gawk
     sudo ${maindir}/root/bin/groot --no-umount --avoid-bind -b /dev ${maindir}/root bash -c '
+    set -e
     pacman-key --init;
     for keyring_file in /usr/share/pacman/keyrings/*.gpg;
     do
