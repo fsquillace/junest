@@ -1,0 +1,9 @@
+[Trigger]
+Operation = Remove
+Type = Path
+Target = usr/bin/?*
+[Action]
+Description = Remove JuNest wrapper
+When = PostTransaction
+Exec = /wrappers/delete-wrapper
+NeedsTargets
