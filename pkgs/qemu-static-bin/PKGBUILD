@@ -1,0 +1,38 @@
+# Maintainer: Filippo Squillace <feel dot sqoox at gmail dot com>
+
+pkgname=qemu-static-bin
+pkgver=2.3.0
+pkgrel=1
+pkgdesc="Statically linked binaries of Qemu with user emulation. Useful for containers/chroot environment with binfmt."
+arch=(arm armv6h armv7h aarch64 i686 x86_64)
+url="https://wiki.qemu.org"
+license=('GPL2')
+options=(!strip)
+
+_repo=https://s3-eu-west-1.amazonaws.com/junest-repo/qemu
+
+source_x86_64=($_repo/x86_64/qemu-x86_64-static-x86
+               $_repo/x86_64/qemu-x86_64-static-arm)
+source_i686=($_repo/x86/qemu-x86-static-x86_64
+             $_repo/x86/qemu-x86-static-arm)
+source_arm=($_repo/arm/qemu-arm-static-x86_64
+            $_repo/arm/qemu-arm-static-x86)
+source_armv6h=(${source_arm[@]})
+source_armv7h=(${source_arm[@]})
+source_aarch64=(${source_arm[@]})
+
+sha256sums_x86_64=('7e1cc358ff0ff53088839f500fe3e439102ab9c0363e5c605241c600f2c71dcf'
+                   'ecaee9410de08472ec77e2305b7a644a2876fa3c839ddb6f7ec4938c7cad6b78')
+sha256sums_i686=('50a9116062c3765ff10504fcdc1808ecb2a5da05620b8a78eeb6dd128ddf063a'
+                 'cb1aa30689e239fae38a615b35aad89743110414d8f9c42ca14bfae8a57be252')
+sha256sums_arm=('fab9518779fb18f0c45698c610165a4f38f2d17442e4f6bbc5ad63f100b0bcd2'
+                '4dd90ff2a6f90b4c41a56c087e7d60bbdd517590ee802dafe975ebe9321a344c')
+sha256sums_armv6h=(${sha256sums_arm[@]})
+sha256sums_armv7h=(${sha256sums_arm[@]})
+sha256sums_aarch64=(${sha256sums_arm[@]})
+
+package() {
+  install -D -t "$pkgdir"/usr/bin qemu-*
+}
+
+# vim:set ts=2 sw=2 et:
