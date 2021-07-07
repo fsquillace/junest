@@ -1,0 +1,22 @@
+# Maintainer: Filippo Squillace <feel dot sqoox at gmail dot com>
+
+pkgname=proot-static-bin
+pkgver=5.1.0
+pkgrel=1
+pkgdesc="chroot, mount --bind, and binfmt_misc without privilege/setup. Static binary only"
+arch=(any)
+url="https://proot-me.github.io/"
+license=(GPL)
+provides=(proot proot-static)
+conflicts=(proot proot-bin proot-static-bin)
+source=(https://s3-eu-west-1.amazonaws.com/junest-repo/proot/proot-x86_64
+        https://s3-eu-west-1.amazonaws.com/junest-repo/proot/proot-arm)
+sha256sums=(8007ba1ac74bba3147035a2643b394abc0e71cf9b7c8bdb3646b88af9fe2e987
+            3069a43e5cf12ce67ccad037d1a8cf3c84302916f9b54074b0a8ce9bedd04151)
+options=(!strip)
+
+package() {
+  install -D -t ${pkgdir}/usr/bin/ proot-*
+}
+
+# vim:set ts=2 sw=2 et:
