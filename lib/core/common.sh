@@ -53,7 +53,7 @@ fi
 
 MAIN_REPO=https://s3-eu-west-1.amazonaws.com/${CMD}-repo
 ENV_REPO=${MAIN_REPO}/${CMD}
-DEFAULT_MIRROR='https://mirror.rackspace.com/archlinux/$repo/os/$arch'
+DEFAULT_MIRROR='https://mirrors.kernel.com/archlinux/$repo/os/$arch'
 
 ORIGIN_WD=$(pwd)
 
