@@ -73,7 +73,7 @@ script:
   #######################
   # Build and validation
   #######################
-  - "curl -s https://raw.githubusercontent.com/bartoszek/arch-travis/master/arch-travis.sh | bash"
+  - "curl -s https://raw.githubusercontent.com/fsquillace/arch-travis/master/arch-travis.sh | bash"
   - "echo pacman pkg cache size: $(du -h ~/.pkg-cache|cut -f1) in $(ls ~/.pkg-cache|wc -l) files"
   - ls -l
   # Test the newly created JuNest image against Ubuntu host
