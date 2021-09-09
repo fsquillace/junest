@@ -76,7 +76,7 @@ function build_image_env(){
 SigLevel = Optional TrustedOnly
 Server = https://raw.githubusercontent.com/fsquillace/junest-repo/master/any
 EOT
-    sudo pacman --noconfirm --config ${maindir}/root/etc/pacman.conf --root ${maindir}/root -Sy sudo-fake groot-git proot-static qemu-static
+    sudo pacman --noconfirm --config ${maindir}/root/etc/pacman.conf --root ${maindir}/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt
 
     info "Installing yay..."
     sudo pacman --noconfirm -S go
@@ -100,7 +100,9 @@ EOT
     info "Setting up the pacman keyring (this might take a while!)..."
     # gawk command is required for pacman-key
     sudo pacman --noconfirm --root ${maindir}/root -S gawk
+    # TODO check why the following did not fail!
     sudo ${maindir}/root/bin/groot --no-umount --avoid-bind -b /dev ${maindir}/root bash -c '
+    set -e
     pacman-key --init;
     for keyring_file in /usr/share/pacman/keyrings/*.gpg;
     do
