@@ -54,7 +54,10 @@ function _setup_env(){
     $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
     info "${NAME} installed successfully!"
     echo
-    info "Please change the pacman mirror URL in /etc/pacman.d/mirrorlist according to your location."
+    info "Default mirror URL set to: ${DEFAULT_MIRROR}"
+    info "You can change the pacman mirror URL in /etc/pacman.d/mirrorlist according to your location:"
+    info "    \$EDITOR ${JUNEST_HOME}/etc/pacman.d/mirrorlist"
+    echo
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
 }

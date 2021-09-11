@@ -25,7 +25,7 @@ JUNEST_TEMPDIR=${JUNEST_TEMPDIR:-/tmp}
 
 # The update of the variable PATH ensures that the executables are
 # found on different locations
-PATH=$PATH:/usr/bin:/bin:/usr/sbin:/sbin
+PATH=/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin:${HOME}/.local/bin
 
 # The executable uname is essential in order to get the architecture
 # of the host system, so a fallback mechanism cannot be used for it.
@@ -53,7 +53,7 @@ fi
 
 MAIN_REPO=https://s3-eu-west-1.amazonaws.com/${CMD}-repo
 ENV_REPO=${MAIN_REPO}/${CMD}
-DEFAULT_MIRROR='https://mirrors.kernel.com/archlinux/$repo/os/$arch'
+DEFAULT_MIRROR='https://mirror.rackspace.com/archlinux/$repo/os/$arch'
 
 ORIGIN_WD=$(pwd)
 

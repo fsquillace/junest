@@ -8,18 +8,6 @@
 #
 # vim: ft=sh
 
-function _install_pkg_from_aur(){
-    local maindir=$1
-    local pkgname=$2
-    local installname=$3
-    mkdir -p ${maindir}/packages/${pkgname}
-    builtin cd ${maindir}/packages/${pkgname}
-    $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}"
-    [ -z "${installname}" ] || $CURL "https://aur.archlinux.org/cgit/aur.git/plain/${installname}?h=${pkgname}"
-    makepkg -sfcd
-    sudo pacman --noconfirm --root ${maindir}/root -U ${pkgname}*.pkg.tar.*
-}
-
 function _install_pkg(){
     # This function allows to install packages from AUR.
     # At the moment is not used.
@@ -76,11 +64,7 @@ function build_image_env(){
 SigLevel = Optional TrustedOnly
 Server = https://raw.githubusercontent.com/fsquillace/junest-repo/master/any
 EOT
-    sudo pacman --noconfirm --config ${maindir}/root/etc/pacman.conf --root ${maindir}/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt
-
-    info "Installing yay..."
-    sudo pacman --noconfirm -S go
-    _install_pkg_from_aur ${maindir} "yay"
+    sudo pacman --noconfirm --config ${maindir}/root/etc/pacman.conf --root ${maindir}/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt yay
 
     echo "Generating the metadata info"
     sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
