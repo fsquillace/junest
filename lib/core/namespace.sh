@@ -99,7 +99,7 @@ function run_env_as_bwrap_fakeroot(){
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    JUNEST_ENV=1 "$backend_command" $COMMON_BWRAP_OPTION --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
+    JUNEST_ENV=1 "$backend_command" $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 
