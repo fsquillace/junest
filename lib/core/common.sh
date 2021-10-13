@@ -67,6 +67,7 @@ ORIGIN_WD=$(pwd)
 DEFAULT_SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
+BWRAP="${JUNEST_HOME}/usr/bin/bwrap"
 PROOT="${JUNEST_HOME}/usr/bin/proot-${ARCH}"
 GROOT="${JUNEST_HOME}/usr/bin/groot"
 CLASSIC_CHROOT=chroot
@@ -82,7 +83,6 @@ CP=cp
 # Used for checking user namespace in config.gz file
 ZGREP=zgrep
 UNSHARE=unshare
-BWRAP=bwrap
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -146,9 +146,9 @@ function unshare_cmd(){
 }
 
 function bwrap_cmd(){
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP --dev-bind / / "${DEFAULT_SH[0]}" "-c" ":"
+    if $LD_EXEC $BWRAP --dev-bind / / "${DEFAULT_SH[0]}" "-c" ":"
     then
-        $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP "${@}"
+        $LD_EXEC $BWRAP "${@}"
     else
         die "Error: Something went wrong while executing bwrap command. Exiting"
     fi

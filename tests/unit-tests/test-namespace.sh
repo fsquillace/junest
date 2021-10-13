@@ -16,10 +16,7 @@ function oneTimeSetUp(){
 ## Mock functions ##
 function init_mocks() {
     function bwrap_cmd(){
-        echo "bwrap $@"
-    }
-    function mybwrap(){
-        echo "mybwrap $@"
+        echo "$BWRAP $@"
     }
 }
 
@@ -104,7 +101,7 @@ function test_is_user_namespace_enabled_with_userns_clone_file_enabled(){
 
 function test_run_env_as_bwrap_fakeroot() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "" "false"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
 }
@@ -118,7 +115,7 @@ function test_run_env_as_bwrap_fakeroot_with_backend_command() {
 
 function test_run_env_as_bwrap_user() {
     assertCommandSuccess run_env_as_bwrap_user "" "" "false"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -134,7 +131,7 @@ function test_run_env_as_bwrap_user_with_backend_command() {
 
 function test_run_env_as_bwrap_fakeroot_no_copy() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "" "true" ""
-    assertEquals "bwrap $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat $STDOUTF)"
 
     [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
     assertEquals 0 $?
@@ -160,7 +157,7 @@ function test_run_env_as_bwrap_fakeroot_no_copy() {
 
 function test_run_env_as_bwrap_user_no_copy() {
     assertCommandSuccess run_env_as_bwrap_user "" "" "true" ""
-    assertEquals "bwrap $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat $STDOUTF)"
 
     [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
     assertEquals 0 $?
@@ -186,14 +183,14 @@ function test_run_env_as_bwrap_user_no_copy() {
 
 function test_run_env_as_bwrap_fakeroot_with_backend_args() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "--bind /usr /usr" "false"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_user_with_backend_args() {
     assertCommandSuccess run_env_as_bwrap_user "" "--bind /usr /usr" "false"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -201,14 +198,14 @@ function test_run_env_as_bwrap_user_with_backend_args() {
 
 function test_run_env_as_bwrap_fakeroot_with_command() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "" "false" "ls -la"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_user_with_command() {
     assertCommandSuccess run_env_as_bwrap_user "" "" "false" "ls -la"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -216,14 +213,14 @@ function test_run_env_as_bwrap_user_with_command() {
 
 function test_run_env_as_bwrap_fakeroot_with_backend_args_and_command() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "--bind /usr /usr" "false" "ls -la"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_user_with_backend_args_and_command() {
     assertCommandSuccess run_env_as_bwrap_user "" "--bind /usr /usr" "false" "ls -la"
-    assertEquals "bwrap $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
 
     _test_copy_common_files
     _test_copy_remaining_files

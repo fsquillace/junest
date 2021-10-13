@@ -67,6 +67,7 @@ function _check_user_namespace() {
 # Globals:
 #   JUNEST_HOME (RO)          : The JuNest home directory.
 #   DEFAULT_SH (RO)           : Contains the default command to run in JuNest.
+#   BWRAP (RO):               : The location of the bwrap binary.
 # Arguments:
 #   backend_args ($1)         : The arguments to pass to bwrap
 #   no_copy_files ($2?)       : If false it will copy some files in /etc
@@ -82,7 +83,7 @@ function _check_user_namespace() {
 function run_env_as_bwrap_fakeroot(){
     check_nested_env
 
-    local backend_command="${1:-bwrap_cmd}"
+    local backend_command="${1:-$BWRAP}"
     local backend_args="$2"
     local no_copy_files="$3"
     shift 3
@@ -99,7 +100,7 @@ function run_env_as_bwrap_fakeroot(){
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    JUNEST_ENV=1 "$backend_command" $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
+    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 
@@ -109,6 +110,7 @@ function run_env_as_bwrap_fakeroot(){
 # Globals:
 #   JUNEST_HOME (RO)         : The JuNest home directory.
 #   DEFAULT_SH (RO)          : Contains the default command to run in JuNest.
+#   BWRAP (RO):               : The location of the bwrap binary.
 # Arguments:
 #   backend_args ($1)        : The arguments to pass to bwrap
 #   no_copy_files ($2?)      : If false it will copy some files in /etc
@@ -123,7 +125,7 @@ function run_env_as_bwrap_fakeroot(){
 function run_env_as_bwrap_user() {
     check_nested_env
 
-    local backend_command="${1:-bwrap_cmd}"
+    local backend_command="${1:-$BWRAP}"
     local backend_args="$2"
     local no_copy_files="$3"
     shift 3
@@ -146,7 +148,7 @@ function run_env_as_bwrap_user() {
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    JUNEST_ENV=1 "$backend_command" $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
+    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 

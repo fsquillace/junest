@@ -9,14 +9,14 @@
 # vim: ft=sh
 
 function _run_env_with_proot(){
-    local backend_command="${1:-proot_cmd}"
+    local backend_command="${1:-$PROOT}"
     local backend_args="$2"
     shift 2
 
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    JUNEST_ENV=1 "${backend_command}" "${backend_args}" "${DEFAULT_SH[@]}" "${args[@]}"
+    PROOT="${backend_command}" JUNEST_ENV=1 proot_cmd "${backend_args}" "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 function _run_env_with_qemu(){

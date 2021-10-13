@@ -143,7 +143,7 @@ function test_unshare(){
 
 function test_bwrap(){
     assertCommandSuccess bwrap_cmd new_program
-    assertEquals "$(echo -e "ld_exec ${JUNEST_HOME}/usr/bin/$BWRAP --dev-bind / / /bin/sh -c :\nld_exec ${JUNEST_HOME}/usr/bin/$BWRAP new_program")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "ld_exec $BWRAP --dev-bind / / /bin/sh -c :\nld_exec $BWRAP new_program")" "$(cat $STDOUTF)"
 
     BWRAP=false LD_EXEC=false assertCommandFail bwrap_cmd new_program
 }
