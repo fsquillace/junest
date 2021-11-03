@@ -149,7 +149,7 @@ section below.
 ## Installation from git repository ##
 Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 
-    git clone git://github.com/fsquillace/junest ~/.local/share/junest
+    git clone https://github.com/fsquillace/junest.git ~/.local/share/junest
     export PATH=~/.local/share/junest/bin:$PATH
 
 ### Installation using AUR (Arch Linux only) ###
