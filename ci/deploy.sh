@@ -42,7 +42,7 @@ then
     aws s3 cp s3://junest-repo/junest/$img_name s3://junest-repo/junest/${img_name}.${DATE}
 
     # Cleanup old images
-    aws s3 ls s3://junest-repo/junest/junest-${ARCH}.tar.gz. | awk '{print $4}' | head -n -${MAX_OLD_IMAGES} | xargs -I {} s3 rm "s3://junest-repo/junest/{}"
+    aws s3 ls s3://junest-repo/junest/junest-${ARCH}.tar.gz. | awk '{print $4}' | head -n -${MAX_OLD_IMAGES} | xargs -I {} aws s3 rm "s3://junest-repo/junest/{}"
 
     # Test the newly deployed image can be downloaded correctly
     junest setup
