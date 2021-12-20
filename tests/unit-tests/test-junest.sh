@@ -31,6 +31,9 @@ function build_image_env(){
 function delete_env(){
     echo "delete_env"
 }
+function create_wrappers(){
+    :
+}
 function setup_env_from_file(){
     echo "setup_env_from_file($1)"
 }

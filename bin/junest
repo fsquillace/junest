@@ -17,6 +17,7 @@ source "${JUNEST_BASE}/lib/core/setup.sh"
 source "${JUNEST_BASE}/lib/core/chroot.sh"
 source "${JUNEST_BASE}/lib/core/namespace.sh"
 source "${JUNEST_BASE}/lib/core/proot.sh"
+source "${JUNEST_BASE}/lib/core/wrappers.sh"
 
 
 ###################################
@@ -189,11 +190,7 @@ function _parse_proot_opts() {
         esac
     done
 
-    ARGS=()
-    for arg in "$@"
-    do
-        ARGS+=("$arg")
-    done
+    ARGS=("$@")
 }
 
 function _parse_build_opts() {
@@ -247,6 +244,7 @@ function execute_operation() {
             else
                 setup_env $ARCH_ARG
             fi
+            create_wrappers
         fi
 
         return
@@ -277,8 +275,9 @@ function execute_operation() {
         run_env=run_env_as_chroot
     fi
 
+    # Call create_wrappers in case new bin files have been created
+    trap "create_wrappers" EXIT QUIT TERM KILL
     $run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
-
 }
 
 function main() {

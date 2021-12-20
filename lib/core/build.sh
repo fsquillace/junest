@@ -8,19 +8,9 @@
 #
 # vim: ft=sh
 
-function _install_pkg_from_aur(){
-    local maindir=$1
-    local pkgname=$2
-    local installname=$3
-    mkdir -p ${maindir}/packages/${pkgname}
-    builtin cd ${maindir}/packages/${pkgname}
-    $CURL "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=${pkgname}"
-    [ -z "${installname}" ] || $CURL "https://aur.archlinux.org/cgit/aur.git/plain/${installname}?h=${pkgname}"
-    makepkg -sfcd
-    sudo pacman --noconfirm --root ${maindir}/root -U ${pkgname}*.pkg.tar.*
-}
-
 function _install_pkg(){
+    # This function allows to install packages from AUR.
+    # At the moment is not used.
     local maindir=$1
     local pkgbuilddir=$2
     # Generate a working directory because sources will be downloaded to there
@@ -40,6 +30,7 @@ function _prepare() {
 }
 
 function build_image_env(){
+    set -x
     umask 022
 
     # The function must runs on ArchLinux with non-root privileges.
@@ -67,14 +58,13 @@ function build_image_env(){
     fi
     sudo mkdir -p ${maindir}/root/run/lock
 
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/sudo-fake"
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/proot-static"
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/qemu-static"
-    _install_pkg ${maindir} "$JUNEST_BASE/pkgs/groot-git"
+    sudo tee -a ${maindir}/root/etc/pacman.conf > /dev/null <<EOT
 
-    info "Installing yay..."
-    sudo pacman --noconfirm -S go
-    _install_pkg_from_aur ${maindir} "yay"
+[junest]
+SigLevel = Optional TrustedOnly
+Server = https://raw.githubusercontent.com/fsquillace/junest-repo/master/any
+EOT
+    sudo pacman --noconfirm --config ${maindir}/root/etc/pacman.conf --root ${maindir}/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt yay
 
     echo "Generating the metadata info"
     sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
@@ -94,7 +84,9 @@ function build_image_env(){
     info "Setting up the pacman keyring (this might take a while!)..."
     # gawk command is required for pacman-key
     sudo pacman --noconfirm --root ${maindir}/root -S gawk
-    sudo ${maindir}/root/bin/groot -b /dev ${maindir}/root bash -c '
+    # TODO check why the following did not fail!
+    sudo ${maindir}/root/bin/groot --no-umount --avoid-bind -b /dev ${maindir}/root bash -c '
+    set -e
     pacman-key --init;
     for keyring_file in /usr/share/pacman/keyrings/*.gpg;
     do
@@ -102,6 +94,8 @@ function build_image_env(){
         pacman-key --populate $keyring;
     done;
     [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye'
+    sudo umount --force --recursive --lazy ${maindir}/root/dev
+    sudo umount --force --recursive ${maindir}/root
     sudo pacman --noconfirm --root ${maindir}/root -Rsn gawk
 
     sudo rm ${maindir}/root/var/cache/pacman/pkg/*
@@ -127,4 +121,6 @@ function build_image_env(){
     builtin cd ${ORIGIN_WD}
     trap - QUIT EXIT ABRT KILL TERM INT
     sudo rm -fr "$maindir"
+
+    set +x
 }

@@ -11,7 +11,7 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 
 |Project Status|Donation|Communication|
 |:------------:|:------:|:-----------:|
-| [![Build status](https://api.travis-ci.org/fsquillace/junest.png?branch=master)](https://travis-ci.org/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![Github Sponsors](https://img.shields.io/badge/GitHub-Sponsors-orange.svg)](https://github.com/sponsors/fsquillace) [![PayPal](https://img.shields.io/badge/PayPal-Donation-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
+| [![Build status](https://api.travis-ci.com/fsquillace/junest.png?branch=master)](https://app.travis-ci.com/github/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![Github Sponsors](https://img.shields.io/badge/GitHub-Sponsors-orange.svg)](https://github.com/sponsors/fsquillace) [![PayPal](https://img.shields.io/badge/PayPal-Donation-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
 
 **Table of Contents**
 - [Description](#description)
@@ -29,7 +29,7 @@ The lightweight Arch Linux based distro that runs upon any Linux distros without
 Description
 ===========
 **JuNest** (Jailed User NEST) is a lightweight Arch Linux based distribution
-that allows to have disposable and isolated GNU/Linux environments
+that allows to have disposable and partial isolated GNU/Linux environments
 within any generic GNU/Linux host OS
 and without the need to have root privileges for installing packages.
 
@@ -40,8 +40,8 @@ to a wide range of packages from the Arch Linux repositories.
 The main advantages on using JuNest are:
 
 - Install packages without root privileges.
-- Partial isolated environment which you can install packages without affecting a production system.
-- Access to a wide range of packages in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
+- Partial isolated environment in which you can install packages without affecting a production system.
+- Access to a wide range of packages, in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
 - Available for `x86_64` and `arm` architectures but you can build your own image from scratch too!
 - Run on a different architecture from the host OS via QEMU
 - All Arch Linux lovers can have their favourite distro everywhere!
@@ -51,13 +51,13 @@ JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/
 How different is JuNest from Docker and Vagrant?
 ------------------------------------------------
 Although JuNest sounds similar to a virtualisation/Linux container -like system,
-JuNest differentiate a lot between Docker and Vagrant.
+JuNest is quite different from solutions like Docker or Vagrant.
 In fact, the purpose of JuNest is **not** to
 build a complete isolated environment but, conversely, is the ability to run
 programs as they were running natively from the host OS. Almost everything is shared
 between host OS and the JuNest sandbox (kernel, process subtree, network, mounting, etc)
 and only the root filesystem gets isolated
-(as the programs installed in JuNest need to reside elsewhere).
+(since the programs installed in JuNest need to reside elsewhere).
 
 This allows interaction between processes belonging to both host OS and JuNest.
 For instance, you can install `top` command in JuNest in order to monitor
@@ -81,7 +81,7 @@ The script will download the image from the repository and will place it to the 
 Access to environment
 ---------------------
 
-By default, JuNest run via the Linux namespaces (aka `ns`) as the backend program. To access via `ns` just type:
+JuNest uses the Linux namespaces (aka `ns`) as the default backend program. To access via `ns` just type:
 
 ```sh
 junest
@@ -90,8 +90,8 @@ junest
 You can use the command `sudo` to acquire fakeroot privileges and
 install/remove packages.
 
-Alternatively, you can access root privileges without using `sudo` with the
-`-f` option:
+Alternatively, you can access fakeroot privileges without using `sudo` all the
+time with the `-f` (or `--fakeroot`) option:
 
 ```sh
 junest -f
@@ -107,26 +107,53 @@ There are multiple backend programs, each with its own pros/cons.
 To know more about the JuNest execution modes depending on the backend program
 used, see the [Usage](#usage) section below.
 
+Run JuNest installed programs directly from host OS
+---------------------------------------
+
+Installed programs can be accessible directly from host without
+calling `junest` command.
+For instance, supposing the host OS is an Ubuntu distro you can directly
+run `pacman` by simply updating the `PATH` variable:
+
+```sh
+export PATH="$PATH:~/.junest/usr/bin_wrappers"
+pacman -S htop
+htop
+```
+
+By default the wrappers use `"ns --fakeroot"` but you can change it via `JUNEST_ARGS` environment variable.
+For instance, if you want to run `iftop` with real root privileges:
+
+```
+pacman -S iftop
+sudo JUNEST_ARGS="groot" iftop
+```
+
+Install packages from AUR
+-------------------------
+
+In `ns` mode, you can easily install package from [AUR](https://aur.archlinux.org/) repository
+using the already available [`yay`](https://aur.archlinux.org/packages/yay/)
+command. In `proot` mode, JuNest does no longer support the building of AUR packages.
+
+**Remember** that in order to build packages from AUR, `base-devel` package group is required
+first:
+
+```sh
+pacman -Syu --ignore sudo base-devel
+:: sudo is in IgnorePkg/IgnoreGroup. Install anyway? [Y/n] n
+...
+...
+```
+
+JuNest uses a modified version of `sudo`. That's why the original `sudo`
+package **must be ignored** in the previous command.
 
 Have fun!
 ---------
 
 If you are new on Arch Linux and you are not familiar with `pacman` package manager
 visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
-
-In `ns` mode, you can easily install package from [AUR](https://aur.archlinux.org/) repository
-using the already available [`yay`](https://aur.archlinux.org/packages/yay/)
-command. In `proot` mode, JuNest does no longer support the building of AUR packages.
-
-**Remember** that in order to build packages from source, `base-devel` package group is required
-first:
-
-```sh
-pacman -Sy --ignore sudo base-devel
-```
-
-JuNest uses a modified version of `sudo`. That's why the original `sudo`
-package has to be ignored in the previous command.
 
 Installation
 ============
@@ -149,12 +176,22 @@ section below.
 ## Installation from git repository ##
 Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 
-    git clone https://github.com/fsquillace/junest.git ~/.local/share/junest
-    export PATH=~/.local/share/junest/bin:$PATH
+```sh
+git clone git://github.com/fsquillace/junest ~/.local/share/junest
+export PATH=~/.local/share/junest/bin:$PATH
+```
+
+Optionally you want to use the wrappers to run commands
+installed in JuNest directly from host:
+
+```sh
+export PATH="$PATH:~/.junest/usr/bin_wrappers"
+```
+Update your `~/.bashrc` or `~/.zshrc` to get always the wrappers available.
 
 ### Installation using AUR (Arch Linux only) ###
 If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/packages/junest-git/).
-After installing junest will be located in `/opt/junest/`
+JuNest will be located in `/opt/junest/`
 
 Usage
 =====
@@ -189,7 +226,8 @@ This mode is based on the fantastic
 PRoot based
 -----------
 [Proot](https://wiki.archlinux.org/index.php/Proot) represents a portable
-solution that works well in most of GNU/Linux distros available.
+solution which allows unprivileged users to execute programs inside a sandbox
+and works well in most of GNU/Linux distros available.
 One of the major drawbacks is the fact that Proot is not officially
 supported anymore, therefore, Proot bugs may no longer be fixed.
 
@@ -203,7 +241,9 @@ Chroot based
 ------------
 This solution suits only for privileged users. JuNest provides the possibility
 to run the environment via `chroot` program.
-In particular, it uses a special program called `GRoot`, an enhanced `chroot`
+In particular, it uses a special program called `GRoot`, a small and portable
+version of
+[arch-chroot](https://wiki.archlinux.org/index.php/Chroot)
 wrapper, that allows to bind mount directories specified by the user, such as
 `/proc`, `/sys`, `/dev`, `/tmp` and `$HOME`, before
 executing any programs inside the JuNest sandbox. In case the mounting will not
@@ -281,7 +321,7 @@ Or using proot arguments:
 junest proot -b "-b /mnt/mydata:/home/user/mydata"
 ```
 
-The option `-b` to provide options to the backeng program will work with PRoot, Namespace and GRoot backend programs.
+The option `-b` to provide options to the backend program will work with PRoot, Namespace and GRoot backend programs.
 Check out the backend program options by passing `--help` option:
 
 ```sh
@@ -309,21 +349,6 @@ Related wiki page:
 
 Internals
 =========
-
-There are two main chroot jail used in JuNest.
-The main one is [proot](https://wiki.archlinux.org/index.php/Proot) which
-allows unprivileged users to execute programs inside a sandbox and
-GRoot, a small and portable version of
-[arch-chroot](https://wiki.archlinux.org/index.php/Chroot) which is an
-enhanced chroot for privileged users that mounts the primary directories
-(i.e. `/proc`, `/sys`, `/dev` and `/run`) before executing any programs inside
-the sandbox.
-
-## Automatic fallback to classic chroot ##
-If GRoot fails for some reasons in the host system (i.e. it is not able to
-mount one of the directories),
-JuNest automatically tries to fallback to the classic chroot.
-
 ## Automatic fallback for all the dependent host OS executables ##
 JuNest attempts first to run the executables in the host OS located in different
 positions (`/usr/bin`, `/bin`, `/usr/sbin` and `/sbin`).
@@ -331,10 +356,10 @@ As a fallback it tries to run the same executable if it is available in the JuNe
 environment.
 
 ## Automatic building of the JuNest images ##
-There is not periodic automation build of the JuNest images yet.
-This was due to the difficulty to automate builds for arm architecture.
-The JuNest image for the `x86_64` is built periodically every once every three
-months.
+There is a periodic automation build of the JuNest images for `x86_64` arch
+only.
+The JuNest image for `arm` architecture may not be always up to date because
+the build is performed manually.
 
 ## Static QEMU binaries ##
 There are static QEMU binaries included in JuNest image that allows to run JuNest
@@ -370,6 +395,8 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 > **A**: This is because as fakeroot is not possible to set the owner/group of
 > files as root. The package will still be installed correctly even though this
 > message is showed.
+
+## Could not change the root directory in pacman
 
 ## No servers configured for repository ##
 

@@ -10,6 +10,7 @@
 #
 # vim: ft=sh
 
+COMMON_BWRAP_OPTION="--bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --bind /sys /sys --bind /proc /proc --dev-bind-try /dev /dev --unshare-user-try"
 CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
 PROC_USERNS_CLONE_FILE="/proc/sys/kernel/unprivileged_userns_clone"
@@ -26,7 +27,9 @@ function _is_user_namespace_enabled() {
         return $NOT_EXISTING_FILE
     fi
 
-    if ! zgrep_cmd -q "CONFIG_USER_NS=y" $config_file
+    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+    # Use redirect to /dev/null instead
+    if ! zgrep_cmd "CONFIG_USER_NS=y" $config_file > /dev/null
     then
         return $NO_CONFIG_FOUND
     fi
@@ -36,7 +39,9 @@ function _is_user_namespace_enabled() {
         return 0
     fi
 
-    if ! zgrep_cmd -q "1" $PROC_USERNS_CLONE_FILE
+    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+    # Use redirect to /dev/null instead
+    if ! zgrep_cmd "1" $PROC_USERNS_CLONE_FILE > /dev/null
     then
         return $UNPRIVILEGED_USERNS_DISABLED
     fi
@@ -55,34 +60,20 @@ function _check_user_namespace() {
     set -e
 }
 
-function _run_env_with_bwrap(){
-    local backend_command="$1"
-    local backend_args="$2"
-    shift 2
-
-    [[ -z "$backend_command" ]] && backend_command=bwrap_cmd
-
-    if [[ "$1" != "" ]]
-    then
-        JUNEST_ENV=1 "$backend_command" --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}" "-c" "$(insert_quotes_on_spaces "${@}")"
-    else
-        JUNEST_ENV=1 "$backend_command" --bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --proc /proc --dev /dev --unshare-user-try ${backend_args} "${SH[@]}"
-    fi
-
-}
 
 #######################################
 # Run JuNest as fakeroot via bwrap
 #
 # Globals:
 #   JUNEST_HOME (RO)          : The JuNest home directory.
-#   SH (RO)                   : Contains the default command to run in JuNest.
+#   DEFAULT_SH (RO)           : Contains the default command to run in JuNest.
+#   BWRAP (RO):               : The location of the bwrap binary.
 # Arguments:
 #   backend_args ($1)         : The arguments to pass to bwrap
 #   no_copy_files ($2?)       : If false it will copy some files in /etc
 #                               from host to JuNest environment.
 #   cmd ($3-?)                : The command to run inside JuNest environment.
-#                               Default command is defined by SH variable.
+#                               Default command is defined by DEFAULT_SH variable.
 # Returns:
 #   $ARCHITECTURE_MISMATCH    : If host and JuNest architecture are different.
 #   $ROOT_ACCESS_ERROR        : If the user is the real root.
@@ -92,7 +83,7 @@ function _run_env_with_bwrap(){
 function run_env_as_bwrap_fakeroot(){
     check_nested_env
 
-    local backend_command="$1"
+    local backend_command="${1:-$BWRAP}"
     local backend_args="$2"
     local no_copy_files="$3"
     shift 3
@@ -106,7 +97,10 @@ function run_env_as_bwrap_fakeroot(){
         copy_common_files
     fi
 
-    _run_env_with_bwrap "$backend_command" "--uid 0 $backend_args" "$@"
+    local args=()
+    [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
+
+    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 
@@ -115,13 +109,14 @@ function run_env_as_bwrap_fakeroot(){
 #
 # Globals:
 #   JUNEST_HOME (RO)         : The JuNest home directory.
-#   SH (RO)                  : Contains the default command to run in JuNest.
+#   DEFAULT_SH (RO)          : Contains the default command to run in JuNest.
+#   BWRAP (RO):               : The location of the bwrap binary.
 # Arguments:
 #   backend_args ($1)        : The arguments to pass to bwrap
 #   no_copy_files ($2?)      : If false it will copy some files in /etc
 #                              from host to JuNest environment.
 #   cmd ($3-?)               : The command to run inside JuNest environment.
-#                              Default command is defined by SH variable.
+#                              Default command is defined by DEFAULT_SH variable.
 # Returns:
 #   $ARCHITECTURE_MISMATCH   : If host and JuNest architecture are different.
 # Output:
@@ -130,7 +125,7 @@ function run_env_as_bwrap_fakeroot(){
 function run_env_as_bwrap_user() {
     check_nested_env
 
-    local backend_command="$1"
+    local backend_command="${1:-$BWRAP}"
     local backend_args="$2"
     local no_copy_files="$3"
     shift 3
@@ -150,7 +145,10 @@ function run_env_as_bwrap_user() {
         copy_passwd_and_group
     fi
 
-    _run_env_with_bwrap "$backend_command" "$backend_args" "$@"
+    local args=()
+    [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
+
+    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 

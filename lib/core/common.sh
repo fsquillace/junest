@@ -25,7 +25,7 @@ JUNEST_TEMPDIR=${JUNEST_TEMPDIR:-/tmp}
 
 # The update of the variable PATH ensures that the executables are
 # found on different locations
-PATH=$PATH:/usr/bin:/bin:/usr/sbin:/sbin
+PATH=/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin:${HOME}/.local/bin
 
 # The executable uname is essential in order to get the architecture
 # of the host system, so a fallback mechanism cannot be used for it.
@@ -53,7 +53,7 @@ fi
 
 MAIN_REPO=https://s3-eu-west-1.amazonaws.com/${CMD}-repo
 ENV_REPO=${MAIN_REPO}/${CMD}
-DEFAULT_MIRROR='https://mirrors.kernel.org/archlinux/$repo/os/$arch'
+DEFAULT_MIRROR='https://mirror.rackspace.com/archlinux/$repo/os/$arch'
 
 ORIGIN_WD=$(pwd)
 
@@ -64,9 +64,10 @@ ORIGIN_WD=$(pwd)
 # different locations in the host OS.
 
 # List of executables that are run inside JuNest:
-SH=("/bin/sh" "--login")
+DEFAULT_SH=("/bin/sh" "--login")
 
 # List of executables that are run in the host OS:
+BWRAP="${JUNEST_HOME}/usr/bin/bwrap"
 PROOT="${JUNEST_HOME}/usr/bin/proot-${ARCH}"
 GROOT="${JUNEST_HOME}/usr/bin/groot"
 CLASSIC_CHROOT=chroot
@@ -82,7 +83,6 @@ CP=cp
 # Used for checking user namespace in config.gz file
 ZGREP=zgrep
 UNSHARE=unshare
-BWRAP=bwrap
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -132,12 +132,12 @@ function unshare_cmd(){
     # with --user option available.
     # Hence, give priority to the `unshare` executable in JuNest image.
     # Also, unshare provides an environment in which /bin/sh maps to dash shell,
-    # therefore it ignores all the remaining SH arguments (i.e. --login) as
+    # therefore it ignores all the remaining DEFAULT_SH arguments (i.e. --login) as
     # they are not supported by dash.
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${SH[0]}" "-c" ":"
+    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
     then
         $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE "${@}"
-    elif $UNSHARE --user "${SH[0]}" "-c" ":"
+    elif $UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
     then
         $UNSHARE "$@"
     else
@@ -146,9 +146,9 @@ function unshare_cmd(){
 }
 
 function bwrap_cmd(){
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP --dev-bind / / "${SH[0]}" "-c" ":"
+    if $LD_EXEC $BWRAP --dev-bind / / "${DEFAULT_SH[0]}" "-c" ":"
     then
-        $LD_EXEC ${JUNEST_HOME}/usr/bin/$BWRAP "${@}"
+        $LD_EXEC $BWRAP "${@}"
     else
         die "Error: Something went wrong while executing bwrap command. Exiting"
     fi
@@ -157,10 +157,10 @@ function bwrap_cmd(){
 function proot_cmd(){
     local proot_args="$1"
     shift
-    if ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
+    if ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
     then
         ${PROOT} ${proot_args} "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${SH[@]}" "-c" ":"
+    elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
     then
         warn "Warn: Proot is not properly working. Disabling SECCOMP and expect the application to run slowly in particular when it uses syscalls intensively."
         warn "Try to use Linux namespace instead as it is more reliable: junest ns"
