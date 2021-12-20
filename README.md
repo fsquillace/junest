@@ -1,6 +1,6 @@
 JuNest
 ======
-The lightweight Arch Linux based distro that runs upon any Linux distros without root access.
+The lightweight Arch Linux based distro that runs, without root privileges, upon any Linux distro.
 
 <h1 align="center">
     <a href="https://github.com/fsquillace/junest"><img
@@ -166,18 +166,11 @@ Before installing JuNest be sure that all dependencies are properly installed in
 - [bash (>=4.0)](https://www.gnu.org/software/bash/)
 - [GNU coreutils](https://www.gnu.org/software/coreutils/)
 
-In `proot` mode, the minimum recommended Linux kernel for the host OS is 2.6.32 on x86 (64 bit)
-and ARM architectures. It is still possible to run JuNest on lower
-2.6.x host OS kernels but errors may appear, and some applications may
-crash. For further information, read the [Troubleshooting](#troubleshooting)
-section below.
-
-
 ## Installation from git repository ##
 Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
 
 ```sh
-git clone git://github.com/fsquillace/junest ~/.local/share/junest
+git clone https://github.com/fsquillace/junest.git ~/.local/share/junest
 export PATH=~/.local/share/junest/bin:$PATH
 ```
 
@@ -228,14 +221,18 @@ PRoot based
 [Proot](https://wiki.archlinux.org/index.php/Proot) represents a portable
 solution which allows unprivileged users to execute programs inside a sandbox
 and works well in most of GNU/Linux distros available.
-One of the major drawbacks is the fact that Proot is not officially
-supported anymore, therefore, Proot bugs may no longer be fixed.
 
 In order to run JuNest via Proot:
 
 - As normal user - Allow to make basic operations: `junest proot`
 
 - As fakeroot - Allow to install/remove packages: `junest proot -f`
+
+In `proot` mode, the minimum recommended Linux kernel for the host OS is 2.6.32 on x86 (64 bit)
+and ARM architectures. It is still possible to run JuNest on lower
+2.6.x host OS kernels but errors may appear, and some applications may
+crash. For further information, read the [Troubleshooting](#troubleshooting)
+section below.
 
 Chroot based
 ------------
@@ -263,7 +260,7 @@ The following table shows the capabilities that each backend program is able to 
 |     | QEMU | Root privileges required | Manage Official Packages | Manage AUR Packages | Portability | Support | User modes |
 | --- | ---- | ------------------------ | ------------------------ | ------------------- | ----------- | ------- | ---------- |
 | **Linux Namespaces** | NO | NO | YES | YES | Poor | YES | Normal user and `fakeroot` |
-| **Proot** | YES | NO | YES | NO | YES | Poor | Normal user and `fakeroot` |
+| **Proot** | YES | NO | YES | NO | YES | YES | Normal user and `fakeroot` |
 | **Chroot** | NO | YES | YES | YES | YES | YES | `root` only |
 
 Advanced usage
