@@ -27,7 +27,6 @@
                        mv bin/junest $out/bin
                        mv lib/* $out/lib
                        chmod +w $out/bin/junest
-                       chmod +w -R $out/lib/*
                        runHook postInstall
                        '';
                        
