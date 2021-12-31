@@ -51,7 +51,7 @@ else
     die "Unknown architecture ${HOST_ARCH}"
 fi
 
-MAIN_REPO=https://s3-eu-west-1.amazonaws.com/${CMD}-repo
+MAIN_REPO=https://dwa8bhj1f036z.cloudfront.net
 ENV_REPO=${MAIN_REPO}/${CMD}
 DEFAULT_MIRROR='https://mirror.rackspace.com/archlinux/$repo/os/$arch'
 

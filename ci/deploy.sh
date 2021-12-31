@@ -35,7 +35,6 @@ then
     cp ${IMG_PATH} ${IMG_PATH}.temp
     aws s3 cp ${IMG_PATH}.temp s3://junest-repo/junest/
     aws s3 mv s3://junest-repo/junest/$img_name.temp s3://junest-repo/junest/$img_name
-    aws s3api put-object-acl --acl public-read --bucket junest-repo --key junest/$img_name
 
     DATE=$(date +'%Y-%m-%d-%H-%M-%S')
 
