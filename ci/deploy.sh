@@ -35,14 +35,13 @@ then
     cp ${IMG_PATH} ${IMG_PATH}.temp
     aws s3 cp ${IMG_PATH}.temp s3://junest-repo/junest/
     aws s3 mv s3://junest-repo/junest/$img_name.temp s3://junest-repo/junest/$img_name
-    aws s3api put-object-acl --acl public-read --bucket junest-repo --key junest/$img_name
 
     DATE=$(date +'%Y-%m-%d-%H-%M-%S')
 
     aws s3 cp s3://junest-repo/junest/$img_name s3://junest-repo/junest/${img_name}.${DATE}
 
     # Cleanup old images
-    aws s3 ls s3://junest-repo/junest/junest-${ARCH}.tar.gz. | awk '{print $4}' | head -n -${MAX_OLD_IMAGES} | xargs -I {} s3 rm "s3://junest-repo/junest/{}"
+    aws s3 ls s3://junest-repo/junest/junest-${ARCH}.tar.gz. | awk '{print $4}' | head -n -${MAX_OLD_IMAGES} | xargs -I {} aws s3 rm "s3://junest-repo/junest/{}"
 
     # Test the newly deployed image can be downloaded correctly
     junest setup
