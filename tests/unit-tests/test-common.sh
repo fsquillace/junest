@@ -197,7 +197,7 @@ function test_copy_passwd_and_group_fallback(){
         echo $@
     }
     CP=cp_cmd_mock GETENT=false LD_EXEC=false assertCommandSuccess copy_passwd_and_group
-    assertEquals "$(echo -e "/etc/passwd $JUNEST_HOME//etc/passwd\n/etc/group $JUNEST_HOME//etc/group")" "$(cat $STDOUTF)"
+    assertEquals "$(echo -e "-f /etc/passwd $JUNEST_HOME//etc/passwd\n-f /etc/group $JUNEST_HOME//etc/group")" "$(cat $STDOUTF)"
 }
 
 function test_copy_passwd_and_group_failure(){

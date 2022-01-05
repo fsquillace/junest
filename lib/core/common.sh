@@ -276,20 +276,22 @@ function copy_passwd_and_group(){
         ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/passwd
     then
         warn "getent command failed or does not exist. Binding directly from /etc/passwd."
-        copy_file /etc/passwd ${JUNEST_HOME}/etc/passwd
+        copy_file /etc/passwd
     fi
 
     if ! getent_cmd group > ${JUNEST_HOME}/etc/group
     then
         warn "getent command failed or does not exist. Binding directly from /etc/group."
-        copy_file /etc/group ${JUNEST_HOME}/etc/group
+        copy_file /etc/group
     fi
     return 0
 }
 
 function copy_file() {
     local file="${1}"
-    [[ -r "$file" ]] && cp_cmd "$file" "${JUNEST_HOME}/$file"
+    # -f option ensure to remove destination file if it cannot be opened
+    # https://github.com/fsquillace/junest/issues/284
+    [[ -r "$file" ]] && cp_cmd -f "$file" "${JUNEST_HOME}/$file"
     return 0
 }
 
