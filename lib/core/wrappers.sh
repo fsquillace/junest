@@ -14,12 +14,11 @@ function create_wrappers() {
         # Arguments inside a variable (i.e. `JUNEST_ARGS`) separated by quotes
         # are not recognized normally unless using `eval`. More info here:
         # https://github.com/fsquillace/junest/issues/262
+        # https://github.com/fsquillace/junest/pull/287
         cat <<EOF > "${JUNEST_HOME}/usr/bin_wrappers/${file}"
 #!/usr/bin/env bash
-
-JUNEST_ARGS=\${JUNEST_ARGS:-ns --fakeroot}
-
-eval junest "\${JUNEST_ARGS}" -- ${file} "\$(printf "%q" "\$@")"
+eval "junest_args_array=(\${JUNEST_ARGS:-ns --fakeroot})"
+junest "\${junest_args_array[@]}" -- ${file} "\$@"
 EOF
         chmod +x "${JUNEST_HOME}/usr/bin_wrappers/${file}"
     done
