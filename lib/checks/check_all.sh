@@ -22,4 +22,5 @@ $JUNEST_SCRIPT ns --backend-command "$JUNEST_HOME/usr/bin/bwrap" -- exit
 sudo -E $JUNEST_SCRIPT groot -- "$CHECK_SCRIPT" --run-root-tests --skip-aur-tests
 
 # Test the wrappers work
+$JUNEST_SCRIPT create-bin-wrappers --force
 $JUNEST_HOME/usr/bin_wrappers/pacman --help

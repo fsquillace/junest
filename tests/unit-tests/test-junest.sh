@@ -12,75 +12,74 @@ function oneTimeSetUp(){
 }
 
 function setUp(){
+    ## Mock functions ##
+    function usage(){
+        echo "usage"
+    }
+    function version(){
+        echo "version"
+    }
+    function build_image_env(){
+        local disable_check=$1
+        echo "build_image_env($disable_check)"
+    }
+    function delete_env(){
+        echo "delete_env"
+    }
+    function setup_env_from_file(){
+        echo "setup_env_from_file($1)"
+    }
+    function setup_env(){
+        echo "setup_env($1)"
+    }
+    function run_env_as_proot_fakeroot(){
+        local backend_command="$1"
+        local backend_args="$2"
+        local no_copy_files="$3"
+        shift 3
+        echo "run_env_as_proot_fakeroot($backend_command,$backend_args,$no_copy_files,$@)"
+    }
+    function run_env_as_groot(){
+        local backend_command="$1"
+        local backend_args="$2"
+        local no_copy_files="$3"
+        shift 3
+        echo "run_env_as_groot($backend_command,$backend_args,$no_copy_files,$@)"
+    }
+    function run_env_as_chroot(){
+        local backend_command="$1"
+        local backend_args="$2"
+        local no_copy_files="$3"
+        shift 3
+        echo "run_env_as_chroot($backend_command,$backend_args,$no_copy_files,$@)"
+    }
+    function run_env_as_proot_user(){
+        local backend_command="$1"
+        local backend_args="$2"
+        local no_copy_files="$3"
+        shift 3
+        echo "run_env_as_proot_user($backend_command,$backend_args,$no_copy_files,$@)"
+    }
+    function run_env_as_bwrap_fakeroot(){
+        local backend_command="$1"
+        local backend_args="$2"
+        local no_copy_files="$3"
+        shift 3
+        echo "run_env_as_bwrap_fakeroot($backend_command,$backend_args,$no_copy_files,$@)"
+    }
+    function run_env_as_bwrap_user(){
+        local backend_command="$1"
+        local backend_args="$2"
+        local no_copy_files="$3"
+        shift 3
+        echo "run_env_as_bwrap_user($backend_command,$backend_args,$no_copy_files,$@)"
+    }
     function is_env_installed(){
         return 0
     }
-}
-
-## Mock functions ##
-function usage(){
-    echo "usage"
-}
-function version(){
-    echo "version"
-}
-function build_image_env(){
-    local disable_check=$1
-    echo "build_image_env($disable_check)"
-}
-function delete_env(){
-    echo "delete_env"
-}
-function create_wrappers(){
-    :
-}
-function setup_env_from_file(){
-    echo "setup_env_from_file($1)"
-}
-function setup_env(){
-    echo "setup_env($1)"
-}
-function run_env_as_proot_fakeroot(){
-    local backend_command="$1"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
-    echo "run_env_as_proot_fakeroot($backend_command,$backend_args,$no_copy_files,$@)"
-}
-function run_env_as_groot(){
-    local backend_command="$1"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
-    echo "run_env_as_groot($backend_command,$backend_args,$no_copy_files,$@)"
-}
-function run_env_as_chroot(){
-    local backend_command="$1"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
-    echo "run_env_as_chroot($backend_command,$backend_args,$no_copy_files,$@)"
-}
-function run_env_as_proot_user(){
-    local backend_command="$1"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
-    echo "run_env_as_proot_user($backend_command,$backend_args,$no_copy_files,$@)"
-}
-function run_env_as_bwrap_fakeroot(){
-    local backend_command="$1"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
-    echo "run_env_as_bwrap_fakeroot($backend_command,$backend_args,$no_copy_files,$@)"
-}
-function run_env_as_bwrap_user(){
-    local backend_command="$1"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
-    echo "run_env_as_bwrap_user($backend_command,$backend_args,$no_copy_files,$@)"
+    function create_wrappers(){
+        :
+    }
 }
 
 function test_help(){
@@ -104,6 +103,18 @@ function test_build_image_env(){
     assertEquals "build_image_env(true)" "$(cat $STDOUTF)"
     assertCommandSuccess main build --disable-check
     assertEquals "build_image_env(true)" "$(cat $STDOUTF)"
+}
+
+function test_create_wrappers(){
+    function create_wrappers(){
+        local force=$1
+        echo "create_wrappers($force)"
+    }
+    assertCommandSuccess main create-bin-wrappers
+    assertEquals "create_wrappers(false)" "$(cat $STDOUTF)"
+
+    assertCommandSuccess main create-bin-wrappers --force
+    assertEquals "create_wrappers(true)" "$(cat $STDOUTF)"
 }
 
 function test_delete_env(){

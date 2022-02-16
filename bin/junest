@@ -68,6 +68,9 @@ usage() {
     echo -e "  b[uild]                                  Build a $NAME image (must run in ArchLinux)"
     echo -e "            -n, --disable-check            Disable the $NAME image check"
     echo
+    echo -e "  create-bin-wrappers                      Create bin wrappers in $JUNEST_HOME/usr/bin_wrappers"
+    echo -e "            -f, --force                    Create the wrapper files even if they already exist"
+    echo
 }
 
 version() {
@@ -78,6 +81,7 @@ function parse_arguments(){
     # Actions
     ACT_SETUP=false
     ACT_BUILD=false
+    ACT_CREATE_WRAPPERS=false
     ACT_NAMESPACE=false
     ACT_PROOT=false
     ACT_GROOT=false
@@ -88,6 +92,7 @@ function parse_arguments(){
     case "$1" in
         s|setup) ACT_SETUP=true ; shift ;;
         b|build) ACT_BUILD=true ; shift ;;
+        create-bin-wrappers) ACT_CREATE_WRAPPERS=true ; shift ;;
         n|ns) ACT_NAMESPACE=true ; shift ;;
         p|proot) ACT_PROOT=true ; shift ;;
         g|groot) ACT_GROOT=true ; shift ;;
@@ -103,6 +108,9 @@ function parse_arguments(){
     elif $ACT_BUILD
     then
         _parse_build_opts "$@"
+    elif $ACT_CREATE_WRAPPERS
+    then
+        _parse_create_wrappers_opts "$@"
     elif $ACT_NAMESPACE
     then
         _parse_ns_opts "$@"
@@ -204,6 +212,17 @@ function _parse_build_opts() {
     done
 }
 
+function _parse_create_wrappers_opts() {
+    OPT_FORCE=false
+    while [[ -n "$1" ]]
+    do
+        case "$1" in
+            -f|--force) OPT_FORCE=true ; shift ;;
+            *) die "Invalid option $1" ;;
+        esac
+    done
+}
+
 function _parse_setup_opts() {
     OPT_FROM_FILE=false
     IMAGE_FILE=""
@@ -254,6 +273,11 @@ function execute_operation() {
     if ! is_env_installed
     then
         die "Error: The image is still not installed in $JUNEST_HOME. Run this first: $CMD setup"
+    fi
+
+    if $ACT_CREATE_WRAPPERS; then
+        create_wrappers $OPT_FORCE
+        exit
     fi
 
     local run_env

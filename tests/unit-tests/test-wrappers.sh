@@ -45,13 +45,26 @@ function test_create_wrappers_already_exist(){
     touch $JUNEST_HOME/usr/bin/myfile
     chmod +x $JUNEST_HOME/usr/bin/myfile
     mkdir -p $JUNEST_HOME/usr/bin_wrappers
-    touch $JUNEST_HOME/usr/bin_wrappers/myfile
+    echo "original" > $JUNEST_HOME/usr/bin_wrappers/myfile
     chmod +x $JUNEST_HOME/usr/bin_wrappers/myfile
-    assertCommandSuccess create_wrappers
+    assertCommandSuccess create_wrappers false
     assertEquals "" "$(cat $STDOUTF)"
     assertTrue "bin_wrappers should exist" "[ -e $JUNEST_HOME/usr/bin_wrappers ]"
     assertTrue "myfile wrapper should exist" "[ -x $JUNEST_HOME/usr/bin_wrappers/myfile ]"
-    assertEquals "" "$(touch $JUNEST_HOME/usr/bin_wrappers/myfile)"
+    assertEquals "original" "$(cat $JUNEST_HOME/usr/bin_wrappers/myfile)"
+}
+
+function test_create_wrappers_forced_already_exist(){
+    echo "new" > $JUNEST_HOME/usr/bin/myfile
+    chmod +x $JUNEST_HOME/usr/bin/myfile
+    mkdir -p $JUNEST_HOME/usr/bin_wrappers
+    echo "original" > $JUNEST_HOME/usr/bin_wrappers/myfile
+    chmod +x $JUNEST_HOME/usr/bin_wrappers/myfile
+    assertCommandSuccess create_wrappers true
+    assertEquals "" "$(cat $STDOUTF)"
+    assertTrue "bin_wrappers should exist" "[ -e $JUNEST_HOME/usr/bin_wrappers ]"
+    assertTrue "myfile wrapper should exist" "[ -x $JUNEST_HOME/usr/bin_wrappers/myfile ]"
+    assertNotEquals "original" "$(cat $JUNEST_HOME/usr/bin_wrappers/myfile)"
 }
 
 function test_create_wrappers_executable_no_longer_exist(){

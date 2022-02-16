@@ -111,7 +111,7 @@ Run JuNest installed programs directly from host OS
 ---------------------------------------
 
 Installed programs can be accessible directly from host without
-calling `junest` command.
+entering directly into a JuNest session (no need to call `junest` command).
 For instance, supposing the host OS is an Ubuntu distro you can directly
 run `pacman` by simply updating the `PATH` variable:
 
