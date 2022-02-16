@@ -69,7 +69,7 @@ usage() {
     echo -e "            -n, --disable-check            Disable the $NAME image check"
     echo
     echo -e "  create-bin-wrappers                      Create bin wrappers in $JUNEST_HOME/usr/bin_wrappers"
-    echo -e "            -f, --force                    Replace the wrapper files even if they already exist"
+    echo -e "            -f, --force                    Create the wrapper files even if they already exist"
     echo
 }
 
