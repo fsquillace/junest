@@ -1,26 +1,28 @@
+#!/usr/bin/env bash
+
 OLD_CWD=${PWD}
 function cwdSetUp(){
     ORIGIN_CWD=$(TMPDIR=/tmp mktemp -d -t junest-cwd.XXXXXXXXXX)
-    cd $ORIGIN_CWD
+    cd "$ORIGIN_CWD" || return 1
 }
 
 function cwdTearDown(){
-    rm -rf $ORIGIN_CWD
-    cd $OLD_CWD
+    rm -rf "$ORIGIN_CWD"
+    cd "$OLD_CWD" || return 1
 }
 
 function junestSetUp(){
     JUNEST_HOME=$(TMPDIR=/tmp mktemp -d -t junest-home.XXXXXXXXXX)
-    mkdir -p ${JUNEST_HOME}/usr/bin
-    mkdir -p ${JUNEST_HOME}/etc/junest
-    echo "JUNEST_ARCH=x86_64" > ${JUNEST_HOME}/etc/junest/info
-    mkdir -p ${JUNEST_HOME}/etc/ca-certificates
+    mkdir -p "${JUNEST_HOME}/usr/bin"
+    mkdir -p "${JUNEST_HOME}/etc/junest"
+    echo "JUNEST_ARCH=x86_64" > "${JUNEST_HOME}/etc/junest/info"
+    mkdir -p "${JUNEST_HOME}/etc/ca-certificates"
 }
 
 function junestTearDown(){
     # the CA directories are read only and can be deleted only by changing the mod
-    [ -d ${JUNEST_HOME}/etc/ca-certificates ] && chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
-    rm -rf $JUNEST_HOME
+    [ -d "${JUNEST_HOME}/etc/ca-certificates" ] && chmod -R +w "${JUNEST_HOME}/etc/ca-certificates"
+    rm -rf "$JUNEST_HOME"
     unset JUNEST_HOME
 }
 
@@ -32,15 +34,17 @@ function setUpUnitTests(){
 }
 
 function assertCommandSuccess(){
+    # shellcheck disable=SC2091
     $(set -e
-      "$@" > $STDOUTF 2> $STDERRF
+      "$@" > "$STDOUTF" 2> "$STDERRF"
     )
     assertTrue "The command $1 did not return 0 exit status" $?
 }
 
 function assertCommandFail(){
+    # shellcheck disable=SC2091
     $(set -e
-      "$@" > $STDOUTF 2> $STDERRF
+      "$@" > "$STDOUTF" 2> "$STDERRF"
     )
     assertFalse "The command $1 returned 0 exit status" $?
 }
@@ -50,8 +54,9 @@ function assertCommandFail(){
 function assertCommandFailOnStatus(){
     local status=$1
     shift
+    # shellcheck disable=SC2091
     $(set -e
-      "$@" > $STDOUTF 2> $STDERRF
+      "$@" > "$STDOUTF" 2> "$STDERRF"
     )
-    assertEquals $status $?
+    assertEquals "$status" $?
 }

@@ -10,6 +10,7 @@
 #
 # vim: ft=sh
 
+# shellcheck disable=SC2027
 COMMON_BWRAP_OPTION="--bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --bind /sys /sys --bind /proc /proc --dev-bind-try /dev /dev --unshare-user-try"
 CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
@@ -24,14 +25,14 @@ function _is_user_namespace_enabled() {
     then
         config_file=$CONFIG_BOOT_FILE
     else
-        return $NOT_EXISTING_FILE
+        return "$NOT_EXISTING_FILE"
     fi
 
     # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
     # Use redirect to /dev/null instead
-    if ! zgrep_cmd "CONFIG_USER_NS=y" $config_file > /dev/null
+    if ! zgrep_cmd "CONFIG_USER_NS=y" "$config_file" > /dev/null
     then
-        return $NO_CONFIG_FOUND
+        return "$NO_CONFIG_FOUND"
     fi
 
     if [[ ! -e $PROC_USERNS_CLONE_FILE ]]
@@ -43,7 +44,7 @@ function _is_user_namespace_enabled() {
     # Use redirect to /dev/null instead
     if ! zgrep_cmd "1" $PROC_USERNS_CLONE_FILE > /dev/null
     then
-        return $UNPRIVILEGED_USERNS_DISABLED
+        return "$UNPRIVILEGED_USERNS_DISABLED"
     fi
 
     return 0
@@ -53,9 +54,9 @@ function _check_user_namespace() {
     set +e
     _is_user_namespace_enabled
     case $? in
-        $NOT_EXISTING_FILE) warn "Could not understand if user namespace is enabled. No config.gz file found. Proceeding anyway..." ;;
-        $NO_CONFIG_FOUND) warn "Unprivileged user namespace is disabled at kernel compile time or kernel too old (<3.8). Proceeding anyway..." ;;
-        $UNPRIVILEGED_USERNS_DISABLED) warn "Unprivileged user namespace disabled. Root permissions are required to enable it: sudo sysctl kernel.unprivileged_userns_clone=1" ;;
+        "$NOT_EXISTING_FILE") warn "Could not understand if user namespace is enabled. No config.gz file found. Proceeding anyway..." ;;
+        "$NO_CONFIG_FOUND") warn "Unprivileged user namespace is disabled at kernel compile time or kernel too old (<3.8). Proceeding anyway..." ;;
+        "$UNPRIVILEGED_USERNS_DISABLED") warn "Unprivileged user namespace disabled. Root permissions are required to enable it: sudo sysctl kernel.unprivileged_userns_clone=1" ;;
     esac
     set -e
 }
@@ -100,6 +101,7 @@ function run_env_as_bwrap_fakeroot(){
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
+    # shellcheck disable=SC2086
     BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
@@ -148,6 +150,7 @@ function run_env_as_bwrap_user() {
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
+    # shellcheck disable=SC2086
     BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
 }
 

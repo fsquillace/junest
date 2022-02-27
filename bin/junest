@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 #
 # This file is part of JuNest (https://github.com/fsquillace/junest).
 #
@@ -7,7 +8,7 @@ set -e
 
 # JUNEST_BASE can be overridden for testing purposes.
 # There is no need for doing it for normal usage.
-JUNEST_BASE="${JUNEST_BASE:-$(readlink -f $(dirname $(readlink -f "$0"))/..)}"
+JUNEST_BASE="${JUNEST_BASE:-$(readlink -f "$(dirname "$(readlink -f "$0")")"/..)}"
 
 source "${JUNEST_BASE}/lib/utils/utils.sh"
 source "${JUNEST_BASE}/lib/core/common.sh"
@@ -24,7 +25,7 @@ source "${JUNEST_BASE}/lib/core/wrappers.sh"
 ### General functions           ###
 ###################################
 usage() {
-    echo -e "$NAME (v$(cat $JUNEST_BASE/VERSION)): $DESCRIPTION"
+    echo -e "$NAME (v$(cat "$JUNEST_BASE"/VERSION)): $DESCRIPTION"
     echo
     echo -e "Usage: $CMD [action] [options] [--] [command]"
     echo
@@ -74,7 +75,7 @@ usage() {
 }
 
 version() {
-    echo -e "$NAME $(cat $JUNEST_BASE/VERSION)"
+    echo -e "$NAME $(cat "$JUNEST_BASE"/VERSION)"
 }
 
 function parse_arguments(){
@@ -226,14 +227,13 @@ function _parse_create_wrappers_opts() {
 function _parse_setup_opts() {
     OPT_FROM_FILE=false
     IMAGE_FILE=""
-    OPT_ARCH=false
     ARCH_ARG=""
     OPT_DELETE=false
     while [[ -n "$1" ]]
     do
         case "$1" in
             -i|--from-file) OPT_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
-            -a|--arch) OPT_ARCH=true ; shift ; ARCH_ARG=$1; shift ;;
+            -a|--arch) shift ; ARCH_ARG=$1; shift ;;
             -d|--delete) OPT_DELETE=true ; shift ;;
             *) die "Invalid option $1" ;;
         esac
@@ -259,9 +259,9 @@ function execute_operation() {
             fi
 
             if $OPT_FROM_FILE; then
-                setup_env_from_file $IMAGE_FILE
+                setup_env_from_file "$IMAGE_FILE"
             else
-                setup_env $ARCH_ARG
+                setup_env "$ARCH_ARG"
             fi
             create_wrappers
         fi
@@ -300,7 +300,7 @@ function execute_operation() {
     fi
 
     # Call create_wrappers in case new bin files have been created
-    trap "create_wrappers" EXIT QUIT TERM KILL
+    trap "create_wrappers" EXIT QUIT TERM
     $run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
 }
 

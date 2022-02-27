@@ -22,7 +22,7 @@
 #   None
 #######################################
 function is_env_installed(){
-    [ -d "$JUNEST_HOME" ] && [ "$(ls -A $JUNEST_HOME)" ] && return 0
+    [[ -d "$JUNEST_HOME" ]] && [[ "$(ls -A "$JUNEST_HOME")" ]] && return 0
     return 1
 }
 
@@ -30,7 +30,7 @@ function is_env_installed(){
 function _cleanup_build_directory(){
     local maindir=$1
     check_not_null "$maindir"
-    builtin cd $ORIGIN_WD
+    builtin cd "$ORIGIN_WD" || return 1
     trap - QUIT EXIT ABRT KILL TERM INT
     rm_cmd -fr "$maindir"
 }
@@ -40,7 +40,8 @@ function _prepare_build_directory(){
     local maindir=$1
     check_not_null "$maindir"
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "rm_cmd -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT KILL TERM INT
+    # shellcheck disable=SC2064
+    trap "rm_cmd -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT TERM INT
 }
 
 
@@ -51,7 +52,7 @@ function _setup_env(){
     is_env_installed && die "Error: ${NAME} has been already installed in $JUNEST_HOME"
 
     mkdir_cmd -p "${JUNEST_HOME}"
-    $TAR -zxpf ${imagepath} -C ${JUNEST_HOME}
+    $TAR -zxpf "${imagepath}" -C "${JUNEST_HOME}"
     info "${NAME} installed successfully!"
     echo
     info "Default mirror URL set to: ${DEFAULT_MIRROR}"
@@ -84,21 +85,22 @@ function _setup_env(){
 #######################################
 function setup_env(){
     local arch=${1:-$ARCH}
-    contains_element $arch "${ARCH_LIST[@]}" || \
-        die_on_status $NOT_AVAILABLE_ARCH "The architecture is not one of: ${ARCH_LIST[@]}"
+    contains_element "$arch" "${ARCH_LIST[@]}" || \
+        die_on_status "$NOT_AVAILABLE_ARCH" "The architecture is not one of: ${ARCH_LIST[*]}"
 
-    local maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t ${CMD}.XXXXXXXXXX)
-    _prepare_build_directory $maindir
+    local maindir
+    maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t "${CMD}".XXXXXXXXXX)
+    _prepare_build_directory "$maindir"
 
     info "Downloading ${NAME}..."
-    builtin cd ${maindir}
+    builtin cd "${maindir}" || return 1
     local imagefile=${CMD}-${arch}.tar.gz
-    download_cmd ${ENV_REPO}/${imagefile}
+    download_cmd "${ENV_REPO}/${imagefile}"
 
     info "Installing ${NAME}..."
-    _setup_env ${maindir}/${imagefile}
+    _setup_env "${maindir}/${imagefile}"
 
-    _cleanup_build_directory ${maindir}
+    _cleanup_build_directory "${maindir}"
 }
 
 #######################################
@@ -118,10 +120,10 @@ function setup_env(){
 function setup_env_from_file(){
     local imagefile=$1
     check_not_null "$imagefile"
-    [ ! -e ${imagefile} ] && die_on_status $NOT_EXISTING_FILE "Error: The ${NAME} image file ${imagefile} does not exist"
+    [[ ! -e ${imagefile} ]] && die_on_status "$NOT_EXISTING_FILE" "Error: The ${NAME} image file ${imagefile} does not exist"
 
     info "Installing ${NAME} from ${imagefile}..."
-    _setup_env ${imagefile}
+    _setup_env "${imagefile}"
 }
 
 #######################################
@@ -138,18 +140,18 @@ function setup_env_from_file(){
 #######################################
 function delete_env(){
     ! ask "Are you sure to delete ${NAME} located in ${JUNEST_HOME}" "N" && return
-    if mountpoint -q ${JUNEST_HOME}
+    if mountpoint -q "${JUNEST_HOME}"
     then
         info "There are mounted directories inside ${JUNEST_HOME}"
-        if ! umount --force ${JUNEST_HOME}
+        if ! umount --force "${JUNEST_HOME}"
         then
             error "Cannot umount directories in ${JUNEST_HOME}"
             die "Try to delete ${NAME} using root permissions"
         fi
     fi
     # the CA directories are read only and can be deleted only by changing the mod
-    chmod -R +w ${JUNEST_HOME}/etc/ca-certificates
-    if rm_cmd -rf ${JUNEST_HOME}
+    chmod -R +w "${JUNEST_HOME}"/etc/ca-certificates
+    if rm_cmd -rf "${JUNEST_HOME}"
     then
         info "${NAME} deleted in ${JUNEST_HOME}"
     else

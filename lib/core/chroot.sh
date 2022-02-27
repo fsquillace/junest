@@ -18,20 +18,22 @@ function _run_env_as_xroot(){
 
     local uid=$UID
     # SUDO_USER is more reliable compared to SUDO_UID
-    [ -z $SUDO_USER ] || uid=$SUDO_USER:$SUDO_GID
+    [[ -z $SUDO_USER ]] || uid=$SUDO_USER:$SUDO_GID
 
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
     # With chown the ownership of the files is assigned to the real user
     trap - QUIT EXIT ABRT KILL TERM INT
-    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME};" EXIT QUIT ABRT KILL TERM INT
+    # shellcheck disable=SC2064
+    trap "[ -z $uid ] || chown_cmd -R ${uid} ${JUNEST_HOME};" EXIT QUIT ABRT TERM INT
 
     if ! $no_copy_files
     then
         copy_common_files
     fi
 
+    # shellcheck disable=SC2086
     JUNEST_ENV=1 $cmd $backend_args "$JUNEST_HOME" "${DEFAULT_SH[@]}" "${args[@]}"
 }
 

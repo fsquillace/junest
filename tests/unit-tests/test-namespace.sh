@@ -1,6 +1,7 @@
 #!/bin/bash
+# shellcheck disable=SC1091
 
-JUNEST_ROOT=$(readlink -f $(dirname $0)/../..)
+JUNEST_ROOT=$(readlink -f "$(dirname "$0")"/../..)
 
 source "$JUNEST_ROOT/tests/utils/utils.sh"
 
@@ -16,7 +17,7 @@ function oneTimeSetUp(){
 ## Mock functions ##
 function init_mocks() {
     function bwrap_cmd(){
-        echo "$BWRAP $@"
+        echo "$BWRAP $*"
     }
 }
 
@@ -39,16 +40,16 @@ function tearDown(){
 }
 
 function _test_copy_common_files() {
-    [[ -e /etc/hosts ]] && assertEquals "$(cat /etc/hosts)" "$(cat ${JUNEST_HOME}/etc/hosts)"
-    [[ -e /etc/host.conf ]] && assertEquals "$(cat /etc/host.conf)" "$(cat ${JUNEST_HOME}/etc/host.conf)"
-    [[ -e /etc/nsswitch.conf ]] && assertEquals "$(cat /etc/nsswitch.conf)" "$(cat ${JUNEST_HOME}/etc/nsswitch.conf)"
-    [[ -e /etc/resolv.conf ]] && assertEquals "$(cat /etc/resolv.conf)" "$(cat ${JUNEST_HOME}/etc/resolv.conf)"
+    [[ -e /etc/hosts ]] && assertEquals "$(cat /etc/hosts)" "$(cat "${JUNEST_HOME}"/etc/hosts)"
+    [[ -e /etc/host.conf ]] && assertEquals "$(cat /etc/host.conf)" "$(cat "${JUNEST_HOME}"/etc/host.conf)"
+    [[ -e /etc/nsswitch.conf ]] && assertEquals "$(cat /etc/nsswitch.conf)" "$(cat "${JUNEST_HOME}"/etc/nsswitch.conf)"
+    [[ -e /etc/resolv.conf ]] && assertEquals "$(cat /etc/resolv.conf)" "$(cat "${JUNEST_HOME}"/etc/resolv.conf)"
 }
 
 function _test_copy_remaining_files() {
-    [[ -e /etc/hosts.equiv ]] && assertEquals "$(cat /etc/hosts.equiv)" "$(cat ${JUNEST_HOME}/etc/hosts.equiv)"
-    [[ -e /etc/netgroup ]] && assertEquals "$(cat /etc/netgroup)" "$(cat ${JUNEST_HOME}/etc/netgroup)"
-    [[ -e /etc/networks ]] && assertEquals "$(cat /etc/networks)" "$(cat ${JUNEST_HOME}/etc/networks)"
+    [[ -e /etc/hosts.equiv ]] && assertEquals "$(cat /etc/hosts.equiv)" "$(cat "${JUNEST_HOME}"/etc/hosts.equiv)"
+    [[ -e /etc/netgroup ]] && assertEquals "$(cat /etc/netgroup)" "$(cat "${JUNEST_HOME}"/etc/netgroup)"
+    [[ -e /etc/networks ]] && assertEquals "$(cat /etc/networks)" "$(cat "${JUNEST_HOME}"/etc/networks)"
 
     [[ -e ${JUNEST_HOME}/etc/passwd ]]
     assertEquals 0 $?
@@ -59,7 +60,7 @@ function _test_copy_remaining_files() {
 function test_is_user_namespace_enabled_no_config_file(){
     CONFIG_PROC_FILE="blah"
     CONFIG_BOOT_FILE="blah"
-    assertCommandFailOnStatus $NOT_EXISTING_FILE _is_user_namespace_enabled
+    assertCommandFailOnStatus "$NOT_EXISTING_FILE" _is_user_namespace_enabled
 }
 
 function test_is_user_namespace_enabled_no_config(){
@@ -67,7 +68,7 @@ function test_is_user_namespace_enabled_no_config(){
     gzip config
     CONFIG_PROC_FILE="config.gz"
     CONFIG_BOOT_FILE="blah"
-    assertCommandFailOnStatus $NO_CONFIG_FOUND _is_user_namespace_enabled
+    assertCommandFailOnStatus "$NO_CONFIG_FOUND" _is_user_namespace_enabled
 }
 
 function test_is_user_namespace_enabled_with_config(){
@@ -86,13 +87,15 @@ function test_is_user_namespace_enabled_with_userns_clone_file_disabled(){
     CONFIG_BOOT_FILE="blah"
     PROC_USERNS_CLONE_FILE="unprivileged_userns_clone"
     echo "0" > $PROC_USERNS_CLONE_FILE
-    assertCommandFailOnStatus $UNPRIVILEGED_USERNS_DISABLED _is_user_namespace_enabled
+    assertCommandFailOnStatus "$UNPRIVILEGED_USERNS_DISABLED" _is_user_namespace_enabled
 }
 
 function test_is_user_namespace_enabled_with_userns_clone_file_enabled(){
     echo "CONFIG_USER_NS=y" > config
     gzip config
+    # shellcheck disable=SC2034
     CONFIG_PROC_FILE="config.gz"
+    # shellcheck disable=SC2034
     CONFIG_BOOT_FILE="blah"
     PROC_USERNS_CLONE_FILE="unprivileged_userns_clone"
     echo "1" > $PROC_USERNS_CLONE_FILE
@@ -101,21 +104,21 @@ function test_is_user_namespace_enabled_with_userns_clone_file_enabled(){
 
 function test_run_env_as_bwrap_fakeroot() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "" "false"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_fakeroot_with_backend_command() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "mybwrap" "" "false"
-    assertEquals "mybwrap $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "mybwrap $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_user() {
     assertCommandSuccess run_env_as_bwrap_user "" "" "false"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -123,7 +126,7 @@ function test_run_env_as_bwrap_user() {
 
 function test_run_env_as_bwrap_user_with_backend_command() {
     assertCommandSuccess run_env_as_bwrap_user "mybwrap" "" "false"
-    assertEquals "mybwrap $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "mybwrap $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -131,7 +134,7 @@ function test_run_env_as_bwrap_user_with_backend_command() {
 
 function test_run_env_as_bwrap_fakeroot_no_copy() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "" "true" ""
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login" "$(cat "$STDOUTF")"
 
     [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
     assertEquals 0 $?
@@ -157,7 +160,7 @@ function test_run_env_as_bwrap_fakeroot_no_copy() {
 
 function test_run_env_as_bwrap_user_no_copy() {
     assertCommandSuccess run_env_as_bwrap_user "" "" "true" ""
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login" "$(cat "$STDOUTF")"
 
     [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
     assertEquals 0 $?
@@ -183,14 +186,14 @@ function test_run_env_as_bwrap_user_no_copy() {
 
 function test_run_env_as_bwrap_fakeroot_with_backend_args() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "--bind /usr /usr" "false"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_user_with_backend_args() {
     assertCommandSuccess run_env_as_bwrap_user "" "--bind /usr /usr" "false"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -198,14 +201,14 @@ function test_run_env_as_bwrap_user_with_backend_args() {
 
 function test_run_env_as_bwrap_fakeroot_with_command() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "" "false" "ls -la"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 sudo /bin/sh --login -c \"ls -la\"" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_user_with_command() {
     assertCommandSuccess run_env_as_bwrap_user "" "" "false" "ls -la"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION /bin/sh --login -c \"ls -la\"" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -213,14 +216,14 @@ function test_run_env_as_bwrap_user_with_command() {
 
 function test_run_env_as_bwrap_fakeroot_with_backend_args_and_command() {
     assertCommandSuccess run_env_as_bwrap_fakeroot "" "--bind /usr /usr" "false" "ls -la"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 --bind /usr /usr sudo /bin/sh --login -c \"ls -la\"" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
 }
 
 function test_run_env_as_bwrap_user_with_backend_args_and_command() {
     assertCommandSuccess run_env_as_bwrap_user "" "--bind /usr /usr" "false" "ls -la"
-    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login -c \"ls -la\"" "$(cat $STDOUTF)"
+    assertEquals "$BWRAP $COMMON_BWRAP_OPTION --bind /usr /usr /bin/sh --login -c \"ls -la\"" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -233,9 +236,10 @@ function test_run_env_as_bwrap_fakeroot_nested_env(){
 }
 
 function test_run_env_as_bwrap_user_nested_env(){
+    # shellcheck disable=SC2034
     JUNEST_ENV=1
     assertCommandFailOnStatus 106 run_env_as_bwrap_user "" "" "false" ""
     unset JUNEST_ENV
 }
 
-source $JUNEST_ROOT/tests/utils/shunit2
+source "$JUNEST_ROOT"/tests/utils/shunit2

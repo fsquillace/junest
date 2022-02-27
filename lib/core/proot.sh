@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC1091
 #
 # This module contains all proot functionalities for JuNest.
 #
@@ -24,18 +25,19 @@ function _run_env_with_qemu(){
     local backend_args="$2"
     shift 2
 
-    source ${JUNEST_HOME}/etc/junest/info
+    source "${JUNEST_HOME}"/etc/junest/info
 
     if [ "$JUNEST_ARCH" != "$ARCH" ]
     then
         local qemu_bin="qemu-$JUNEST_ARCH-static-$ARCH"
         local qemu_symlink="/tmp/${qemu_bin}-$RANDOM"
         trap - QUIT EXIT ABRT KILL TERM INT
-        trap "[ -e ${qemu_symlink} ] && rm_cmd -f ${qemu_symlink}" EXIT QUIT ABRT KILL TERM INT
+        # shellcheck disable=SC2064
+        trap "[ -e ${qemu_symlink} ] && rm_cmd -f ${qemu_symlink}" EXIT QUIT ABRT TERM INT
 
         warn "Emulating $NAME via QEMU..."
-        [ -e ${qemu_symlink} ] || \
-            ln_cmd -s ${JUNEST_HOME}/bin/${qemu_bin} ${qemu_symlink}
+        [[ -e ${qemu_symlink} ]] || \
+            ln_cmd -s "${JUNEST_HOME}/bin/${qemu_bin}" "${qemu_symlink}"
         backend_args="-q ${qemu_symlink} $backend_args"
     fi
 
@@ -62,7 +64,7 @@ function _run_env_with_qemu(){
 #######################################
 function run_env_as_proot_fakeroot(){
     (( EUID == 0 )) && \
-        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
+        die_on_status "$ROOT_ACCESS_ERROR" "You cannot access with root privileges. Use --groot option instead."
     check_nested_env
 
     local backend_command="$1"
@@ -104,7 +106,7 @@ function run_env_as_proot_fakeroot(){
 #######################################
 function run_env_as_proot_user(){
     (( EUID == 0 )) && \
-        die_on_status $ROOT_ACCESS_ERROR "You cannot access with root privileges. Use --groot option instead."
+        die_on_status "$ROOT_ACCESS_ERROR" "You cannot access with root privileges. Use --groot option instead."
     check_nested_env
 
     local backend_command="$1"

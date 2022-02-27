@@ -10,10 +10,10 @@ MAX_OLD_IMAGES=30
 
 # ARCH can be one of: x86, x86_64, arm
 HOST_ARCH=$(uname -m)
-if [ $HOST_ARCH == "i686" ] || [ $HOST_ARCH == "i386" ]
+if [ "$HOST_ARCH" == "i686" ] || [ "$HOST_ARCH" == "i386" ]
 then
     ARCH="x86"
-elif [ $HOST_ARCH == "x86_64" ]
+elif [ "$HOST_ARCH" == "x86_64" ]
 then
     ARCH="x86_64"
 elif [[ $HOST_ARCH =~ .*(arm).* ]]
@@ -31,14 +31,14 @@ then
     # Upload image
     # The put is done via a temporary filename in order to prevent outage on the
     # production file for a longer period of time.
-    img_name=$(basename ${IMG_PATH})
-    cp ${IMG_PATH} ${IMG_PATH}.temp
-    aws s3 cp ${IMG_PATH}.temp s3://junest-repo/junest/
-    aws s3 mv s3://junest-repo/junest/$img_name.temp s3://junest-repo/junest/$img_name
+    img_name=$(basename "${IMG_PATH}")
+    cp "${IMG_PATH}" "${IMG_PATH}".temp
+    aws s3 cp "${IMG_PATH}".temp s3://junest-repo/junest/
+    aws s3 mv s3://junest-repo/junest/"$img_name".temp s3://junest-repo/junest/"$img_name"
 
     DATE=$(date +'%Y-%m-%d-%H-%M-%S')
 
-    aws s3 cp s3://junest-repo/junest/$img_name s3://junest-repo/junest/${img_name}.${DATE}
+    aws s3 cp "s3://junest-repo/junest/$img_name" "s3://junest-repo/junest/${img_name}.${DATE}"
 
     # Cleanup old images
     aws s3 ls s3://junest-repo/junest/junest-${ARCH}.tar.gz. | awk '{print $4}' | head -n -${MAX_OLD_IMAGES} | xargs -I {} aws s3 rm "s3://junest-repo/junest/{}"

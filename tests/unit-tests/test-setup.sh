@@ -1,6 +1,7 @@
 #!/bin/bash
+# shellcheck disable=SC1091
 
-JUNEST_ROOT=$(readlink -f $(dirname $0)/../..)
+JUNEST_ROOT=$(readlink -f "$(dirname "$0")"/../..)
 
 source "$JUNEST_ROOT/tests/utils/utils.sh"
 
@@ -26,24 +27,26 @@ function tearDown(){
 }
 
 function test_is_env_installed(){
-    rm -rf $JUNEST_HOME/*
+    rm -rf "${JUNEST_HOME:?}"/*
     assertCommandFail is_env_installed
-    touch $JUNEST_HOME/just_file
+    touch "$JUNEST_HOME"/just_file
     assertCommandSuccess is_env_installed
 }
 
 function test_setup_env(){
-    rm -rf $JUNEST_HOME/*
+    rm -rf "${JUNEST_HOME:?}"/*
     wget_mock(){
         # Proof that the setup is happening
         # inside $JUNEST_TEMPDIR
-        local cwd=${PWD#${JUNEST_TEMPDIR}}
-        local parent_dir=${PWD%${cwd}}
+        local cwd=${PWD#"${JUNEST_TEMPDIR}"}
+        local parent_dir=${PWD%"${cwd}"}
         assertEquals "$JUNEST_TEMPDIR" "${parent_dir}"
         touch file
-        tar -czvf ${CMD}-${ARCH}.tar.gz file
+        tar -czvf "${CMD}-${ARCH}".tar.gz file
     }
+    # shellcheck disable=SC2034
     WGET=wget_mock
+    # shellcheck disable=SC2119
     setup_env 1> /dev/null
     assertTrue "[ -e $JUNEST_HOME/file ]"
 
@@ -52,10 +55,10 @@ function test_setup_env(){
 
 
 function test_setup_env_from_file(){
-    rm -rf $JUNEST_HOME/*
+    rm -rf "${JUNEST_HOME:?}"/*
     touch file
-    tar -czvf ${CMD}-${ARCH}.tar.gz file 1> /dev/null
-    assertCommandSuccess setup_env_from_file ${CMD}-${ARCH}.tar.gz
+    tar -czvf "${CMD}-${ARCH}".tar.gz file 1> /dev/null
+    assertCommandSuccess setup_env_from_file "${CMD}-${ARCH}.tar.gz"
     assertTrue "[ -e $JUNEST_HOME/file ]"
 }
 
@@ -64,10 +67,10 @@ function test_setup_env_from_file_not_existing_file(){
 }
 
 function test_setup_env_from_file_with_absolute_path(){
-    rm -rf $JUNEST_HOME/*
+    rm -rf "${JUNEST_HOME:?}"/*
     touch file
-    tar -czf ${CMD}-${ARCH}.tar.gz file
-    assertCommandSuccess setup_env_from_file ${CMD}-${ARCH}.tar.gz
+    tar -czf "${CMD}-${ARCH}".tar.gz file
+    assertCommandSuccess setup_env_from_file "${CMD}-${ARCH}.tar.gz"
     assertTrue "[ -e $JUNEST_HOME/file ]"
 }
 
@@ -78,4 +81,4 @@ function test_delete_env(){
     assertCommandFail is_env_installed
 }
 
-source $JUNEST_ROOT/tests/utils/shunit2
+source "$JUNEST_ROOT"/tests/utils/shunit2

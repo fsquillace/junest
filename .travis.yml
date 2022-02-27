@@ -61,6 +61,7 @@ script:
   - bash --version
   - bash ./tests/checkstyle/checkstyle.sh
   - bash ./tests/unit-tests/unit-tests.sh
+  - shellcheck bin/junest lib/**/*.sh ci/*.sh tests/**/*.sh
 
   # ARM with qemu does seem to work properly. Disabling integ tests for ARM for now.
   #- export JUNEST_HOME=~/.junest-arm

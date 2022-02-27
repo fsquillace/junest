@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2034
+# shellcheck disable=SC1091
 #
 # This module contains all common functionalities for JuNest.
 #
@@ -29,7 +31,7 @@ PATH=/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin:${HOME}/.local/bin
 
 # The executable uname is essential in order to get the architecture
 # of the host system, so a fallback mechanism cannot be used for it.
-UNAME=uname
+UNAME="uname"
 
 ARCH_LIST=('x86_64' 'x86' 'arm')
 HOST_ARCH=$($UNAME -m)
@@ -53,6 +55,7 @@ fi
 
 MAIN_REPO=https://dwa8bhj1f036z.cloudfront.net
 ENV_REPO=${MAIN_REPO}/${CMD}
+# shellcheck disable=SC2016
 DEFAULT_MIRROR='https://mirror.rackspace.com/archlinux/$repo/os/$arch'
 
 ORIGIN_WD=$(pwd)
@@ -73,16 +76,16 @@ GROOT="${JUNEST_HOME}/usr/bin/groot"
 CLASSIC_CHROOT=chroot
 WGET="wget --no-check-certificate"
 CURL="curl -L -J -O -k"
-TAR=tar
+TAR="tar"
 CHOWN="chown"
-LN=ln
-RM=rm
-MKDIR=mkdir
-GETENT=getent
-CP=cp
+LN="ln"
+RM="rm"
+MKDIR="mkdir"
+GETENT="getent"
+CP="cp"
 # Used for checking user namespace in config.gz file
-ZGREP=zgrep
-UNSHARE=unshare
+ZGREP="zgrep"
+UNSHARE="unshare"
 
 LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 
@@ -91,32 +94,32 @@ LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 # image.
 
 function ln_cmd(){
-    $LN "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$LN "$@"
+    $LN "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$LN "$@"
 }
 
 function getent_cmd(){
-    $GETENT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$GETENT "$@"
+    $GETENT "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$GETENT "$@"
 }
 
 function cp_cmd(){
-    $CP "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CP "$@"
+    $CP "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CP "$@"
 }
 
 function rm_cmd(){
-    $RM "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$RM "$@"
+    $RM "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$RM "$@"
 }
 
 function chown_cmd(){
-    $CHOWN "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CHOWN "$@"
+    $CHOWN "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CHOWN "$@"
 }
 
 function mkdir_cmd(){
-    $MKDIR "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$MKDIR "$@"
+    $MKDIR "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$MKDIR "$@"
 }
 
 function zgrep_cmd(){
     # No need for LD_EXEC as zgrep is a POSIX shell script
-    $ZGREP "$@" || ${JUNEST_HOME}/usr/bin/$ZGREP "$@"
+    $ZGREP "$@" || "${JUNEST_HOME}"/usr/bin/$ZGREP "$@"
 }
 
 function download_cmd(){
@@ -124,7 +127,7 @@ function download_cmd(){
 }
 
 function chroot_cmd(){
-    $CLASSIC_CHROOT "$@" || $LD_EXEC ${JUNEST_HOME}/usr/bin/$CLASSIC_CHROOT "$@"
+    $CLASSIC_CHROOT "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CLASSIC_CHROOT "$@"
 }
 
 function unshare_cmd(){
@@ -134,9 +137,9 @@ function unshare_cmd(){
     # Also, unshare provides an environment in which /bin/sh maps to dash shell,
     # therefore it ignores all the remaining DEFAULT_SH arguments (i.e. --login) as
     # they are not supported by dash.
-    if $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
+    if $LD_EXEC "${JUNEST_HOME}"/usr/bin/$UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
     then
-        $LD_EXEC ${JUNEST_HOME}/usr/bin/$UNSHARE "${@}"
+        $LD_EXEC "${JUNEST_HOME}"/usr/bin/$UNSHARE "${@}"
     elif $UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
     then
         $UNSHARE "$@"
@@ -146,9 +149,9 @@ function unshare_cmd(){
 }
 
 function bwrap_cmd(){
-    if $LD_EXEC $BWRAP --dev-bind / / "${DEFAULT_SH[0]}" "-c" ":"
+    if $LD_EXEC "$BWRAP" --dev-bind / / "${DEFAULT_SH[0]}" "-c" ":"
     then
-        $LD_EXEC $BWRAP "${@}"
+        $LD_EXEC "$BWRAP" "${@}"
     else
         die "Error: Something went wrong while executing bwrap command. Exiting"
     fi
@@ -157,8 +160,10 @@ function bwrap_cmd(){
 function proot_cmd(){
     local proot_args="$1"
     shift
+    # shellcheck disable=SC2086
     if ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
     then
+        # shellcheck disable=SC2086
         ${PROOT} ${proot_args} "${@}"
     elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
     then
@@ -192,7 +197,7 @@ function check_nested_env() {
     if [[ $JUNEST_ENV == "1" ]]
     then
         die_on_status $NESTED_ENVIRONMENT "Error: Nested ${NAME} environments are not allowed"
-    elif [[ ! -z $JUNEST_ENV ]] && [[ $JUNEST_ENV != "0" ]]
+    elif [[ -n $JUNEST_ENV ]] && [[ $JUNEST_ENV != "0" ]]
     then
         die_on_status $VARIABLE_NOT_SET "The variable JUNEST_ENV is not properly set"
     fi
@@ -214,7 +219,7 @@ function check_nested_env() {
 #   None
 #######################################
 function check_same_arch() {
-    source ${JUNEST_HOME}/etc/junest/info
+    source "${JUNEST_HOME}"/etc/junest/info
     [ "$JUNEST_ARCH" != "$ARCH" ] && \
         die_on_status $ARCHITECTURE_MISMATCH "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
     return 0
@@ -272,14 +277,14 @@ function copy_passwd_and_group(){
     # is configured.
     # Try to at least get the current user via `getent passwd $USER` since it uses
     # a more reliable and faster system call (getpwnam(3)).
-    if ! getent_cmd passwd > ${JUNEST_HOME}/etc/passwd || \
-        ! getent_cmd passwd ${USER} >> ${JUNEST_HOME}/etc/passwd
+    if ! getent_cmd passwd > "${JUNEST_HOME}"/etc/passwd || \
+        ! getent_cmd passwd "${USER}" >> "${JUNEST_HOME}"/etc/passwd
     then
         warn "getent command failed or does not exist. Binding directly from /etc/passwd."
         copy_file /etc/passwd
     fi
 
-    if ! getent_cmd group > ${JUNEST_HOME}/etc/group
+    if ! getent_cmd group > "${JUNEST_HOME}"/etc/group
     then
         warn "getent command failed or does not exist. Binding directly from /etc/group."
         copy_file /etc/group

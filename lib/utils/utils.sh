@@ -50,7 +50,7 @@ function echoerr() {
 #   Message printed to stderr.
 #######################################
 function die() {
-    error $@
+    error "$@"
     exit 1
 }
 
@@ -70,8 +70,8 @@ function die() {
 function die_on_status() {
     status=$1
     shift
-    error $@
-    exit $status
+    error "$@"
+    exit "$status"
 }
 
 #######################################
@@ -87,7 +87,7 @@ function die_on_status() {
 #   Message printed to stderr.
 #######################################
 function error() {
-    echoerr -e "\033[1;31m$@\033[0m"
+    echoerr -e "\033[1;31m$*\033[0m"
 }
 
 #######################################
@@ -104,7 +104,7 @@ function error() {
 #######################################
 function warn() {
     # $@: msg (mandatory) - str: Message to print
-    echoerr -e "\033[1;33m$@\033[0m"
+    echoerr -e "\033[1;33m$*\033[0m"
 }
 
 #######################################
@@ -120,7 +120,7 @@ function warn() {
 #   Message printed to stdout.
 #######################################
 function info(){
-    echo -e "\033[1;36m$@\033[0m"
+    echo -e "\033[1;36m$*\033[0m"
 }
 
 #######################################
@@ -142,12 +142,12 @@ function info(){
 function ask(){
     local question=$1
     local default_answer=$2
-    check_not_null $question
+    check_not_null "$question"
 
-    if [ ! -z "$default_answer" ]
+    if [ -n "$default_answer" ]
     then
         local answers="Y y N n"
-        [[ "$answers" =~ "$default_answer" ]] || { error "The default answer: $default_answer is wrong."; return $WRONG_ANSWER; }
+        [[ "$answers" =~ $default_answer ]] || { error "The default answer: $default_answer is wrong."; return $WRONG_ANSWER; }
     fi
 
     local default="Y"
@@ -156,12 +156,13 @@ function ask(){
     local other="n"
     [ "$default" == "N" ] && other="y"
 
-    local prompt=$(info "$question (${default}/${other})> ")
+    local prompt
+    prompt=$(info "$question (${default}/${other})> ")
 
     local res="none"
     while [ "$res" != "Y" ] && [ "$res" != "N"  ] && [ "$res" != "" ];
     do
-        read -p "$prompt" res
+        read -r -p "$prompt" res
         res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
     done
 
@@ -170,36 +171,31 @@ function ask(){
     [ "$res" == "Y" ]
 }
 
-function check_and_trap() {
-    local sigs="${@:2:${#@}}"
-    local traps="$(trap -p $sigs)"
-    [[ $traps ]] && die "Attempting to overwrite existing $sigs trap: $traps"
-    trap $@
-}
-
-function check_and_force_trap() {
-    local sigs="${@:2:${#@}}"
-    local traps="$(trap -p $sigs)"
-    [[ $traps ]] && warn "Attempting to overwrite existing $sigs trap: $traps"
-    trap $@
-}
-
 function insert_quotes_on_spaces(){
 # It inserts quotes between arguments.
 # Useful to preserve quotes on command
 # to be used inside sh -c/bash -c
-    C=''
+    local C=""
     whitespace="[[:space:]]"
     for i in "$@"
     do
         if [[ $i =~ $whitespace ]]
         then
-            C="$C \"$i\""
+            temp_C="\"$i\""
         else
-            C="$C $i"
+            temp_C="$i"
         fi
+
+        # Handle edge case when C is empty to avoid adding an extra space
+        if [[ -z $C ]]
+        then
+            C="$temp_C"
+        else
+            C="$C $temp_C"
+        fi
+
     done
-    echo $C
+    echo "$C"
 }
 
 contains_element () {
