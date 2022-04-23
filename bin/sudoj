@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# This file is part of JuNest (https://github.com/fsquillace/junest).
+#
+
+export PATH="${PATH}:${JUNEST_HOME}/usr/bin_wrappers"
+
+JUNEST_ARGS="ns --fakeroot" "$@"

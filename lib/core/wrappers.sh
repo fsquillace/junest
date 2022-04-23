@@ -36,7 +36,7 @@ function create_wrappers() {
         cat <<EOF > "${JUNEST_HOME}/usr/bin_wrappers/${file}"
 #!/usr/bin/env bash
 
-JUNEST_ARGS=\${JUNEST_ARGS:-ns --fakeroot}
+JUNEST_ARGS=\${JUNEST_ARGS:-ns}
 
 eval junest "\${JUNEST_ARGS}" -- ${file} "\$(printf "%q" "\$@")"
 EOF

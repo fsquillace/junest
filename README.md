@@ -110,23 +110,32 @@ used, see the [Usage](#usage) section below.
 Run JuNest installed programs directly from host OS
 ---------------------------------------
 
-Installed programs can be accessible directly from host without
-entering directly into a JuNest session (no need to call `junest` command).
+Program installed within JuNest can be accessible directly from host machine
+without entering directly into a JuNest session
+(no need to call `junest` command first).
 For instance, supposing the host OS is an Ubuntu distro you can directly
 run `pacman` by simply updating the `PATH` variable:
 
 ```sh
 export PATH="$PATH:~/.junest/usr/bin_wrappers"
-pacman -S htop
+sudoj pacman -S htop
 htop
 ```
 
-By default the wrappers use `"ns --fakeroot"` but you can change it via `JUNEST_ARGS` environment variable.
+By default the wrappers use `ns` mode. To use the `ns --fakeroot` you can use the convenient command helper `sudoj`.
+For more control on backend mode you can use the `JUNEST_ARGS` environment variable.
 For instance, if you want to run `iftop` with real root privileges:
 
 ```
-pacman -S iftop
+sudoj pacman -S iftop
 sudo JUNEST_ARGS="groot" iftop
+```
+
+Bin wrappers can be always recreated (e.g. in case for some reasons they get
+corrupted) with:
+
+```
+junest create-bin-wrappers -f
 ```
 
 Install packages from AUR
