@@ -43,6 +43,35 @@ function test_create_wrappers_executable_file(){
     assertTrue "myfile wrapper should exist" "[ -x $JUNEST_HOME/usr/bin_wrappers/myfile ]"
 }
 
+function test_create_wrappers_verify_content(){
+    # Test for:
+    # https://github.com/fsquillace/junest/issues/262
+    # https://github.com/fsquillace/junest/issues/292
+    touch "$JUNEST_HOME"/usr/bin/myfile
+    chmod +x "$JUNEST_HOME"/usr/bin/myfile
+    export JUNEST_ARGS="ns --fakeroot -b '--bind /run /run2'"
+    assertCommandSuccess create_wrappers
+    assertEquals "" "$(cat "$STDOUTF")"
+
+    # Mock junest command to capture the actual output generated from myfile script
+    junest(){
+        for arg in "$@"
+        do
+            echo "$arg"
+        done
+    }
+    assertEquals "ns
+--fakeroot
+-b
+--bind /run /run2
+--
+myfile
+pacman
+-Rsn
+neovim
+new package" "$(source "$JUNEST_HOME"/usr/bin_wrappers/myfile pacman -Rsn neovim 'new package')"
+}
+
 function test_create_wrappers_already_exist(){
     touch "$JUNEST_HOME"/usr/bin/myfile
     chmod +x "$JUNEST_HOME"/usr/bin/myfile
