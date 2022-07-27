@@ -24,7 +24,18 @@ function _install_pkg(){
 
 function _prepare() {
     # ArchLinux System initialization
-    sudo pacman --noconfirm -Syu
+    sudo pacman --noconfirm -Syy
+    sudo pacman-key --init
+    if [[ $(uname -m) == *"arm"* ]]
+    then
+        sudo pacman -S --noconfirm archlinuxarm-keyring
+        sudo pacman-key --populate archlinuxarm
+    else
+        sudo pacman -S --noconfirm archlinux-keyring
+        sudo pacman-key --populate archlinux
+    fi
+
+    sudo pacman --noconfirm -Su
     sudo pacman -S --noconfirm base-devel
     sudo pacman -S --noconfirm git arch-install-scripts
 }
@@ -84,21 +95,22 @@ EOT
     sudo pacman --noconfirm --root "${maindir}"/root -Rsn gzip
 
     info "Setting up the pacman keyring (this might take a while!)..."
-    # gawk command is required for pacman-key
-    sudo pacman --noconfirm --root "${maindir}"/root -S gawk
-    # TODO check why the following did not fail!
-    sudo "${maindir}"/root/bin/groot --no-umount --avoid-bind -b /dev "${maindir}"/root bash -c '
+    if [[ $(uname -m) == *"arm"* ]]
+    then
+        sudo pacman -S --noconfirm --root "${maindir}"/root archlinuxarm-keyring
+    else
+        sudo pacman -S --noconfirm --root "${maindir}"/root archlinux-keyring
+    fi
+    sudo mount --bind "${maindir}"/root "${maindir}"/root
+    sudo arch-chroot "${maindir}"/root bash -c '
     set -e
     pacman-key --init;
     for keyring_file in /usr/share/pacman/keyrings/*.gpg;
     do
         keyring=$(basename $keyring_file | cut -f 1 -d ".");
         pacman-key --populate $keyring;
-    done;
-    [ -e /etc/pacman.d/gnupg/S.gpg-agent ] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye'
-    sudo umount --force --recursive --lazy "${maindir}"/root/dev
-    sudo umount --force --recursive "${maindir}"/root
-    sudo pacman --noconfirm --root "${maindir}"/root -Rsn gawk
+    done;'
+    sudo umount "${maindir}"/root
 
     sudo rm "${maindir}"/root/var/cache/pacman/pkg/*
     # This is needed on system with busybox tar command.
