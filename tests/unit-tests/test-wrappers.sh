@@ -34,6 +34,22 @@ function test_create_wrappers_not_executable_file(){
     assertTrue "myfile wrapper should not exist" "[ ! -x $JUNEST_HOME/usr/bin_wrappers/myfile ]"
 }
 
+function test_create_wrappers_directory(){
+    mkdir -p "$JUNEST_HOME"/usr/bin/mydir
+    assertCommandSuccess create_wrappers
+    assertEquals "" "$(cat "$STDOUTF")"
+    assertTrue "bin_wrappers should exist" "[ -e $JUNEST_HOME/usr/bin_wrappers ]"
+    assertTrue "mydir wrapper should not exist" "[ ! -e $JUNEST_HOME/usr/bin_wrappers/mydir ]"
+}
+
+function test_create_wrappers_broken_link(){
+    ln -s /opt/myapp/bin/cmd "$JUNEST_HOME"/usr/bin/cmd
+    assertCommandSuccess create_wrappers
+    assertEquals "" "$(cat "$STDOUTF")"
+    assertTrue "bin_wrappers should exist" "[ -e $JUNEST_HOME/usr/bin_wrappers ]"
+    assertTrue "cmd wrapper should exist" "[ -x $JUNEST_HOME/usr/bin_wrappers/cmd ]"
+}
+
 function test_create_wrappers_executable_file(){
     touch "$JUNEST_HOME"/usr/bin/myfile
     chmod +x "$JUNEST_HOME"/usr/bin/myfile

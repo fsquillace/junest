@@ -25,7 +25,10 @@ function create_wrappers() {
     cd "${JUNEST_HOME}/usr/bin" || return 1
     for file in *
     do
-        [[ -x $file ]] || continue
+        [[ -d $file ]] && continue
+        # Symlinks outside junest appear as broken even though the are correct
+        # within a junest session. The following do not skip broken symlinks:
+        [[ -x $file || -L $file ]] || continue
         if [[ -e ${JUNEST_HOME}/usr/bin_wrappers/$file ]] && ! $force
         then
             continue
@@ -47,7 +50,7 @@ EOF
     cd "${JUNEST_HOME}/usr/bin_wrappers" || return 1
     for file in *
     do
-        [[ -e ${JUNEST_HOME}/usr/bin/$file ]] || rm -f "$file"
+        [[ -e ${JUNEST_HOME}/usr/bin/$file || -L ${JUNEST_HOME}/usr/bin/$file ]] || rm -f "$file"
     done
 
 }
