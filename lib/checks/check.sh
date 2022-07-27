@@ -52,9 +52,6 @@ PACMAN_OPTIONS="--noconfirm --disable-download-timeout"
 # shellcheck disable=SC2086
 $SUDO pacman $PACMAN_OPTIONS -Syy
 
-# Awk is required for pacman-key
-# shellcheck disable=SC2086
-$SUDO pacman $PACMAN_OPTIONS -S gawk
 $SUDO pacman-key --init
 
 if [[ $(uname -m) == *"arm"* ]]
