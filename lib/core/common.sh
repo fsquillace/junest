@@ -53,7 +53,7 @@ else
     die "Unknown architecture ${HOST_ARCH}"
 fi
 
-MAIN_REPO=https://dwa8bhj1f036z.cloudfront.net
+MAIN_REPO=https://link.storjshare.io/s/jvb5tgarnjtt565fffa44spvyuga/junest-repo
 ENV_REPO=${MAIN_REPO}/${CMD}
 # shellcheck disable=SC2016
 DEFAULT_MIRROR='https://mirror.rackspace.com/archlinux/$repo/os/$arch'
@@ -74,7 +74,7 @@ BWRAP="${JUNEST_HOME}/usr/bin/bwrap"
 PROOT="${JUNEST_HOME}/usr/bin/proot-${ARCH}"
 GROOT="${JUNEST_HOME}/usr/bin/groot"
 CLASSIC_CHROOT=chroot
-WGET="wget --no-check-certificate"
+WGET="wget --content-disposition --no-check-certificate"
 CURL="curl -L -J -O -k"
 TAR="tar"
 CHOWN="chown"

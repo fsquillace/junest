@@ -95,7 +95,7 @@ function setup_env(){
     info "Downloading ${NAME}..."
     builtin cd "${maindir}" || return 1
     local imagefile=${CMD}-${arch}.tar.gz
-    download_cmd "${ENV_REPO}/${imagefile}"
+    download_cmd "${ENV_REPO}/${imagefile}?download=1"
 
     info "Installing ${NAME}..."
     _setup_env "${maindir}/${imagefile}"
