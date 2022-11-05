@@ -27,7 +27,7 @@ JUNEST_TEMPDIR=${JUNEST_TEMPDIR:-/tmp}
 
 # The update of the variable PATH ensures that the executables are
 # found on different locations
-PATH=/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin:${HOME}/.local/bin
+PATH=/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin:${HOME}/.local/bin:"$PATH"
 
 # The executable uname is essential in order to get the architecture
 # of the host system, so a fallback mechanism cannot be used for it.
