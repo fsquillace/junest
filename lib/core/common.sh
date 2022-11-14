@@ -25,9 +25,19 @@ UNPRIVILEGED_USERNS_DISABLED=109
 JUNEST_HOME=${JUNEST_HOME:-~/.${CMD}}
 JUNEST_TEMPDIR=${JUNEST_TEMPDIR:-/tmp}
 
-# The update of the variable PATH ensures that the executables are
-# found on different locations
-PATH=/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin:${HOME}/.local/bin:"$PATH"
+# The following function updates the PATH variable to ensure that
+# required executables are found in their default locations
+# without cluttering the user's PATH with duplicates.
+function _path_prepend(){
+    PATH=:$PATH
+    PATH=$1${PATH//:$1:/:}
+}
+_path_prepend ${HOME}/.local/bin
+_path_prepend /sbin
+_path_prepend /usr/sbin
+_path_prepend /usr/local/bin
+_path_prepend /bin
+_path_prepend /usr/bin
 
 # The executable uname is essential in order to get the architecture
 # of the host system, so a fallback mechanism cannot be used for it.
