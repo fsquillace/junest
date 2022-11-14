@@ -32,7 +32,7 @@ function _path_prepend(){
     PATH=:$PATH
     PATH=$1${PATH//:$1:/:}
 }
-_path_prepend ${HOME}/.local/bin
+_path_prepend "${HOME}"/.local/bin
 _path_prepend /sbin
 _path_prepend /usr/sbin
 _path_prepend /usr/local/bin
