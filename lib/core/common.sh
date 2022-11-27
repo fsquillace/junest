@@ -67,7 +67,7 @@ ORIGIN_WD=$(pwd)
 # different locations in the host OS.
 
 # List of executables that are run inside JuNest:
-DEFAULT_SH=("/bin/sh" "--login")
+DEFAULT_SH=("/bin/bash" "--login")
 
 # List of executables that are run in the host OS:
 BWRAP="${JUNEST_HOME}/usr/bin/bwrap"
