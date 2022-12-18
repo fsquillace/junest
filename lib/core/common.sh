@@ -54,6 +54,7 @@ else
 fi
 
 MAIN_REPO=https://link.storjshare.io/s/jvb5tgarnjtt565fffa44spvyuga/junest-repo
+MAIN_REPO=https://pub-a2af2344e8554f6c807bc3db355ae622.r2.dev
 ENV_REPO=${MAIN_REPO}/${CMD}
 # shellcheck disable=SC2016
 DEFAULT_MIRROR='https://mirror.rackspace.com/archlinux/$repo/os/$arch'

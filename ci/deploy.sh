@@ -7,7 +7,7 @@ IMG_PATH=$1
 set -ux
 
 MAX_OLD_IMAGES=5
-ENDPOINT="https://gateway.storjshare.io"
+ENDPOINT="https://8da1bcd84e423c9b013b69fe1e8b4675.r2.cloudflarestorage.com"
 
 # ARCH can be one of: x86, x86_64, arm
 HOST_ARCH=$(uname -m)
