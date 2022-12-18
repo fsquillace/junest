@@ -308,3 +308,27 @@ function copy_common_files() {
     copy_file /etc/resolv.conf
     return 0
 }
+
+function prepare_archlinux() {
+    local SUDO=${1:-sudo}
+    local PACMAN_OPTIONS="--noconfirm --disable-download-timeout"
+
+    # shellcheck disable=SC2086
+    $SUDO pacman $PACMAN_OPTIONS -Syy
+
+    $SUDO pacman-key --init
+
+    if [[ $(uname -m) == *"arm"* ]]
+    then
+        # shellcheck disable=SC2086
+        $SUDO pacman $PACMAN_OPTIONS -S archlinuxarm-keyring
+        $SUDO pacman-key --populate archlinuxarm
+    else
+        # shellcheck disable=SC2086
+        $SUDO pacman $PACMAN_OPTIONS -S archlinux-keyring
+        $SUDO pacman-key --populate archlinux
+    fi
+
+    # shellcheck disable=SC2086
+    $SUDO pacman $PACMAN_OPTIONS -Su
+}

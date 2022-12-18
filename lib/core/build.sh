@@ -24,20 +24,8 @@ function _install_pkg(){
 
 function _prepare() {
     # ArchLinux System initialization
-    sudo pacman --noconfirm -Syy
-    sudo pacman-key --init
-    if [[ $(uname -m) == *"arm"* ]]
-    then
-        sudo pacman -S --noconfirm archlinuxarm-keyring
-        sudo pacman-key --populate archlinuxarm
-    else
-        sudo pacman -S --noconfirm archlinux-keyring
-        sudo pacman-key --populate archlinux
-    fi
-
-    sudo pacman --noconfirm -Su
-    sudo pacman -S --noconfirm base-devel
-    sudo pacman -S --noconfirm git arch-install-scripts
+    prepare_archlinux
+    sudo pacman -S --noconfirm git arch-install-scripts haveged
 }
 
 function build_image_env(){
