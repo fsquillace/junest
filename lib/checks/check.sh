@@ -47,26 +47,9 @@ info "Initial JuNest setup..."
 # otherwise it is not possible to exit from the session
 trap "[[ -e /etc/pacman.d/gnupg/S.gpg-agent ]] && gpg-connect-agent -S /etc/pacman.d/gnupg/S.gpg-agent killagent /bye" QUIT EXIT ABRT TERM INT
 
+prepare_archlinux "$SUDO"
+
 PACMAN_OPTIONS="--noconfirm --disable-download-timeout"
-
-# shellcheck disable=SC2086
-$SUDO pacman $PACMAN_OPTIONS -Syy
-
-$SUDO pacman-key --init
-
-if [[ $(uname -m) == *"arm"* ]]
-then
-    # shellcheck disable=SC2086
-    $SUDO pacman $PACMAN_OPTIONS -S archlinuxarm-keyring
-    $SUDO pacman-key --populate archlinuxarm
-else
-    # shellcheck disable=SC2086
-    $SUDO pacman $PACMAN_OPTIONS -S archlinux-keyring
-    $SUDO pacman-key --populate archlinux
-fi
-
-# shellcheck disable=SC2086
-$SUDO pacman $PACMAN_OPTIONS -Su
 # shellcheck disable=SC2086
 $SUDO pacman $PACMAN_OPTIONS -S grep coreutils
 # shellcheck disable=SC2086
