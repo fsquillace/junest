@@ -62,7 +62,7 @@ function build_image_env(){
     info "Installing pacman and its dependencies..."
     # All the essential executables (ln, mkdir, chown, etc) are in coreutils
     # bwrap command belongs to bubblewrap
-    sudo pacstrap -G -M -d "${maindir}"/root pacman coreutils bubblewrap
+    sudo pacstrap -G -M "${maindir}"/root pacman coreutils bubblewrap
 
     if [[ ${ARCH} != "arm" ]]
     then

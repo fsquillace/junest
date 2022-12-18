@@ -28,7 +28,7 @@ fi
 if [[ "$TRAVIS_BRANCH" == "master" ]]
 then
 
-    export AWS_DEFAULT_REGION=eu-west-1
+    export AWS_DEFAULT_REGION=auto
     # Upload image
     # The put is done via a temporary filename in order to prevent outage on the
     # production file for a longer period of time.
