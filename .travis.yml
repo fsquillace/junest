@@ -32,6 +32,11 @@ archlinux:
      sudo sed -i '/^COMPRESSXZ/s/\xz/xz -T 2/' /etc/makepkg.conf
      sudo sed -i '$a   CFLAGS="$CFLAGS -w"'   /etc/makepkg.conf
      sudo sed -i '$a CXXFLAGS="$CXXFLAGS -w"' /etc/makepkg.conf
+     sudo pacman -Syy --noconfirm --disable-download-timeout
+     sudo pacman-key --init
+     sudo pacman -S --noconfirm --disable-download-timeout archlinux-keyring
+     sudo pacman-key --populate archlinux
+     sudo pacman -Su --noconfirm --disable-download-timeout
   script:
   # Here do not make any validation (-n) because it will be done later on in the Ubuntu host directly
   - ./bin/junest build -n
