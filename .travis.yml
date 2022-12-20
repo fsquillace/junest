@@ -1,5 +1,6 @@
 sudo: required
 os: linux
+arch: arm64
 
 cache:
   directories:
@@ -14,9 +15,9 @@ env:
   - TRAVIS_BASH_VERSION="4.0"
 
 before_install:
-  - ./ci/install-bash.sh "$TRAVIS_BASH_VERSION"
+  #- ./ci/install-bash.sh "$TRAVIS_BASH_VERSION"
   - sudo apt-get update
-  - sudo apt-get -y install awscli
+  - sudo apt-get -y install awscli bash
 
 install:
   - PATH=$PWD/bin:$PATH
@@ -42,7 +43,8 @@ script:
   # Build and validation
   #######################
   - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-  - docker run --rm -v "$(pwd):/build" -v ~/.ccache:/home/travis/.ccache -v ~/.pkg-cache:/var/cache/pacman/pkg --privileged archlinux:latest bash /build/ci/build_image.sh
+  #- docker run --rm -v "$(pwd):/build" -v ~/.ccache:/home/travis/.ccache -v ~/.pkg-cache:/var/cache/pacman/pkg --privileged archlinux:latest bash /build/ci/build_image.sh
+  - docker run --rm -v "$(pwd):/build" -v ~/.ccache:/home/travis/.ccache -v ~/.pkg-cache:/var/cache/pacman/pkg --privileged menci/archlinuxarm:latest bash /build/ci/build_image.sh
 
   - "echo pacman pkg cache size: $(du -h ~/.pkg-cache|cut -f1) in $(ls ~/.pkg-cache|wc -l) files"
   - ls -l
