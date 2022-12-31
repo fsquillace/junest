@@ -61,6 +61,9 @@ function _setup_env(){
     echo
     info "Remember to refresh the package databases from the server:"
     info "    pacman -Syy"
+    echo
+    info "To install packages from AUR follow the wiki here:"
+    info "https://github.com/fsquillace/junest#install-packages-from-aur"
 }
 
 

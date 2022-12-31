@@ -11,7 +11,7 @@ The lightweight Arch Linux based distro that runs, without root privileges, upon
 
 |Project Status|Donation|Communication|
 |:------------:|:------:|:-----------:|
-| [![Build status](https://api.travis-ci.com/fsquillace/junest.png?branch=master)](https://app.travis-ci.com/github/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![Github Sponsors](https://img.shields.io/badge/GitHub-Sponsors-orange.svg)](https://github.com/sponsors/fsquillace) [![PayPal](https://img.shields.io/badge/PayPal-Donation-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the gitter chat at https://gitter.im/fsquillace/junest](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/fsquillace/junest?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![RSS](https://img.shields.io/badge/RSS-News-orange.svg)](http://fsquillace.github.io/junest-site/feed.xml) |
+| [![Build status](https://api.travis-ci.com/fsquillace/junest.png?branch=master)](https://app.travis-ci.com/github/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![Github Sponsors](https://img.shields.io/badge/GitHub-Sponsors-orange.svg)](https://github.com/sponsors/fsquillace) [![PayPal](https://img.shields.io/badge/PayPal-Donation-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the Discord server at https://discord.gg/ttfBT7MKve](https://img.shields.io/badge/Discord-Server-blueviolet.svg)](https://discord.gg/ttfBT7MKve) |
 
 **Table of Contents**
 - [Description](#description)
