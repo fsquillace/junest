@@ -84,6 +84,7 @@ RM="rm"
 MKDIR="mkdir"
 GETENT="getent"
 CP="cp"
+ID="id"
 # Used for checking user namespace in config.gz file
 ZGREP="zgrep"
 UNSHARE="unshare"
@@ -245,7 +246,7 @@ function check_same_arch() {
 function provide_common_bindings(){
     RESULT=""
     local re='(.*):.*'
-    for bind in "/dev" "/sys" "/proc" "/tmp" "$HOME"
+    for bind in "/dev" "/sys" "/proc" "/tmp" "$HOME" "/run/user/$($ID -u)"
     do
         if [[ $bind =~ $re ]]
         then

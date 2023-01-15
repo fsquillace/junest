@@ -11,7 +11,7 @@
 # vim: ft=sh
 
 # shellcheck disable=SC2027
-COMMON_BWRAP_OPTION="--bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --bind /sys /sys --bind /proc /proc --dev-bind-try /dev /dev --unshare-user-try"
+COMMON_BWRAP_OPTION="--bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp /tmp --bind /sys /sys --bind /proc /proc --dev-bind-try /dev /dev --bind-try "/run/user/$($ID -u)" "/run/user/$($ID -u)" --unshare-user-try"
 CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
 PROC_USERNS_CLONE_FILE="/proc/sys/kernel/unprivileged_userns_clone"
