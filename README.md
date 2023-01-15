@@ -251,7 +251,7 @@ In particular, it uses a special program called `GRoot`, a small and portable
 version of
 [arch-chroot](https://wiki.archlinux.org/index.php/Chroot)
 wrapper, that allows to bind mount directories specified by the user, such as
-`/proc`, `/sys`, `/dev`, `/tmp` and `$HOME`, before
+`/proc`, `/sys`, `/dev`, `/tmp`, `/run/user/<id>` and `$HOME`, before
 executing any programs inside the JuNest sandbox. In case the mounting will not
 work, JuNest is even providing the possibility to run the environment directly via
 the pure `chroot` command.

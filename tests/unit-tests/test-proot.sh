@@ -55,11 +55,11 @@ function test_run_env_as_proot_user(){
         echo $*
     }
     assertCommandSuccess run_env_as_proot_user "" "-k 3.10" "false" "/usr/bin/mkdir" "-v" "/newdir2"
-    assertEquals "-b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
+    assertEquals "-b /run/user/$(id -u) -b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
 
     SH=("/usr/bin/echo")
     assertCommandSuccess run_env_as_proot_user "" "-k 3.10" "false"
-    assertEquals "-b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
+    assertEquals "-b /run/user/$(id -u) -b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -72,11 +72,11 @@ function test_run_env_as_proot_user_with_backend_command(){
         echo $*
     }
     assertCommandSuccess run_env_as_proot_user "myproot" "-k 3.10" "false" "/usr/bin/mkdir" "-v" "/newdir2"
-    assertEquals "myproot -b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
+    assertEquals "myproot -b /run/user/$(id -u) -b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
 
     SH=("/usr/bin/echo")
     assertCommandSuccess run_env_as_proot_user "myproot" "-k 3.10" "false"
-    assertEquals "myproot -b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
+    assertEquals "myproot -b /run/user/$(id -u) -b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
     _test_copy_remaining_files
@@ -89,7 +89,7 @@ function test_run_env_as_proot_user_no_copy(){
         echo $*
     }
     assertCommandSuccess run_env_as_proot_user "" "-k 3.10" "true" "/usr/bin/mkdir" "-v" "/newdir2"
-    assertEquals "-b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
+    assertEquals "-b /run/user/$(id -u) -b $HOME -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
 
     [[ ! -e ${JUNEST_HOME}/etc/hosts ]]
     assertEquals 0 $?
@@ -126,11 +126,11 @@ function test_run_env_as_proot_fakeroot(){
         echo $*
     }
     assertCommandSuccess run_env_as_proot_fakeroot "" "-k 3.10" "false" "/usr/bin/mkdir" "-v" "/newdir2"
-    assertEquals "-0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
+    assertEquals "-0 -b /run/user/$(id -u) -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
 
     SH=("/usr/bin/echo")
     assertCommandSuccess run_env_as_proot_fakeroot "" "-k 3.10" "false"
-    assertEquals "-0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
+    assertEquals "-0 -b /run/user/$(id -u) -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
 }
@@ -142,12 +142,12 @@ function test_run_env_as_proot_fakeroot_with_backend_command(){
         echo $*
     }
     assertCommandSuccess run_env_as_proot_fakeroot "myproot" "-k 3.10" "false" "/usr/bin/mkdir" "-v" "/newdir2"
-    assertEquals "myproot -0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
+    assertEquals "myproot -0 -b /run/user/$(id -u) -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
 
     # shellcheck disable=SC2034
     SH=("/usr/bin/echo")
     assertCommandSuccess run_env_as_proot_fakeroot "myproot" "-k 3.10" "false"
-    assertEquals "myproot -0 -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
+    assertEquals "myproot -0 -b /run/user/$(id -u) -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10" "$(cat "$STDOUTF")"
 
     _test_copy_common_files
 }
@@ -165,7 +165,7 @@ function test_run_env_with_quotes(){
         echo $*
     }
     assertCommandSuccess run_env_as_proot_user "" "-k 3.10" "false" "bash" "-c" "/usr/bin/mkdir -v /newdir2"
-    assertEquals "-b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 bash -c /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
+    assertEquals "-b /run/user/$(id -u) -b ${HOME} -b /tmp -b /proc -b /sys -b /dev -r ${JUNEST_HOME} -k 3.10 bash -c /usr/bin/mkdir -v /newdir2" "$(cat "$STDOUTF")"
 }
 
 function test_run_env_with_proot_args(){
