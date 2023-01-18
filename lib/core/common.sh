@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# shellcheck disable=SC2154
 # shellcheck disable=SC2034
 # shellcheck disable=SC1091
 #
@@ -33,25 +34,27 @@ PATH=/usr/bin:/bin:/usr/local/bin:/usr/sbin:/sbin:${HOME}/.local/bin:"$PATH"
 # of the host system, so a fallback mechanism cannot be used for it.
 UNAME="uname"
 
-ARCH_LIST=('x86_64' 'x86' 'arm')
+ARCH_LIST="x86_64 x86 arm"
 HOST_ARCH=$($UNAME -m)
 # To check all available architectures look here:
 # https://wiki.archlinux.org/index.php/PKGBUILD#arch
-if [[ $HOST_ARCH == "i686" ]] || [[ $HOST_ARCH == "i386" ]]
-then
-    ARCH="x86"
-    LD_LIB="${JUNEST_HOME}/lib/ld-linux.so.2"
-elif [[ $HOST_ARCH == "x86_64" ]]
-then
-    ARCH="x86_64"
-    LD_LIB="${JUNEST_HOME}/lib64/ld-linux-x86-64.so.2"
-elif [[ $HOST_ARCH =~ .*(arm).* ]] || [[ $HOST_ARCH == "aarch64" ]]
-then
-    ARCH="arm"
-    LD_LIB="${JUNEST_HOME}/lib/ld-linux-armhf.so.3"
-else
-    die "Unknown architecture ${HOST_ARCH}"
-fi
+case "$HOST_ARCH" in
+i686 | i386)
+	ARCH="x86"
+	LD_LIB="${JUNEST_HOME}/lib/ld-linux.so.2"
+	;;
+x86_64)
+	ARCH="x86_64"
+	LD_LIB="${JUNEST_HOME}/lib64/ld-linux-x86-64.so.2"
+	;;
+*arm* | aarch64)
+	ARCH="arm"
+	LD_LIB="${JUNEST_HOME}/lib/ld-linux-armhf.so.3"
+	;;
+*)
+	die "Unknown architecture ${HOST_ARCH}"
+	;;
+esac
 
 MAIN_REPO=https://link.storjshare.io/s/jvb5tgarnjtt565fffa44spvyuga/junest-repo
 MAIN_REPO=https://pub-a2af2344e8554f6c807bc3db355ae622.r2.dev
@@ -68,7 +71,7 @@ ORIGIN_WD=$(pwd)
 # different locations in the host OS.
 
 # List of executables that are run inside JuNest:
-DEFAULT_SH=("/bin/sh" "--login")
+DEFAULT_SH="/bin/bash"
 
 # List of executables that are run in the host OS:
 BWRAP="${JUNEST_HOME}/usr/bin/bwrap"
@@ -95,86 +98,80 @@ LD_EXEC="$LD_LIB --library-path ${JUNEST_HOME}/usr/lib:${JUNEST_HOME}/lib"
 # As a last hope they try to run the same executable available in the JuNest
 # image.
 
-function ln_cmd(){
-    $LN "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$LN "$@"
+ln_cmd() {
+	$LN "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$LN "$@"
 }
 
-function getent_cmd(){
-    $GETENT "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$GETENT "$@"
+getent_cmd() {
+	$GETENT "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$GETENT "$@"
 }
 
-function cp_cmd(){
-    $CP "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CP "$@"
+cp_cmd() {
+	$CP "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CP "$@"
 }
 
-function rm_cmd(){
-    $RM "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$RM "$@"
+rm_cmd() {
+	$RM "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$RM "$@"
 }
 
-function chown_cmd(){
-    $CHOWN "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CHOWN "$@"
+chown_cmd() {
+	$CHOWN "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CHOWN "$@"
 }
 
-function mkdir_cmd(){
-    $MKDIR "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$MKDIR "$@"
+mkdir_cmd() {
+	$MKDIR "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$MKDIR "$@"
 }
 
-function zgrep_cmd(){
-    # No need for LD_EXEC as zgrep is a POSIX shell script
-    $ZGREP "$@" || "${JUNEST_HOME}"/usr/bin/$ZGREP "$@"
+zgrep_cmd() {
+	# No need for LD_EXEC as zgrep is a POSIX shell script
+	$ZGREP "$@" || "${JUNEST_HOME}"/usr/bin/$ZGREP "$@"
 }
 
-function download_cmd(){
-    $WGET "$@" || $CURL "$@"
+download_cmd() {
+	$WGET "$@" || $CURL "$@"
 }
 
-function chroot_cmd(){
-    $CLASSIC_CHROOT "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CLASSIC_CHROOT "$@"
+chroot_cmd() {
+	$CLASSIC_CHROOT "$@" || $LD_EXEC "${JUNEST_HOME}"/usr/bin/$CLASSIC_CHROOT "$@"
 }
 
-function unshare_cmd(){
-    # Most of the distros do not have the `unshare` command updated
-    # with --user option available.
-    # Hence, give priority to the `unshare` executable in JuNest image.
-    # Also, unshare provides an environment in which /bin/sh maps to dash shell,
-    # therefore it ignores all the remaining DEFAULT_SH arguments (i.e. --login) as
-    # they are not supported by dash.
-    if $LD_EXEC "${JUNEST_HOME}"/usr/bin/$UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
-    then
-        $LD_EXEC "${JUNEST_HOME}"/usr/bin/$UNSHARE "${@}"
-    elif $UNSHARE --user "${DEFAULT_SH[0]}" "-c" ":"
-    then
-        $UNSHARE "$@"
-    else
-        die "Error: Something went wrong while executing unshare command. Exiting"
-    fi
+unshare_cmd() {
+	# Most of the distros do not have the `unshare` command updated
+	# with --user option available.
+	# Hence, give priority to the `unshare` executable in JuNest image.
+	# Also, unshare provides an environment in which /bin/sh maps to dash shell,
+	# therefore it ignores all the remaining DEFAULT_SH arguments (i.e. --login) as
+	# they are not supported by dash.
+	if $LD_EXEC "${JUNEST_HOME}"/usr/bin/$UNSHARE --user "$DEFAULT_SH" "-c" ":"; then
+		$LD_EXEC "${JUNEST_HOME}"/usr/bin/$UNSHARE "${@}"
+	elif $UNSHARE --user "$DEFAULT_SH" "-c" ":"; then
+		$UNSHARE "$@"
+	else
+		die "Error: Something went wrong while executing unshare command. Exiting"
+	fi
 }
 
-function bwrap_cmd(){
-    if $LD_EXEC "$BWRAP" --dev-bind / / "${DEFAULT_SH[0]}" "-c" ":"
-    then
-        $LD_EXEC "$BWRAP" "${@}"
-    else
-        die "Error: Something went wrong while executing bwrap command. Exiting"
-    fi
+bwrap_cmd() {
+	if $LD_EXEC "$BWRAP" --dev-bind / / "$DEFAULT_SH" "-c" ":"; then
+		$LD_EXEC "$BWRAP" "${@}"
+	else
+		die "Error: Something went wrong while executing bwrap command. Exiting"
+	fi
 }
 
-function proot_cmd(){
-    local proot_args="$1"
-    shift
-    # shellcheck disable=SC2086
-    if ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
-    then
-        # shellcheck disable=SC2086
-        ${PROOT} ${proot_args} "${@}"
-    elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${DEFAULT_SH[@]}" "-c" ":"
-    then
-        warn "Warn: Proot is not properly working. Disabling SECCOMP and expect the application to run slowly in particular when it uses syscalls intensively."
-        warn "Try to use Linux namespace instead as it is more reliable: junest ns"
-        PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${@}"
-    else
-        die "Error: Something went wrong with proot command. Exiting"
-    fi
+proot_cmd() {
+	shift
+	# shellcheck disable=SC2086
+	if ${PROOT} ${proot_args} "$DEFAULT_SH --login" "-c" ":"; then
+		# shellcheck disable=SC2086
+		${PROOT} ${proot_args} "${@}"
+	elif PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "$DEFAULT_SH --login" "-c" ":"; then
+		warn "Warn: Proot is not properly working. Disabling SECCOMP and expect the application to run slowly in particular when it uses syscalls intensively."
+		warn "Try to use Linux namespace instead as it is more reliable: junest ns"
+		PROOT_NO_SECCOMP=1 ${PROOT} ${proot_args} "${@}"
+	else
+		die "Error: Something went wrong with proot command. Exiting"
+	fi
 }
 
 ############## COMMON FUNCTIONS ###############
@@ -195,14 +192,12 @@ function proot_cmd(){
 # Output:
 #   None
 #######################################
-function check_nested_env() {
-    if [[ $JUNEST_ENV == "1" ]]
-    then
-        die_on_status $NESTED_ENVIRONMENT "Error: Nested ${NAME} environments are not allowed"
-    elif [[ -n $JUNEST_ENV ]] && [[ $JUNEST_ENV != "0" ]]
-    then
-        die_on_status $VARIABLE_NOT_SET "The variable JUNEST_ENV is not properly set"
-    fi
+check_nested_env() {
+	if [ "$JUNEST_ENV" = "1" ]; then
+		die_on_status $NESTED_ENVIRONMENT "Error: Nested ${NAME} environments are not allowed"
+	elif [ -n "$JUNEST_ENV" ] && [ "$JUNEST_ENV" != "0" ]; then
+		die_on_status $VARIABLE_NOT_SET "The variable JUNEST_ENV is not properly set"
+	fi
 }
 
 #######################################
@@ -220,16 +215,16 @@ function check_nested_env() {
 # Output:
 #   None
 #######################################
-function check_same_arch() {
-    source "${JUNEST_HOME}"/etc/junest/info
-    [ "$JUNEST_ARCH" != "$ARCH" ] && \
-        die_on_status $ARCHITECTURE_MISMATCH "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
-    return 0
+check_same_arch() {
+	. "${JUNEST_HOME}"/etc/junest/info
+	[ "$JUNEST_ARCH" != "$ARCH" ] &&
+		die_on_status $ARCHITECTURE_MISMATCH "The host system architecture is not correct: $ARCH != $JUNEST_ARCH"
+	return 0
 }
 
 #######################################
 # Provide the proot common binding options for both normal user and fakeroot.
-# The list of bindings can be found in `proot --help`. This function excludes
+# The list of bindings can be found in `proot --help`. This excludes
 # /etc/mtab file so that it will not give conflicts with the related
 # symlink in the image.
 #
@@ -243,24 +238,25 @@ function check_same_arch() {
 # Output:
 #   None
 #######################################
-function provide_common_bindings(){
-    RESULT=""
-    local re='(.*):.*'
-    for bind in "/dev" "/sys" "/proc" "/tmp" "$HOME" "/run/user/$($ID -u)"
-    do
-        if [[ $bind =~ $re ]]
-        then
-            [ -e "${BASH_REMATCH[1]}" ] && RESULT="-b $bind $RESULT"
-        else
-            [ -e "$bind" ] && RESULT="-b $bind $RESULT"
-        fi
-    done
-    return 0
+provide_common_bindings() {
+	RESULT=""
+	for bind in "/dev" "/sys" "/proc" "/tmp" "$HOME" "/run/user/$($ID -u)"; do
+		case "$re" in
+		$bind)
+			## [ -e "${BASH_REMATCH}" ] && RESULT="-b $bind $RESULT"
+			RESULT="-b $bind $RESULT"
+			;;
+		*)
+			[ -e "$bind" ] && RESULT="-b $bind $RESULT"
+			;;
+		esac
+	done
+	return 0
 }
 
 #######################################
 # Build passwd and group files using getent command.
-# If getent fails the function fallbacks by copying the content from /etc/passwd
+# If getent fails the fallbacks by copying the content from /etc/passwd
 # and /etc/group.
 #
 # The generated passwd and group will be stored in $JUNEST_HOME/etc/junest.
@@ -274,62 +270,59 @@ function provide_common_bindings(){
 # Output:
 #  None
 #######################################
-function copy_passwd_and_group(){
-    # Enumeration of users/groups is disabled/limited depending on how nsswitch.conf
-    # is configured.
-    # Try to at least get the current user via `getent passwd $USER` since it uses
-    # a more reliable and faster system call (getpwnam(3)).
-    if ! getent_cmd passwd > "${JUNEST_HOME}"/etc/passwd || \
-        ! getent_cmd passwd "${USER}" >> "${JUNEST_HOME}"/etc/passwd
-    then
-        warn "getent command failed or does not exist. Binding directly from /etc/passwd."
-        copy_file /etc/passwd
-    fi
+copy_passwd_and_group() {
+	# Enumeration of users/groups is disabled/limited depending on how nsswitch.conf
+	# is configured.
+	# Try to at least get the current user via `getent passwd $USER` since it uses
+	# a more reliable and faster system call (getpwnam(3)).
+	if ! getent_cmd passwd >"${JUNEST_HOME}"/etc/passwd ||
+		! getent_cmd passwd "${USER}" >>"${JUNEST_HOME}"/etc/passwd; then
+		warn "getent command failed or does not exist. Binding directly from /etc/passwd."
+		copy_file /etc/passwd
+	fi
 
-    if ! getent_cmd group > "${JUNEST_HOME}"/etc/group
-    then
-        warn "getent command failed or does not exist. Binding directly from /etc/group."
-        copy_file /etc/group
-    fi
-    return 0
+	if ! getent_cmd group >"${JUNEST_HOME}"/etc/group; then
+		warn "getent command failed or does not exist. Binding directly from /etc/group."
+		copy_file /etc/group
+	fi
+	return 0
 }
 
-function copy_file() {
-    local file="${1}"
-    # -f option ensure to remove destination file if it cannot be opened
-    # https://github.com/fsquillace/junest/issues/284
-    [[ -r "$file" ]] && cp_cmd -f "$file" "${JUNEST_HOME}/$file"
-    return 0
+copy_file() {
+	# -f option ensure to remove destination file if it cannot be opened
+	# https://github.com/fsquillace/junest/issues/284
+	[ -r "$file" ] && cp_cmd -f "$file" "${JUNEST_HOME}/$file"
+	return 0
 }
 
-function copy_common_files() {
-    copy_file /etc/host.conf
-    copy_file /etc/hosts
-    copy_file /etc/nsswitch.conf
-    copy_file /etc/resolv.conf
-    return 0
+copy_common_files() {
+	copy_file /etc/host.conf
+	copy_file /etc/hosts
+	copy_file /etc/nsswitch.conf
+	copy_file /etc/resolv.conf
+	return 0
 }
 
-function prepare_archlinux() {
-    local sudo=${1:-sudo}
-    local pacman_options="--noconfirm --disable-download-timeout"
+prepare_archlinux() {
 
-    # shellcheck disable=SC2086
-    $sudo pacman $pacman_options -Syy
+	# shellcheck disable=SC2086
+	$sudo pacman $pacman_options -Syy
 
-    $sudo pacman-key --init
+	$sudo pacman-key --init
 
-    if [[ $(uname -m) == *"arm"* ]]
-    then
-        # shellcheck disable=SC2086
-        $sudo pacman $pacman_options -S archlinuxarm-keyring
-        $sudo pacman-key --populate archlinuxarm
-    else
-        # shellcheck disable=SC2086
-        $sudo pacman $pacman_options -S archlinux-keyring
-        $sudo pacman-key --populate archlinux
-    fi
+	case "$(uname -m)" in
+	*"arm"*)
+		# shellcheck disable=SC2086
+		$sudo pacman $pacman_options -S archlinuxarm-keyring
+		$sudo pacman-key --populate archlinuxarm
+		;;
+	*)
+		# shellcheck disable=SC2086
+		$sudo pacman $pacman_options -S archlinux-keyring
+		$sudo pacman-key --populate archlinux
+		;;
+	esac
 
-    # shellcheck disable=SC2086
-    $sudo pacman $pacman_options -Su
+	# shellcheck disable=SC2086
+	$sudo pacman $pacman_options -Su
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # This module contains all setup functionalities for JuNest.
 #
@@ -21,51 +21,47 @@
 # Output:
 #   None
 #######################################
-function is_env_installed(){
-    [[ -d "$JUNEST_HOME" ]] && [[ "$(ls -A "$JUNEST_HOME")" ]] && return 0
-    return 1
+is_env_installed() {
+	[ -d "$JUNEST_HOME" ] && [ "$(ls -A "$JUNEST_HOME")" ] && return 0
+	return 1
 }
 
-
-function _cleanup_build_directory(){
-    local maindir=$1
-    check_not_null "$maindir"
-    builtin cd "$ORIGIN_WD" || return 1
-    trap - QUIT EXIT ABRT KILL TERM INT
-    rm_cmd -fr "$maindir"
+_cleanup_build_directory() {
+	maindir=$1
+	check_not_null "$maindir"
+	command cd "$ORIGIN_WD" || return 1
+	trap - QUIT EXIT ABRT KILL TERM INT
+	rm_cmd -fr "$maindir"
 }
 
-
-function _prepare_build_directory(){
-    local maindir=$1
-    check_not_null "$maindir"
-    trap - QUIT EXIT ABRT KILL TERM INT
-    # shellcheck disable=SC2064
-    trap "rm_cmd -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT TERM INT
+_prepare_build_directory() {
+	maindir=$1
+	check_not_null "$maindir"
+	trap - QUIT EXIT ABRT KILL TERM INT
+	# shellcheck disable=SC2064
+	trap "rm_cmd -rf ${maindir}; die \"Error occurred when installing ${NAME}\"" EXIT QUIT ABRT TERM INT
 }
 
+_setup_env() {
+	imagepath=$1
+	check_not_null "$imagepath"
 
-function _setup_env(){
-    local imagepath=$1
-    check_not_null "$imagepath"
+	is_env_installed && die "Error: ${NAME} has been already installed in $JUNEST_HOME"
 
-    is_env_installed && die "Error: ${NAME} has been already installed in $JUNEST_HOME"
-
-    mkdir_cmd -p "${JUNEST_HOME}"
-    $TAR -zxpf "${imagepath}" -C "${JUNEST_HOME}"
-    info "${NAME} installed successfully!"
-    echo
-    info "Default mirror URL set to: ${DEFAULT_MIRROR}"
-    info "You can change the pacman mirror URL in /etc/pacman.d/mirrorlist according to your location:"
-    info "    \$EDITOR ${JUNEST_HOME}/etc/pacman.d/mirrorlist"
-    echo
-    info "Remember to refresh the package databases from the server:"
-    info "    pacman -Syy"
-    echo
-    info "To install packages from AUR follow the wiki here:"
-    info "https://github.com/fsquillace/junest#install-packages-from-aur"
+	mkdir_cmd -p "$JUNEST_HOME"
+	$TAR -zxpf "${imagepath}" -C "$JUNEST_HOME"
+	info "${NAME} installed successfully!"
+	echo
+	info "Default mirror URL set to: ${DEFAULT_MIRROR}"
+	info "You can change the pacman mirror URL in /etc/pacman.d/mirrorlist according to your location:"
+	info "    \$EDITOR $JUNEST_HOME/etc/pacman.d/mirrorlist"
+	echo
+	info "Remember to refresh the package databases from the server:"
+	info "    pacman -Syy"
+	echo
+	info "To install packages from AUR follow the wiki here:"
+	info "https://github.com/fsquillace/junest#install-packages-from-aur"
 }
-
 
 #######################################
 # Setup JuNest.
@@ -86,24 +82,24 @@ function _setup_env(){
 # Output:
 #   None
 #######################################
-function setup_env(){
-    local arch=${1:-$ARCH}
-    contains_element "$arch" "${ARCH_LIST[@]}" || \
-        die_on_status "$NOT_AVAILABLE_ARCH" "The architecture is not one of: ${ARCH_LIST[*]}"
+setup_env() {
+	arch=${1:-$ARCH}
+	contains_element "$arch" "$ARCH_LIST" ||
+		die_on_status "$NOT_AVAILABLE_ARCH" "The architecture is not one of: $ARCH_LIST"
 
-    local maindir
-    maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t "${CMD}".XXXXXXXXXX)
-    _prepare_build_directory "$maindir"
+	maindir
+	maindir=$(TMPDIR=$JUNEST_TEMPDIR mktemp -d -t "${CMD}".XXXXXXXXXX)
+	_prepare_build_directory "$maindir"
 
-    info "Downloading ${NAME}..."
-    builtin cd "${maindir}" || return 1
-    local imagefile=${CMD}-${arch}.tar.gz
-    download_cmd "${ENV_REPO}/${imagefile}"
+	info "Downloading ${NAME}..."
+	command cd "${maindir}" || return 1
+	imagefile=${CMD}-${arch}.tar.gz
+	download_cmd "${ENV_REPO}/$imagefile"
 
-    info "Installing ${NAME}..."
-    _setup_env "${maindir}/${imagefile}"
+	info "Installing ${NAME}..."
+	_setup_env "${maindir}/$imagefile"
 
-    _cleanup_build_directory "${maindir}"
+	_cleanup_build_directory "${maindir}"
 }
 
 #######################################
@@ -120,13 +116,13 @@ function setup_env(){
 # Output:
 #   None
 #######################################
-function setup_env_from_file(){
-    local imagefile=$1
-    check_not_null "$imagefile"
-    [[ ! -e ${imagefile} ]] && die_on_status "$NOT_EXISTING_FILE" "Error: The ${NAME} image file ${imagefile} does not exist"
+setup_env_from_file() {
+	imagefile=$1
+	check_not_null "$imagefile"
+	[ ! -e "$imagefile" ] && die_on_status "$NOT_EXISTING_FILE" "Error: The ${NAME} image file ${imagefile} does not exist"
 
-    info "Installing ${NAME} from ${imagefile}..."
-    _setup_env "${imagefile}"
+	info "Installing ${NAME} from $imagefile..."
+	_setup_env "$imagefile"
 }
 
 #######################################
@@ -141,24 +137,20 @@ function setup_env_from_file(){
 # Output:
 #  None
 #######################################
-function delete_env(){
-    ! ask "Are you sure to delete ${NAME} located in ${JUNEST_HOME}" "N" && return
-    if mountpoint -q "${JUNEST_HOME}"
-    then
-        info "There are mounted directories inside ${JUNEST_HOME}"
-        if ! umount --force "${JUNEST_HOME}"
-        then
-            error "Cannot umount directories in ${JUNEST_HOME}"
-            die "Try to delete ${NAME} using root permissions"
-        fi
-    fi
-    # the CA directories are read only and can be deleted only by changing the mod
-    chmod -R +w "${JUNEST_HOME}"/etc/ca-certificates
-    if rm_cmd -rf "${JUNEST_HOME}"
-    then
-        info "${NAME} deleted in ${JUNEST_HOME}"
-    else
-        error "Error: Cannot delete ${NAME} in ${JUNEST_HOME}"
-    fi
+delete_env() {
+	! ask "Are you sure to delete ${NAME} located in $JUNEST_HOME" "N" && return
+	if mountpoint -q "$JUNEST_HOME"; then
+		info "There are mounted directories inside $JUNEST_HOME"
+		if ! umount --force "$JUNEST_HOME"; then
+			error "Cannot umount directories in $JUNEST_HOME"
+			die "Try to delete ${NAME} using root permissions"
+		fi
+	fi
+	# the CA directories are read only and can be deleted only by changing the mod
+	chmod -R +w "$JUNEST_HOME"/etc/ca-certificates
+	if rm_cmd -rf "$JUNEST_HOME"; then
+		info "${NAME} deleted in $JUNEST_HOME"
+	else
+		error "Error: Cannot delete ${NAME} in $JUNEST_HOME"
+	fi
 }
-

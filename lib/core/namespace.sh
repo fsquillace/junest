@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # This module contains functionalities for accessing to JuNest via bubblewrap.
 #
@@ -16,51 +16,45 @@ CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
 PROC_USERNS_CLONE_FILE="/proc/sys/kernel/unprivileged_userns_clone"
 
-function _is_user_namespace_enabled() {
-    local config_file=""
-    if [[ -e $CONFIG_PROC_FILE ]]
-    then
-        config_file=$CONFIG_PROC_FILE
-    elif [[ -e $CONFIG_BOOT_FILE ]]
-    then
-        config_file=$CONFIG_BOOT_FILE
-    else
-        return "$NOT_EXISTING_FILE"
-    fi
+_is_user_namespace_enabled() {
+	config_file=""
+	if [ -e $CONFIG_PROC_FILE ]; then
+		config_file=$CONFIG_PROC_FILE
+	elif [ -e "$CONFIG_BOOT_FILE" ]; then
+		config_file=$CONFIG_BOOT_FILE
+	else
+		return "$NOT_EXISTING_FILE"
+	fi
 
-    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
-    # Use redirect to /dev/null instead
-    if ! zgrep_cmd "CONFIG_USER_NS=y" "$config_file" > /dev/null
-    then
-        return "$NO_CONFIG_FOUND"
-    fi
+	# `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+	# Use redirect to /dev/null instead
+	if ! zgrep_cmd "CONFIG_USER_NS=y" "$config_file" >/dev/null; then
+		return "$NO_CONFIG_FOUND"
+	fi
 
-    if [[ ! -e $PROC_USERNS_CLONE_FILE ]]
-    then
-        return 0
-    fi
+	if [ ! -e $PROC_USERNS_CLONE_FILE ]; then
+		return 0
+	fi
 
-    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
-    # Use redirect to /dev/null instead
-    if ! zgrep_cmd "1" $PROC_USERNS_CLONE_FILE > /dev/null
-    then
-        return "$UNPRIVILEGED_USERNS_DISABLED"
-    fi
+	# `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+	# Use redirect to /dev/null instead
+	if ! zgrep_cmd "1" $PROC_USERNS_CLONE_FILE >/dev/null; then
+		return "$UNPRIVILEGED_USERNS_DISABLED"
+	fi
 
-    return 0
+	return 0
 }
 
-function _check_user_namespace() {
-    set +e
-    _is_user_namespace_enabled
-    case $? in
-        "$NOT_EXISTING_FILE") warn "Could not understand if user namespace is enabled. No config.gz file found. Proceeding anyway..." ;;
-        "$NO_CONFIG_FOUND") warn "Unprivileged user namespace is disabled at kernel compile time or kernel too old (<3.8). Proceeding anyway..." ;;
-        "$UNPRIVILEGED_USERNS_DISABLED") warn "Unprivileged user namespace disabled. Root permissions are required to enable it: sudo sysctl kernel.unprivileged_userns_clone=1" ;;
-    esac
-    set -e
+_check_user_namespace() {
+	set +e
+	_is_user_namespace_enabled
+	case $? in
+	"$NOT_EXISTING_FILE") warn "Could not understand if user namespace is enabled. No config.gz file found. Proceeding anyway..." ;;
+	"$NO_CONFIG_FOUND") warn "Unprivileged user namespace is disabled at kernel compile time or kernel too old (<3.8). Proceeding anyway..." ;;
+	"$UNPRIVILEGED_USERNS_DISABLED") warn "Unprivileged user namespace disabled. Root permissions are required to enable it: sudo sysctl kernel.unprivileged_userns_clone=1" ;;
+	esac
+	set -e
 }
-
 
 #######################################
 # Run JuNest as fakeroot via bwrap
@@ -81,30 +75,28 @@ function _check_user_namespace() {
 # Output:
 #   -                         : The command output.
 #######################################
-function run_env_as_bwrap_fakeroot(){
-    check_nested_env
+run_env_as_bwrap_fakeroot() {
+	check_nested_env
 
-    local backend_command="${1:-$BWRAP}"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
+	backend_command="${1:-$BWRAP}"
+	backend_args="$2"
+	no_copy_files="$3"
+	shift 3
 
-    _check_user_namespace
+	_check_user_namespace
 
-    check_same_arch
+	check_same_arch
 
-    if ! $no_copy_files
-    then
-        copy_common_files
-    fi
+	if ! $no_copy_files; then
+		copy_common_files
+	fi
 
-    local args=()
-    [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
+	args=""
+	[ "$1" != "" ] && args="-c $(insert_quotes_on_spaces "${@}")"
 
-    # shellcheck disable=SC2086
-    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
+	# shellcheck disable=SC2086
+	BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "$DEFAULT_SH --login" "$args"
 }
-
 
 #######################################
 # Run JuNest as normal user via bwrap.
@@ -124,36 +116,31 @@ function run_env_as_bwrap_fakeroot(){
 # Output:
 #   -                        : The command output.
 #######################################
-function run_env_as_bwrap_user() {
-    check_nested_env
+run_env_as_bwrap_user() {
+	check_nested_env
 
-    local backend_command="${1:-$BWRAP}"
-    local backend_args="$2"
-    local no_copy_files="$3"
-    shift 3
+	backend_command="${1:-$BWRAP}"
+	backend_args="$2"
+	no_copy_files="$3"
+	shift 3
 
-    _check_user_namespace
+	_check_user_namespace
 
-    check_same_arch
+	check_same_arch
 
-    if ! $no_copy_files
-    then
-        copy_common_files
-        copy_file /etc/hosts.equiv
-        copy_file /etc/netgroup
-        copy_file /etc/networks
-        # No need for localtime as it is setup during the image build
-        #copy_file /etc/localtime
-        copy_passwd_and_group
-    fi
+	if ! $no_copy_files; then
+		copy_common_files
+		copy_file /etc/hosts.equiv
+		copy_file /etc/netgroup
+		copy_file /etc/networks
+		# No need for localtime as it is setup during the image build
+		#copy_file /etc/localtime
+		copy_passwd_and_group
+	fi
 
-    local args=()
-    [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
+	args=""
+	[ "$1" != "" ] && args="-c $(insert_quotes_on_spaces "${@}")"
 
-    # shellcheck disable=SC2086
-    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
+	# shellcheck disable=SC2086
+	BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "$DEFAULT_SH --login" "$args"
 }
-
-
-
-

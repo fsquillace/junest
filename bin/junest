@@ -1,312 +1,389 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # shellcheck disable=SC1091
 #
 # This file is part of JuNest (https://github.com/fsquillace/junest).
 #
 
-set -e
-
 # JUNEST_BASE can be overridden for testing purposes.
 # There is no need for doing it for normal usage.
 JUNEST_BASE="${JUNEST_BASE:-$(readlink -f "$(dirname "$(readlink -f "$0")")"/..)}"
 
-source "${JUNEST_BASE}/lib/utils/utils.sh"
-source "${JUNEST_BASE}/lib/core/common.sh"
+. "${JUNEST_BASE}/lib/utils/utils.sh"
+. "${JUNEST_BASE}/lib/core/common.sh"
 
-source "${JUNEST_BASE}/lib/core/build.sh"
-source "${JUNEST_BASE}/lib/core/setup.sh"
-source "${JUNEST_BASE}/lib/core/chroot.sh"
-source "${JUNEST_BASE}/lib/core/namespace.sh"
-source "${JUNEST_BASE}/lib/core/proot.sh"
-source "${JUNEST_BASE}/lib/core/wrappers.sh"
-
+. "${JUNEST_BASE}/lib/core/build.sh"
+. "${JUNEST_BASE}/lib/core/setup.sh"
+. "${JUNEST_BASE}/lib/core/chroot.sh"
+. "${JUNEST_BASE}/lib/core/namespace.sh"
+. "${JUNEST_BASE}/lib/core/proot.sh"
+. "${JUNEST_BASE}/lib/core/wrappers.sh"
 
 ###################################
 ### General functions           ###
 ###################################
 usage() {
-    echo -e "$NAME (v$(cat "$JUNEST_BASE"/VERSION)): $DESCRIPTION"
-    echo
-    echo -e "Usage: $CMD [action] [options] [--] [command]"
-    echo
-    echo -e "General:"
-    echo -e "-h, --help                                 Show this help message"
-    echo -e "-V, --version                              Show the $NAME version"
-    echo
-    echo -e "Actions and options:"
-    echo -e "  s[etup]                                  Setup $NAME in ${JUNEST_HOME} either from repo or from file"
-    echo -e "            -i, --from-file <image>        Setup the $NAME image in ${JUNEST_HOME}"
-    echo -e "            -a, --arch <arch>              $NAME architecture to download (x86_64, arm)"
-    echo -e "                                           Defaults to the host architecture ($ARCH)"
-    echo -e "            -d, --delete                   Delete $NAME from ${JUNEST_HOME}"
-    echo
-    echo -e "  n[s]                                     Access via Linux Namespaces using BubbleWrap (Default action)"
-    echo -e "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
-    echo -e "            --backend-command <cmd>        Bwrap command to use"
-    echo -e "            -b, --backend-args <args>      Arguments for bwrap backend program"
-    echo -e "                                           ($CMD ns -b \"--help\" to check out the bwrap options)"
-    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
-    echo
-    echo -e "  p[root]                                  Access via PRoot"
-    echo -e "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
-    echo -e "            --backend-command <cmd>        PRoot command to use"
-    echo -e "            -b, --backend-args <args>      Arguments for PRoot backend program"
-    echo -e "                                           ($CMD proot -b \"--help\" to check out the PRoot options)"
-    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
-    echo
-    echo -e "  g[root]                                  Access with root privileges via GRoot"
-    echo -e "            --backend-command <cmd>        GRoot command to use"
-    echo -e "            -b, --backend-args <args>      Arguments for GRoot backend program"
-    echo -e "                                           ($CMD groot -b \"--help\" to check out the GRoot options)"
-    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
-    echo
-    echo -e "  r[oot]                                   Access with root privileges via classic chroot"
-    echo -e "            --backend-command <cmd>        Chroot command to use"
-    echo -e "            -b, --backend-args <args>      Arguments for chroot backend program"
-    echo -e "                                           ($CMD root -b \"--help\" to check out the chroot options)"
-    echo -e "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
-    echo
-    echo -e "  b[uild]                                  Build a $NAME image (must run in ArchLinux)"
-    echo -e "            -n, --disable-check            Disable the $NAME image check"
-    echo
-    echo -e "  create-bin-wrappers                      Create bin wrappers in $JUNEST_HOME/usr/bin_wrappers"
-    echo -e "            -f, --force                    Create the wrapper files even if they already exist"
-    echo
+	printf '%s\n' "$NAME (v$(cat "$JUNEST_BASE"/VERSION)): $DESCRIPTION"
+	printf '%s\n' ""
+	printf '%s\n' "Usage: $CMD [action] [options] [--] [command]"
+	printf '%s\n' ""
+	printf '%s\n' "General:"
+	printf '%s\n' "-h, --help                                 Show this help message"
+	printf '%s\n' "-V, --version                              Show the $NAME version"
+	printf '%s\n' ""
+	printf '%s\n' "Actions and options:"
+	printf '%s\n' "  s[etup]                                  Setup $NAME in ${JUNEST_HOME} either from repo or from file"
+	printf '%s\n' "            -i, --from-file <image>        Setup the $NAME image in ${JUNEST_HOME}"
+	printf '%s\n' "            -a, --arch <arch>              $NAME architecture to download (x86_64, arm)"
+	printf '%s\n' "                                           Defaults to the host architecture ($ARCH)"
+	printf '%s\n' "            -d, --delete                   Delete $NAME from ${JUNEST_HOME}"
+	printf '%s\n' ""
+	printf '%s\n' "  n[s]                                     Access via Linux Namespaces using BubbleWrap (Default action)"
+	printf '%s\n' "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
+	printf '%s\n' "            --backend-command <cmd>        Bwrap command to use"
+	printf '%s\n' "            -b, --backend-args <args>      Arguments for bwrap backend program"
+	printf '%s\n' "                                           ($CMD ns -b \"--help\" to check out the bwrap options)"
+	printf '%s\n' "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
+	printf '%s\n' ""
+	printf '%s\n' "  p[root]                                  Access via PRoot"
+	printf '%s\n' "            -f, --fakeroot                 Run $NAME with fakeroot privileges"
+	printf '%s\n' "            --backend-command <cmd>        PRoot command to use"
+	printf '%s\n' "            -b, --backend-args <args>      Arguments for PRoot backend program"
+	printf '%s\n' "                                           ($CMD proot -b \"--help\" to check out the PRoot options)"
+	printf '%s\n' "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
+	printf '%s\n' ""
+	printf '%s\n' "  g[root]                                  Access with root privileges via GRoot"
+	printf '%s\n' "            --backend-command <cmd>        GRoot command to use"
+	printf '%s\n' "            -b, --backend-args <args>      Arguments for GRoot backend program"
+	printf '%s\n' "                                           ($CMD groot -b \"--help\" to check out the GRoot options)"
+	printf '%s\n' "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
+	printf '%s\n' ""
+	printf '%s\n' "  r[oot]                                   Access with root privileges via classic chroot"
+	printf '%s\n' "            --backend-command <cmd>        Chroot command to use"
+	printf '%s\n' "            -b, --backend-args <args>      Arguments for chroot backend program"
+	printf '%s\n' "                                           ($CMD root -b \"--help\" to check out the chroot options)"
+	printf '%s\n' "            -n, --no-copy-files            Do not copy common etc files into $NAME environment"
+	printf '%s\n' ""
+	printf '%s\n' "  b[uild]                                  Build a $NAME image (must run in ArchLinux)"
+	printf '%s\n' "            -n, --disable-check            Disable the $NAME image check"
+	printf '%s\n' ""
+	printf '%s\n' "  create-bin-wrappers                      Create bin wrappers in $JUNEST_HOME/usr/bin_wrappers"
+	printf '%s\n' "            -f, --force                    Create the wrapper files even if they already exist"
+	printf '%s\n' ""
 }
 
 version() {
-    echo -e "$NAME $(cat "$JUNEST_BASE"/VERSION)"
+	printf '%s\n' "$NAME $(cat "$JUNEST_BASE"/VERSION)"
 }
 
-function parse_arguments(){
-    # Actions
-    ACT_SETUP=false
-    ACT_BUILD=false
-    ACT_CREATE_WRAPPERS=false
-    ACT_NAMESPACE=false
-    ACT_PROOT=false
-    ACT_GROOT=false
-    ACT_ROOT=false
-    ACT_HELP=false
-    ACT_VERSION=false
-
-    case "$1" in
-        s|setup) ACT_SETUP=true ; shift ;;
-        b|build) ACT_BUILD=true ; shift ;;
-        create-bin-wrappers) ACT_CREATE_WRAPPERS=true ; shift ;;
-        n|ns) ACT_NAMESPACE=true ; shift ;;
-        p|proot) ACT_PROOT=true ; shift ;;
-        g|groot) ACT_GROOT=true ; shift ;;
-        r|root) ACT_ROOT=true ; shift ;;
-        -h|--help) ACT_HELP=true ; shift ;;
-        -V|--version) ACT_VERSION=true ; shift ;;
-        *) ACT_NAMESPACE=true ;;
-    esac
-
-    if $ACT_SETUP
-    then
-        _parse_setup_opts "$@"
-    elif $ACT_BUILD
-    then
-        _parse_build_opts "$@"
-    elif $ACT_CREATE_WRAPPERS
-    then
-        _parse_create_wrappers_opts "$@"
-    elif $ACT_NAMESPACE
-    then
-        _parse_ns_opts "$@"
-    elif $ACT_PROOT
-    then
-        _parse_proot_opts "$@"
-    elif $ACT_GROOT
-    then
-        _parse_root_opts "$@"
-    elif $ACT_ROOT
-    then
-        _parse_root_opts "$@"
-    fi
+addarg() {
+	if [ -z "$ARGS" ]; then
+		ARGS="$1"
+	else
+		ARGS="$ARGS $1"
+	fi
 }
 
-function _parse_root_opts() {
-    # Options:
-    BACKEND_ARGS=""
-    OPT_NO_COPY_FILES=false
-    BACKEND_COMMAND=""
+parse_arguments() {
+	# Actions
+	ACT_SETUP=false
+	ACT_BUILD=false
+	ACT_CREATE_WRAPPERS=false
+	ACT_NAMESPACE=false
+	ACT_PROOT=false
+	ACT_GROOT=false
+	ACT_ROOT=false
+	ACT_HELP=false
+	ACT_VERSION=false
 
-    while [[ -n "$1" ]]
-    do
-        case "$1" in
-            -b|--backend-args) shift ; BACKEND_ARGS=$1; shift ;;
-            -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
-            --backend-command) shift; BACKEND_COMMAND="$1"; shift ;;
-            --) shift ; break ;;
-            -*) die "Invalid option $1" ;;
-            *) break ;;
-        esac
-    done
+	case "$1" in
+	s | setup)
+		ACT_SETUP=true
+		shift
+		;;
+	b | build)
+		ACT_BUILD=true
+		shift
+		;;
+	create-bin-wrappers)
+		ACT_CREATE_WRAPPERS=true
+		shift
+		;;
+	n | ns)
+		ACT_NAMESPACE=true
+		shift
+		;;
+	p | proot)
+		ACT_PROOT=true
+		shift
+		;;
+	g | groot)
+		ACT_GROOT=true
+		shift
+		;;
+	r | root)
+		ACT_ROOT=true
+		shift
+		;;
+	-h | --help)
+		ACT_HELP=true
+		shift
+		;;
+	-V | --version)
+		ACT_VERSION=true
+		shift
+		;;
+	*) ACT_NAMESPACE=true ;;
+	esac
 
-    ARGS=()
-    for arg in "$@"
-    do
-        ARGS+=("$arg")
-    done
+	if $ACT_SETUP; then
+		_parse_setup_opts "$@"
+	elif $ACT_BUILD; then
+		_parse_build_opts "$@"
+	elif $ACT_CREATE_WRAPPERS; then
+		_parse_create_wrappers_opts "$@"
+	elif $ACT_NAMESPACE; then
+		_parse_ns_opts "$@"
+	elif $ACT_PROOT; then
+		_parse_proot_opts "$@"
+	elif $ACT_GROOT; then
+		_parse_root_opts "$@"
+	elif $ACT_ROOT; then
+		_parse_root_opts "$@"
+	fi
 }
 
-function _parse_ns_opts() {
-    # Options:
-    OPT_FAKEROOT=false
-    BACKEND_ARGS=""
-    OPT_NO_COPY_FILES=false
-    BACKEND_COMMAND=""
+_parse_root_opts() {
+	# Options:
+	BACKEND_ARGS=""
+	OPT_NO_COPY_FILES=false
+	BACKEND_COMMAND=""
 
-    while [[ -n "$1" ]]
-    do
-        case "$1" in
-            -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-            -b|--backend-args) shift ; BACKEND_ARGS=$1; shift ;;
-            -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
-            --backend-command) shift; BACKEND_COMMAND="$1"; shift ;;
-            --) shift ; break ;;
-            -*) die "Invalid option $1" ;;
-            *) break ;;
-        esac
-    done
+	while [ -n "$1" ]; do
+		case "$1" in
+		-b | --backend-args)
+			shift
+			BACKEND_ARGS=$1
+			shift
+			;;
+		-n | --no-copy-files)
+			OPT_NO_COPY_FILES=true
+			shift
+			;;
+		--backend-command)
+			shift
+			BACKEND_COMMAND="$1"
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		-*) die "Invalid option $1" ;;
+		*) break ;;
+		esac
+	done
 
-    ARGS=()
-    for arg in "$@"
-    do
-        ARGS+=("$arg")
-    done
+	for arg in "$@"; do
+		addarg "$arg"
+	done
 }
 
-function _parse_proot_opts() {
-    # Options:
-    OPT_FAKEROOT=false
-    BACKEND_ARGS=""
-    OPT_NO_COPY_FILES=false
-    BACKEND_COMMAND=""
+_parse_ns_opts() {
+	# Options:
+	OPT_FAKEROOT=false
+	BACKEND_ARGS=""
+	OPT_NO_COPY_FILES=false
+	BACKEND_COMMAND=""
 
-    while [[ -n "$1" ]]
-    do
-        case "$1" in
-            -f|--fakeroot) OPT_FAKEROOT=true ; shift ;;
-            -b|--backend-args) shift ; BACKEND_ARGS=$1; shift ;;
-            -n|--no-copy-files) OPT_NO_COPY_FILES=true ; shift ;;
-            --backend-command) shift; BACKEND_COMMAND="$1"; shift ;;
-            --) shift ; break ;;
-            -*) die "Invalid option $1" ;;
-            *) break ;;
-        esac
-    done
+	while [ -n "$1" ]; do
+		case "$1" in
+		-f | --fakeroot)
+			OPT_FAKEROOT=true
+			shift
+			;;
+		-b | --backend-args)
+			shift
+			BACKEND_ARGS=$1
+			shift
+			;;
+		-n | --no-copy-files)
+			OPT_NO_COPY_FILES=true
+			shift
+			;;
+		--backend-command)
+			shift
+			BACKEND_COMMAND="$1"
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		-*) die "Invalid option $1" ;;
+		*) break ;;
+		esac
+	done
 
-    ARGS=("$@")
+	for arg in "$@"; do
+		addarg "$arg"
+	done
 }
 
-function _parse_build_opts() {
-    OPT_DISABLE_CHECK=false
-    while [[ -n "$1" ]]
-    do
-        case "$1" in
-            -n|--disable-check) OPT_DISABLE_CHECK=true ; shift ;;
-            *) die "Invalid option $1" ;;
-        esac
-    done
+_parse_proot_opts() {
+	# Options:
+	OPT_FAKEROOT=false
+	BACKEND_ARGS=""
+	OPT_NO_COPY_FILES=false
+	BACKEND_COMMAND=""
+
+	while [ -n "$1" ]; do
+		case "$1" in
+		-f | --fakeroot)
+			OPT_FAKEROOT=true
+			shift
+			;;
+		-b | --backend-args)
+			shift
+			BACKEND_ARGS=$1
+			shift
+			;;
+		-n | --no-copy-files)
+			OPT_NO_COPY_FILES=true
+			shift
+			;;
+		--backend-command)
+			shift
+			BACKEND_COMMAND="$1"
+			shift
+			;;
+		--)
+			shift
+			break
+			;;
+		-*) die "Invalid option $1" ;;
+		*) break ;;
+		esac
+	done
+
+	ARGS="$*"
 }
 
-function _parse_create_wrappers_opts() {
-    OPT_FORCE=false
-    while [[ -n "$1" ]]
-    do
-        case "$1" in
-            -f|--force) OPT_FORCE=true ; shift ;;
-            *) die "Invalid option $1" ;;
-        esac
-    done
+_parse_build_opts() {
+	OPT_DISABLE_CHECK=false
+	while [ -n "$1" ]; do
+		case "$1" in
+		-n | --disable-check)
+			OPT_DISABLE_CHECK=true
+			shift
+			;;
+		*) die "Invalid option $1" ;;
+		esac
+	done
 }
 
-function _parse_setup_opts() {
-    OPT_FROM_FILE=false
-    IMAGE_FILE=""
-    ARCH_ARG=""
-    OPT_DELETE=false
-    while [[ -n "$1" ]]
-    do
-        case "$1" in
-            -i|--from-file) OPT_FROM_FILE=true ; shift ; IMAGE_FILE=$1 ; shift ;;
-            -a|--arch) shift ; ARCH_ARG=$1; shift ;;
-            -d|--delete) OPT_DELETE=true ; shift ;;
-            *) die "Invalid option $1" ;;
-        esac
-    done
+_parse_create_wrappers_opts() {
+	OPT_FORCE=false
+	while [ -n "$1" ]; do
+		case "$1" in
+		-f | --force)
+			OPT_FORCE=true
+			shift
+			;;
+		*) die "Invalid option $1" ;;
+		esac
+	done
 }
 
-function execute_operation() {
-    $ACT_HELP && usage && return
-    $ACT_VERSION && version && return
-
-    if $ACT_BUILD; then
-        build_image_env $OPT_DISABLE_CHECK
-        return
-    fi
-
-    if $ACT_SETUP; then
-        if $OPT_DELETE; then
-            delete_env
-        else
-            if is_env_installed
-            then
-                die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
-            fi
-
-            if $OPT_FROM_FILE; then
-                setup_env_from_file "$IMAGE_FILE"
-            else
-                setup_env "$ARCH_ARG"
-            fi
-            create_wrappers
-        fi
-
-        return
-    fi
-
-
-    if ! is_env_installed
-    then
-        die "Error: The image is still not installed in $JUNEST_HOME. Run this first: $CMD setup"
-    fi
-
-    if $ACT_CREATE_WRAPPERS; then
-        create_wrappers $OPT_FORCE
-        exit
-    fi
-
-    local run_env
-    if $ACT_NAMESPACE; then
-        if $OPT_FAKEROOT; then
-            run_env=run_env_as_bwrap_fakeroot
-        else
-            run_env=run_env_as_bwrap_user
-        fi
-    elif $ACT_PROOT; then
-        if $OPT_FAKEROOT; then
-            run_env=run_env_as_proot_fakeroot
-        else
-            run_env=run_env_as_proot_user
-        fi
-    elif $ACT_GROOT; then
-        run_env=run_env_as_groot
-    elif $ACT_ROOT; then
-        run_env=run_env_as_chroot
-    fi
-
-    # Call create_wrappers in case new bin files have been created
-    trap "create_wrappers" EXIT QUIT TERM
-    $run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
+_parse_setup_opts() {
+	OPT_FROM_FILE=false
+	IMAGE_FILE=""
+	ARCH_ARG=""
+	OPT_DELETE=false
+	while [ -n "$1" ]; do
+		case "$1" in
+		-i | --from-file)
+			OPT_FROM_FILE=true
+			shift
+			IMAGE_FILE=$1
+			shift
+			;;
+		-a | --arch)
+			shift
+			ARCH_ARG=$1
+			shift
+			;;
+		-d | --delete)
+			OPT_DELETE=true
+			shift
+			;;
+		*) die "Invalid option $1" ;;
+		esac
+	done
 }
 
-function main() {
-    parse_arguments "$@"
-    execute_operation
+execute_operation() {
+	$ACT_HELP && usage && return
+	$ACT_VERSION && version && return
+
+	if $ACT_BUILD; then
+		build_image_env "$OPT_DISABLE_CHECK"
+		return
+	fi
+
+	if $ACT_SETUP; then
+		if $OPT_DELETE; then
+			delete_env
+		else
+			if is_env_installed; then
+				die "Error: The image cannot be installed since $JUNEST_HOME is not empty."
+			fi
+
+			if $OPT_FROM_FILE; then
+				setup_env_from_file "$IMAGE_FILE"
+			else
+				setup_env "$ARCH_ARG"
+			fi
+			create_wrappers
+		fi
+
+		return
+	fi
+
+	if ! is_env_installed; then
+		die "Error: The image is still not installed in $JUNEST_HOME. Run this first: $CMD setup"
+	fi
+
+	if $ACT_CREATE_WRAPPERS; then
+		create_wrappers "$OPT_FORCE"
+		exit
+	fi
+
+	if $ACT_NAMESPACE; then
+		if $OPT_FAKEROOT; then
+			run_env=run_env_as_bwrap_fakeroot
+		else
+			run_env=run_env_as_bwrap_user
+		fi
+	elif $ACT_PROOT; then
+		if $OPT_FAKEROOT; then
+			run_env=run_env_as_proot_fakeroot
+		else
+			run_env=run_env_as_proot_user
+		fi
+	elif $ACT_GROOT; then
+		run_env=run_env_as_groot
+	elif $ACT_ROOT; then
+		run_env=run_env_as_chroot
+	fi
+
+	# Call create_wrappers in case new bin files have been created
+	trap "create_wrappers" EXIT QUIT TERM
+	$run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" "$OPT_NO_COPY_FILES" "${ARGS}"
+}
+
+main() {
+	parse_arguments "$@"
+	execute_operation
 }
 
 main "$@"

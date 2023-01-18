@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 NULL_EXCEPTION=11
 WRONG_ANSWER=33
@@ -16,9 +16,12 @@ WRONG_ANSWER=33
 # Output:
 #   None
 #######################################
-function check_not_null() {
-    [ -z "$1" ] && { error "Error: null argument $1"; return $NULL_EXCEPTION; }
-    return 0
+check_not_null() {
+	[ -z "$1" ] && {
+		error "Error: null argument $1"
+		return $NULL_EXCEPTION
+	}
+	return 0
 }
 
 #######################################
@@ -33,8 +36,8 @@ function check_not_null() {
 # Output:
 #   Message printed to stderr.
 #######################################
-function echoerr() {
-    echo "$@" 1>&2;
+echoerr() {
+	printf '%b\n' "$@" 1>&2
 }
 
 #######################################
@@ -49,9 +52,9 @@ function echoerr() {
 # Output:
 #   Message printed to stderr.
 #######################################
-function die() {
-    error "$@"
-    exit 1
+die() {
+	error "$@"
+	exit 1
 }
 
 #######################################
@@ -67,11 +70,11 @@ function die() {
 # Output:
 #   Message printed to stderr.
 #######################################
-function die_on_status() {
-    status=$1
-    shift
-    error "$@"
-    exit "$status"
+die_on_status() {
+	status=$1
+	shift
+	error "$@"
+	exit "$status"
 }
 
 #######################################
@@ -86,8 +89,8 @@ function die_on_status() {
 # Output:
 #   Message printed to stderr.
 #######################################
-function error() {
-    echoerr -e "\033[1;31m$*\033[0m"
+error() {
+	echoerr "\033[1;31m$*\033[0m"
 }
 
 #######################################
@@ -102,9 +105,9 @@ function error() {
 # Output:
 #   Message printed to stderr.
 #######################################
-function warn() {
-    # $@: msg (mandatory) - str: Message to print
-    echoerr -e "\033[1;33m$*\033[0m"
+warn() {
+	# $@: msg (mandatory) - str: Message to print
+	echoerr "\033[1;33m$*\033[0m"
 }
 
 #######################################
@@ -119,8 +122,8 @@ function warn() {
 # Output:
 #   Message printed to stdout.
 #######################################
-function info(){
-    echo -e "\033[1;36m$*\033[0m"
+info() {
+	printf '%b\n' "\033[1;36m$*\033[0m"
 }
 
 #######################################
@@ -139,67 +142,70 @@ function info(){
 # Output:
 #   Print the question to ask.
 #######################################
-function ask(){
-    local question=$1
-    local default_answer=$2
-    check_not_null "$question"
+ask() {
+	question="$1"
+	default_answer="$2"
 
-    if [ -n "$default_answer" ]
-    then
-        local answers="Y y N n"
-        [[ "$answers" =~ $default_answer ]] || { error "The default answer: $default_answer is wrong."; return $WRONG_ANSWER; }
-    fi
+	check_not_null "$question"
 
-    local default="Y"
-    [ -z "$default_answer" ] || default=$(echo "$default_answer" | tr '[:lower:]' '[:upper:]')
+	if [ -n "$default_answer" ]; then
+		case "$default_answer" in
+		Y | y | N | n) ;;
+		*)
+			error "The default answer: $default_answer is wrong."
+			return $WRONG_ANSWER
+			;;
+		esac
+	fi
 
-    local other="n"
-    [ "$default" == "N" ] && other="y"
+	default="Y"
+	[ -z "$default_answer" ] || default=$(printf '%s\n' "$default_answer" | tr '[:lower:]' '[:upper:]')
 
-    local prompt
-    prompt=$(info "$question (${default}/${other})> ")
+	other="n"
+	[ "$default" = "N" ] && other="y"
 
-    local res="none"
-    while [ "$res" != "Y" ] && [ "$res" != "N"  ] && [ "$res" != "" ];
-    do
-        read -r -p "$prompt" res
-        res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
-    done
+	prompt=$(info "$question (${default}/${other})> ")
 
-    [ "$res" == "" ] && res="$default"
+	res="none"
+	while [ "$res" != "Y" ] && [ "$res" != "N" ] && [ "$res" != "" ]; do
+		printf '%s' "$prompt"
+		read -r res
+		res=$(echo "$res" | tr '[:lower:]' '[:upper:]')
+	done
 
-    [ "$res" == "Y" ]
+	[ "$res" = "" ] && res="$default"
+
+	[ "$res" = "Y" ]
 }
 
-function insert_quotes_on_spaces(){
-# It inserts quotes between arguments.
-# Useful to preserve quotes on command
-# to be used inside sh -c/bash -c
-    local C=""
-    whitespace="[[:space:]]"
-    for i in "$@"
-    do
-        if [[ $i =~ $whitespace ]]
-        then
-            temp_C="\"$i\""
-        else
-            temp_C="$i"
-        fi
+insert_quotes_on_spaces() {
+	# It inserts quotes between arguments.
+	# Useful to preserve quotes on command
+	# to be used inside sh -c/bash -c
+	whitespace="[:space:]"
+	for i in "$@"; do
+		# shellcheck disable=2254
+		case "$i" in
+		$whitespace)
+			temp_C="\"$i\""
+			;;
+		*)
+			temp_C="$i"
+			;;
+		esac
 
-        # Handle edge case when C is empty to avoid adding an extra space
-        if [[ -z $C ]]
-        then
-            C="$temp_C"
-        else
-            C="$C $temp_C"
-        fi
+		# Handle edge case when C is empty to avoid adding an extra space
+		if [ -z "$C" ]; then
+			C="$temp_C"
+		else
+			C="$C $temp_C"
+		fi
 
-    done
-    echo "$C"
+	done
+	echo "$C"
 }
 
-contains_element () {
-  local e
-  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
-  return 1
+contains_element() {
+	for e in "$@"; do [ "$e" = "$1" ] && return 0; done
+	return 1
 }
