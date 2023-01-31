@@ -1,6 +1,6 @@
 JuNest
 ======
-The lightweight Arch Linux based distro that runs, without root privileges, upon any Linux distro.
+The lightweight Arch Linux based distro that runs, without root privileges, on top of any other Linux distro.
 
 <h1 align="center">
     <a href="https://github.com/fsquillace/junest"><img
@@ -28,40 +28,40 @@ The lightweight Arch Linux based distro that runs, without root privileges, upon
 
 Description
 ===========
-**JuNest** (Jailed User NEST) is a lightweight Arch Linux based distribution
-that allows to have disposable and partial isolated GNU/Linux environments
-within any generic GNU/Linux host OS
-and without the need to have root privileges for installing packages.
+**JuNest** (Jailed User Nest) is a lightweight Arch Linux based distribution
+that allows the creation of disposable and partially isolated GNU/Linux environments
+within any generic GNU/Linux host OS and without requiring root
+privileges to install packages.
 
-JuNest contains mainly the package managers (called [pacman](https://wiki.archlinux.org/index.php/Pacman)
-that allows to access
+JuNest is built around [pacman](https://wiki.archlinux.org/index.php/Pacman),
+the Arch Linux package manager, which allows access
 to a wide range of packages from the Arch Linux repositories.
 
-The main advantages on using JuNest are:
+The main advantages of using JuNest include:
 
 - Install packages without root privileges.
-- Partial isolated environment in which you can install packages without affecting a production system.
-- Access to a wide range of packages, in particular on GNU/Linux distros that may contain limited repositories (such as CentOS and RedHat).
+- Create partially isolated environments in which you can install packages without risking mishaps on production systems.
+- Access a wider range of packages, particularly on GNU/Linux distros with comparatively limited repositories (such as CentOS and Red Hat).
+- Run on a different architecture from the host OS via QEMU.
 - Available for `x86_64` and `arm` architectures but you can build your own image from scratch too!
-- Run on a different architecture from the host OS via QEMU
-- All Arch Linux lovers can have their favourite distro everywhere!
+- All Arch Linux lovers can enjoy their favourite distro everywhere!
 
 JuNest follows the [Arch Linux philosophy](https://wiki.archlinux.org/index.php/The_Arch_Way).
 
 How different is JuNest from Docker and Vagrant?
 ------------------------------------------------
-Although JuNest sounds similar to a virtualisation/Linux container -like system,
+Although JuNest sounds similar to a virtualisation/Linux container-like system,
 JuNest is quite different from solutions like Docker or Vagrant.
 In fact, the purpose of JuNest is **not** to
-build a complete isolated environment but, conversely, is the ability to run
-programs as they were running natively from the host OS. Almost everything is shared
-between host OS and the JuNest sandbox (kernel, process subtree, network, mounting, etc)
+build a completely isolated environment but, conversely, to provide the ability to run
+programs as if they were running natively from the host OS. Almost everything is shared
+between the host OS and the JuNest sandbox (kernel, process subtree, network, mounting, etc)
 and only the root filesystem gets isolated
 (since the programs installed in JuNest need to reside elsewhere).
 
 This allows interaction between processes belonging to both host OS and JuNest.
-For instance, you can install `top` command in JuNest in order to monitor
-any processes belonging to the host OS.
+For example, you can install the `top` command in JuNest and use it to monitor
+processes belonging to the host OS.
 
 Quickstart
 ==========
