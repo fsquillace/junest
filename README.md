@@ -512,7 +512,7 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 > have *suid* permission, you can list the commands from your JuNest environment
 > with the following command:
 
-    $> find /usr/bin -perm +4000
+    $> find /usr/bin -perm /4000
 
 ## No characters are visible on a graphic application ##
 
