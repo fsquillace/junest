@@ -70,6 +70,8 @@ EOT
     echo "Generating the metadata info"
     sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
     sudo bash -c "echo 'JUNEST_ARCH=$ARCH' > ${maindir}/root/etc/${CMD}/info"
+    # Related to: https://github.com/fsquillace/junest/issues/305
+    sudo bash -c "echo 'export FAKEROOTDONTTRYCHOWN=true' > ${maindir}/root/etc/profile.d/junest.sh"
 
     info "Generating the locales..."
     # sed command is required for locale-gen but it is required by fakeroot
