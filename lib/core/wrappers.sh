@@ -21,6 +21,17 @@
 function create_wrappers() {
     local force=${1:-false}
     mkdir -p "${JUNEST_HOME}/usr/bin_wrappers"
+    # Arguments inside a variable (i.e. `JUNEST_ARGS`) separated by quotes
+    # are not recognized normally unless using `eval`. More info here:
+    # https://github.com/fsquillace/junest/issues/262
+    # https://github.com/fsquillace/junest/pull/287
+    cat <<EOF > "${JUNEST_HOME}/usr/bin/junest_wrapper"
+#!/usr/bin/env bash
+
+eval "junest_args_array=(\${JUNEST_ARGS:-ns})"
+junest "\${junest_args_array[@]}" -- \$(basename \${0}) "\$@"
+EOF
+    chmod +x "${JUNEST_HOME}/usr/bin/junest_wrapper"
 
     cd "${JUNEST_HOME}/usr/bin" || return 1
     for file in *
@@ -33,17 +44,8 @@ function create_wrappers() {
         then
             continue
         fi
-        # Arguments inside a variable (i.e. `JUNEST_ARGS`) separated by quotes
-        # are not recognized normally unless using `eval`. More info here:
-        # https://github.com/fsquillace/junest/issues/262
-        # https://github.com/fsquillace/junest/pull/287
-        cat <<EOF > "${JUNEST_HOME}/usr/bin_wrappers/${file}"
-#!/usr/bin/env bash
-
-eval "junest_args_array=(\${JUNEST_ARGS:-ns})"
-junest "\${junest_args_array[@]}" -- ${file} "\$@"
-EOF
-        chmod +x "${JUNEST_HOME}/usr/bin_wrappers/${file}"
+        rm -f "${JUNEST_HOME}/usr/bin_wrappers/$file"
+        ln -s "../bin/junest_wrapper" "${JUNEST_HOME}/usr/bin_wrappers/$file"
     done
 
     # Remove wrappers no longer needed

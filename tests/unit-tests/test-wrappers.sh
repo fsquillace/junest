@@ -81,7 +81,7 @@ function test_create_wrappers_verify_content(){
 -b
 --bind /run /run2
 --
-myfile
+test-wrappers.sh
 pacman
 -Rsn
 neovim
