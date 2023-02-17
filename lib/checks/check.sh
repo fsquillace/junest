@@ -54,11 +54,21 @@ PACMAN_OPTIONS="--noconfirm --disable-download-timeout"
 $SUDO pacman $PACMAN_OPTIONS -S grep coreutils
 # shellcheck disable=SC2086
 # shellcheck disable=SC2046
-$SUDO pacman $PACMAN_OPTIONS -S $(pacman -Sg base-devel | cut -d ' ' -f 2 | grep -v sudo)
+$SUDO pacman $PACMAN_OPTIONS -Syu --ignore sudo base-devel
 
 info "Checking basic executables work..."
 $SUDO pacman -Qi pacman 1> /dev/null
 /usr/bin/groot --help 1> /dev/null
+
+# Test FAKEROOTDONTTRYCHOWN is set to true by default
+set +u
+if [[ -z $FAKEROOTKEY ]]
+then
+    fakeroot chown root /tmp
+else
+    chown root /tmp
+fi
+set -u
 
 repo_package1=tree
 echo "Checking ${repo_package1} package from official repo..."
