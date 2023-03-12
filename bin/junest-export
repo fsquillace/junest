@@ -1,0 +1,24 @@
+#!/bin/sh
+
+case "$1" in
+	'-a'|'-app')
+		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
+		while [ -n "$1" ]
+		do
+		mkdir ~/.cache/junest-export
+		cp ~/.junest/usr/share/applications/*$2* ~/.cache/junest-export
+		launchername=$(ls ~/.cache/junest-export)
+		appbinary=$(cat ~/.cache/junest-export/$launchername | grep Exec | cut -c 6- | head -1)
+		appiconname=$(cat ~/.cache/junest-export/$launchername | grep Icon | cut -c 6- | head -1)
+		sed -i "s#Exec=$appbinary#Exec=sh -c '~/.local/share/junest/bin/junest -- $appbinary'#g" ~/.cache/junest-export/$launchername
+		mkdir -p ~/.local/share/applications
+		mv ~/.cache/junest-export/$launchername ~/.local/share/applications/
+		rm -R -f ~/.cache/junest-export
+		mkdir -p ~/.local/share/icons
+		ln -s ~/.junest/usr/share/icons/hicolor ~/.local/share/icons/hicolor > /dev/null 2>&1
+		cp ~/.junest/usr/share/pixmaps/*$appiconname* ~/.local/share/icons/ > /dev/null 2>&1
+		echo " $2 has been successfully exported!"
+		exit
+		done
+esac
+		
