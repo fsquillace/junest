@@ -17,28 +17,28 @@ case "$1" in
 		mkdir ~/.cache/junest-export
 		cp ~/.junest/usr/share/applications/*$2* ~/.cache/junest-export
 		launchername=$(ls ~/.cache/junest-export)
-		appbinary=$(cat ~/.cache/junest-export/$launchername | grep Exec | cut -c 6- | head -1)
-		appiconname=$(cat ~/.cache/junest-export/$launchername | grep Icon | cut -c 6- | head -1)
+		appiconname=$(cat ~/.cache/junest-export/$launchername > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
 		addmedia='"--bind /media /media"'
-		sed -i "s#Exec=$appbinary#Exec=sh -c '~/.local/share/junest/bin/junest -- $appbinary'#g" ~/.cache/junest-export/$launchername
+		sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/$launchername > /dev/null 2>&1
+		sed -i "/^Exec=/ s/$/$(echo \')/" ~/.cache/junest-export/$launchername > /dev/null 2>&1
 		while [ -n "$3" ]
 		do
 		case "$3" in
-			'-S'|'--sudo')	sed -i "s#junest --#junest -- sudo#g" ~/.cache/junest-export/$launchername; break;;
-			'-m'|'--media')	sed -i "s#junest --#junest -b $addmedia --#g" ~/.cache/junest-export/$launchername; break;;
+			'-S'|'--sudo')	sed -i "s#junest --#junest -- sudo#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
+			'-m'|'--media')	sed -i "s#junest --#junest -b $addmedia --#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
 			''|*)	break;;
 		esac
 		done
 		while [ -n "$4" ]
 		do
 		case "$4" in
-			'-S'|'--sudo')	sed -i "s#junest -b $addmedia --#jjunest -b $addmedia -- sudo#g" ~/.cache/junest-export/$launchername; break;;
-			'-m'|'--media')	sed -i "s#junest -- sudo#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/$launchername; break;;
+			'-S'|'--sudo')	sed -i "s#junest -b $addmedia --#jjunest -b $addmedia -- sudo#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
+			'-m'|'--media')	sed -i "s#junest -- sudo#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
 			''|*)	break;;
 		esac
 		done
 		mkdir -p ~/.local/share/applications
-		mv ~/.cache/junest-export/$launchername ~/.local/share/applications/
+		mv ~/.cache/junest-export/$launchername ~/.local/share/applications/ > /dev/null 2>&1
 		rm -R -f ~/.cache/junest-export
 		mkdir -p ~/.local/share/icons
 		ln -s ~/.junest/usr/share/icons/hicolor ~/.local/share/icons/hicolor > /dev/null 2>&1
