@@ -1,50 +1,107 @@
 #!/bin/sh
 
 case "$1" in
-	''|'-h'|'--help')
-		echo "\n USAGE:\n\n   junest-export {OPTION} {APPNAME} {FLAG}\n"
-		echo " EXAMPLES:\n\n   junest-export --app celestia\n   junest-export --app kdenlive --media\n   junest-export --app pamac-manager --sudo\n"
+	'') echo "\n USAGE:\n\n   junest-export {OPTION}\n   junest-export {OPTION} {APPNAME}\n   junest-export {OPTION} {APPNAME} {FLAGS}\n\n Run 'junest-export -h' or 'junest-export --help' for more information\n";;
+	'-h'|'--help')
+		echo "\n USAGE:\n\n   junest-export {OPTION}\n   junest-export {OPTION} {APPNAME}\n   junest-export {OPTION} {APPNAME} {FLAGS}\n"
+		echo " EXAMPLES:\n\n   junes-export --update\n   junest-export --app celestia\n   junest-export --app kdenlive --media\n   junest-export --service pamac --sudo\n"
 		echo " OPTIONS:\n"
-		echo "   --app/-a:           name of the application to export"
+		echo "   --help/-h:       shows this message"
+		echo "   --app/-a:        name of the application to export"
+		echo "   --service/-s:    name of the service to export"
+		echo "   --update/-u:     update this script (requires 'wget')"
+		echo "   --version/-v:    shows the version of this script"
 		echo "\n FLAGS:\n"
-		echo "   --media/-m:         enable the support for drives mounted in /media"
-		echo "   --sudo/-S:          specify if the exported item should be run as sudo\n"
+		echo "   --media/-m:      enable the support for drives mounted in /media"
+		echo "   --sudo/-S:       specify if the exported item should be run as sudo\n"
 		;;
 	'-a'|'--app')
 		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
 		while [ -n "$1" ]
 		do
-		mkdir ~/.cache/junest-export
-		cp ~/.junest/usr/share/applications/*$2* ~/.cache/junest-export
-		launchername=$(ls ~/.cache/junest-export)
-		appiconname=$(cat ~/.cache/junest-export/$launchername > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
-		addmedia='"--bind /media /media"'
-		sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/$launchername > /dev/null 2>&1
-		sed -i "/^Exec=/ s/$/$(echo \')/" ~/.cache/junest-export/$launchername > /dev/null 2>&1
-		while [ -n "$3" ]
-		do
-		case "$3" in
-			'-S'|'--sudo')	sed -i "s#junest --#junest -- sudo#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
-			'-m'|'--media')	sed -i "s#junest --#junest -b $addmedia --#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
-			''|*)	break;;
-		esac
-		done
-		while [ -n "$4" ]
-		do
-		case "$4" in
-			'-S'|'--sudo')	sed -i "s#junest -b $addmedia --#jjunest -b $addmedia -- sudo#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
-			'-m'|'--media')	sed -i "s#junest -- sudo#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/$launchername > /dev/null 2>&1; break;;
-			''|*)	break;;
-		esac
-		done
-		mkdir -p ~/.local/share/applications
-		mv ~/.cache/junest-export/$launchername ~/.local/share/applications/ > /dev/null 2>&1
-		rm -R -f ~/.cache/junest-export
-		mkdir -p ~/.local/share/icons
-		ln -s ~/.junest/usr/share/icons/hicolor ~/.local/share/icons/hicolor > /dev/null 2>&1
-		cp ~/.junest/usr/share/pixmaps/*$appiconname* ~/.local/share/icons/ > /dev/null 2>&1
-		echo " $2 has been successfully exported!"
-		exit
+		arg=$(ls ~/.junest/usr/share/applications/ | grep $2 | head -1)
+		if test -f ~/.junest/usr/share/applications/$arg; then
+			rm -R -f ~/.cache/junest-export
+			mkdir ~/.cache/junest-export
+			cp ~/.junest/usr/share/applications/*$2* ~/.cache/junest-export
+			appiconname=$(cat ~/.cache/junest-export/* > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
+			addmedia='"--bind /media /media"'
+			sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/* > /dev/null 2>&1
+			sed -i "/^Exec=/ s/$/$(echo \')/" ~/.cache/junest-export/* > /dev/null 2>&1
+			while [ -n "$3" ]
+			do
+			case "$3" in
+				'-S'|'--sudo')	sed -i "s#junest --#junest -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest --#junest -b $addmedia --#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				''|*)	break;;
+			esac
+			done
+			while [ -n "$4" ]
+			do
+			case "$4" in
+				'-S'|'--sudo')	sed -i "s#junest -b $addmedia --#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest -- sudo#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				''|*)	break;;
+			esac
+			done
+			mkdir -p ~/.local/share/applications
+			mv ~/.cache/junest-export/* ~/.local/share/applications/ > /dev/null 2>&1
+			rm -R -f ~/.cache/junest-export
+			mkdir -p ~/.local/share/icons
+			ln -s ~/.junest/usr/share/icons/hicolor ~/.local/share/icons/hicolor > /dev/null 2>&1
+			cp ~/.junest/usr/share/pixmaps/*$appiconname* ~/.local/share/icons/ > /dev/null 2>&1
+			echo " $2 has been successfully exported!"
+			exit
+		else
+			echo " $2 is not a valid argument or is not installed."; break;
+		fi
 		done;;
+	'-s'|'--service')
+		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
+		while [ -n "$1" ]
+		do
+		arg=$(ls ~/.junest/etc/xdg/autostart/ | grep $2 | head -1)
+		if test -f ~/.junest/etc/xdg/autostart/$arg; then
+			rm -R -f ~/.cache/junest-export
+			mkdir ~/.cache/junest-export
+			cp ~/.junest/etc/xdg/autostart/*$2* ~/.cache/junest-export
+			appiconname=$(cat ~/.cache/junest-export/* > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
+			addmedia='"--bind /media /media"'
+			sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/* > /dev/null 2>&1
+			sed -i "/^Exec=/ s/$/$(echo \')/" ~/.cache/junest-export/* > /dev/null 2>&1
+			while [ -n "$3" ]
+			do
+			case "$3" in
+				'-S'|'--sudo')	sed -i "s#junest --#junest -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest --#junest -b $addmedia --#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				''|*)	break;;
+			esac
+			done
+			while [ -n "$4" ]
+			do
+			case "$4" in
+				'-S'|'--sudo')	sed -i "s#junest -b $addmedia --#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest -- sudo#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				''|*)	break;;
+			esac
+			done
+			mkdir -p ~/.config/autostart
+			mv ~/.cache/junest-export/* ~/.config/autostart/ > /dev/null 2>&1
+			rm -R -f ~/.cache/junest-export
+			mkdir -p ~/.local/share/icons
+			ln -s ~/.junest/usr/share/icons/hicolor ~/.local/share/icons/hicolor > /dev/null 2>&1
+			cp ~/.junest/usr/share/pixmaps/*$appiconname* ~/.local/share/icons/ > /dev/null 2>&1
+			echo " $2 has been successfully exported!"
+			exit
+		else
+			echo " $2 is not a valid argument or is not installed."; break;
+		fi
+		done;;
+	'-u'|'--update')
+		DIR="$( cd "$( dirname "$0" )" && pwd )"
+		wget -q https://raw.githubusercontent.com/ivan-hc/junest/master/bin/junest-export -O /tmp/junest-export.sh && chmod a+x /tmp/junest-export.sh
+		mv /tmp/junest-export.sh $DIR/junest-export > /dev/null 2>&1
+		echo " This script is updated to the version $($DIR/junest-export -v)";;
+	'-v'|'--version') echo "0.0.2";;
 esac
 		
