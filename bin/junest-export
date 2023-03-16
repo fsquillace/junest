@@ -4,7 +4,7 @@ case "$1" in
 	'') echo "\n USAGE:\n\n   junest-export {OPTION}\n   junest-export {OPTION} {APPNAME}\n   junest-export {OPTION} {APPNAME} {FLAGS}\n\n Run 'junest-export -h' or 'junest-export --help' for more information\n";;
 	'-h'|'--help')
 		echo "\n USAGE:\n\n   junest-export {OPTION}\n   junest-export {OPTION} {APPNAME}\n   junest-export {OPTION} {APPNAME} {FLAGS}\n"
-		echo " EXAMPLES:\n\n   junes-export --update\n   junest-export --app celestia\n   junest-export --app kdenlive --media\n   junest-export --service pamac --sudo\n"
+		echo " EXAMPLES:\n\n   junest-export --update\n   junest-export --app celestia\n   junest-export --app kdenlive --media\n   junest-export --service pamac --sudo\n"
 		echo " OPTIONS:\n"
 		echo "   --help/-h:       shows this message"
 		echo "   --app/-a:        name of the application to export"
