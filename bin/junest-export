@@ -1,15 +1,9 @@
 #!/bin/sh
 
 # ADD BASH COMPLETION
-if test -f ~/.bash_completion; then
-		echo 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' >> ~/.bash_completion
-	else
-	 	echo '#!/usr/bin/env bash' >> ~/.bash_completion
-	 	echo 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' >> ~/.bash_completion
-	 	chmod a+x ~/.bash_completion
-fi
 rm -R -f ~/.cache/junest-list
 echo -ne "$(ls ~/.junest/usr/bin_wrappers/ )"\\r >> ~/.cache/junest-list
+echo "\n--app\n--enable-completion\n--service--\n--update\n--version\n--media\n--sudo" >> ~/.cache/junest-list
 
 # OPTIONS
 case "$1" in
@@ -18,14 +12,15 @@ case "$1" in
 		echo "\n USAGE:\n\n   junest-export {OPTION}\n   junest-export {OPTION} {APPNAME}\n   junest-export {OPTION} {APPNAME} {FLAGS}\n"
 		echo " EXAMPLES:\n\n   junest-export --update\n   junest-export --app celestia\n   junest-export --app kdenlive --media\n   junest-export --service pamac --sudo\n"
 		echo " OPTIONS:\n"
-		echo "   --help/-h:       shows this message"
-		echo "   --app/-a:        name of the application to export"
-		echo "   --service/-s:    name of the service to export"
-		echo "   --update/-u:     update this script (requires 'wget')"
-		echo "   --version/-v:    shows the version of this script"
+		echo "   --help/-h:           shows this message"
+		echo "   --app/-a:            name of the application to export"
+		echo "   --enable-completion  enable bash completion"
+		echo "   --service/-s:        name of the service to export"
+		echo "   --update/-u:         update this script (requires 'wget')"
+		echo "   --version/-v:        shows the version of this script"
 		echo "\n FLAGS:\n"
-		echo "   --media/-m:      enable the support for drives mounted in /media"
-		echo "   --sudo/-S:       specify if the exported item should be run as sudo\n"
+		echo "   --media/-m:          enable the support for drives mounted in /media"
+		echo "   --sudo/-S:           specify if the exported item should be run as sudo\n"
 		;;
 	'-a'|'--app')
 		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
@@ -122,6 +117,16 @@ case "$1" in
 		wget -q https://raw.githubusercontent.com/ivan-hc/junest/master/bin/junest-export -O /tmp/junest-export.sh && chmod a+x /tmp/junest-export.sh
 		mv /tmp/junest-export.sh $DIR/junest-export > /dev/null 2>&1
 		echo " This script is updated to the version $($DIR/junest-export -v)";;
-	'-v'|'--version') echo "0.0.3";;
+  '--enable-completion')
+		if test -f ~/.bash_completion; then
+			echo 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' >> ~/.bash_completion
+			echo " Completion enabled! "
+		else
+		 	echo '#!/usr/bin/env bash' >> ~/.bash_completion
+		 	echo 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' >> ~/.bash_completion
+		 	chmod a+x ~/.bash_completion
+		 	echo " Completion enabled! "
+		fi;;
+	'-v'|'--version') echo "0.0.3-1";;
 esac
 		
