@@ -1,5 +1,17 @@
 #!/bin/sh
 
+# ADD BASH COMPLETION
+if test -f ~/.bash_completion; then
+		echo 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' >> ~/.bash_completion
+	else
+	 	echo '#!/usr/bin/env bash' >> ~/.bash_completion
+	 	echo 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' >> ~/.bash_completion
+	 	chmod a+x ~/.bash_completion
+fi
+rm -R -f ~/.cache/junest-list
+echo -ne "$(ls ~/.junest/usr/bin_wrappers/ )"\\r >> ~/.cache/junest-list
+
+# OPTIONS
 case "$1" in
 	'') echo "\n USAGE:\n\n   junest-export {OPTION}\n   junest-export {OPTION} {APPNAME}\n   junest-export {OPTION} {APPNAME} {FLAGS}\n\n Run 'junest-export -h' or 'junest-export --help' for more information\n";;
 	'-h'|'--help')
@@ -19,11 +31,15 @@ case "$1" in
 		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
 		while [ -n "$1" ]
 		do
-		arg=$(ls ~/.junest/usr/share/applications/ | grep $2 | head -1)
-		if test -f ~/.junest/usr/share/applications/$arg; then
+		desktopfile=$(ls ~/.junest/usr/share/applications/ | grep -i $2 | head -1)
+		if test -f ~/.junest/usr/share/applications/$desktopfile > /dev/null 2>&1; then
 			rm -R -f ~/.cache/junest-export
 			mkdir ~/.cache/junest-export
-			cp ~/.junest/usr/share/applications/*$2* ~/.cache/junest-export
+			if test -f ~/.junest/usr/share/applications/*$2* > /dev/null 2>&1; then
+				cp ~/.junest/usr/share/applications/*$2* ~/.cache/junest-export > /dev/null 2>&1
+			else
+				cp ~/.junest/usr/share/applications/$desktopfile ~/.cache/junest-export > /dev/null 2>&1
+			fi
 			appiconname=$(cat ~/.cache/junest-export/* > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
 			addmedia='"--bind /media /media"'
 			sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/* > /dev/null 2>&1
@@ -60,11 +76,15 @@ case "$1" in
 		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
 		while [ -n "$1" ]
 		do
-		arg=$(ls ~/.junest/etc/xdg/autostart/ | grep $2 | head -1)
-		if test -f ~/.junest/etc/xdg/autostart/$arg; then
+		desktopfile=$(ls ~/.junest/etc/xdg/autostart/ | grep -i $2 | head -1)
+		if test -f ~/.junest/etc/xdg/autostart/$desktopfile > /dev/null 2>&1; then
 			rm -R -f ~/.cache/junest-export
 			mkdir ~/.cache/junest-export
-			cp ~/.junest/etc/xdg/autostart/*$2* ~/.cache/junest-export
+			if test -f ~/.junest/etc/xdg/autostart/*$2* > /dev/null 2>&1; then
+				cp ~/.junest/etc/xdg/autostart/*$2* ~/.cache/junest-export > /dev/null 2>&1
+			else
+				cp ~/.junest/etc/xdg/autostart/$desktopfile ~/.cache/junest-export > /dev/null 2>&1
+			fi
 			appiconname=$(cat ~/.cache/junest-export/* > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
 			addmedia='"--bind /media /media"'
 			sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/* > /dev/null 2>&1
@@ -102,6 +122,6 @@ case "$1" in
 		wget -q https://raw.githubusercontent.com/ivan-hc/junest/master/bin/junest-export -O /tmp/junest-export.sh && chmod a+x /tmp/junest-export.sh
 		mv /tmp/junest-export.sh $DIR/junest-export > /dev/null 2>&1
 		echo " This script is updated to the version $($DIR/junest-export -v)";;
-	'-v'|'--version') echo "0.0.2";;
+	'-v'|'--version') echo "0.0.3";;
 esac
 		
