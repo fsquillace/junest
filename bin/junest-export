@@ -3,7 +3,7 @@
 # ADD BASH COMPLETION
 rm -R -f ~/.cache/junest-list
 echo -ne "$(ls ~/.junest/usr/bin_wrappers/ )"\\r >> ~/.cache/junest-list
-echo "\n--app\n--enable-completion\n--service--\n--update\n--version\n--media\n--sudo" >> ~/.cache/junest-list
+echo "\n--help\n--app\n--delete\n--disable-completion\n--enable-completion\n--remove\n--service\n--update\n--version\n--media\n--sudo" >> ~/.cache/junest-list
 
 # OPTIONS
 case "$1" in
@@ -12,15 +12,18 @@ case "$1" in
 		echo "\n USAGE:\n\n   junest-export {OPTION}\n   junest-export {OPTION} {APPNAME}\n   junest-export {OPTION} {APPNAME} {FLAGS}\n"
 		echo " EXAMPLES:\n\n   junest-export --update\n   junest-export --app celestia\n   junest-export --app kdenlive --media\n   junest-export --service pamac --sudo\n"
 		echo " OPTIONS:\n"
-		echo "   --help/-h:           shows this message"
-		echo "   --app/-a:            name of the application to export"
-		echo "   --enable-completion  enable bash completion"
-		echo "   --service/-s:        name of the service to export"
-		echo "   --update/-u:         update this script (requires 'wget')"
-		echo "   --version/-v:        shows the version of this script"
+		echo "   --help/-h:            shows this message"
+		echo "   --app/-a:             name of the application to export"
+		echo "   --disable-completion  disable bash completion"
+		echo "   --enable-completion   enable bash completion"
+		echo "   --service/-s:         name of the service to export"
+		echo "   --update/-u:          update this script (requires 'wget')"
+		echo "   --version/-v:         shows the version of this script"
 		echo "\n FLAGS:\n"
-		echo "   --media/-m:          enable the support for drives mounted in /media"
-		echo "   --sudo/-S:           specify if the exported item should be run as sudo\n"
+		echo "   --app/-a:             action on an exported application"
+		echo "   --media/-m:           enable the support for drives mounted in /media"
+		echo "   --service/-s:         action on an exported service"
+		echo "   --sudo/-S:            specify if the exported item should be run as sudo\n"
 		;;
 	'-a'|'--app')
 		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
@@ -67,6 +70,37 @@ case "$1" in
 			echo " $2 is not a valid argument or is not installed."; break;
 		fi
 		done;;
+		
+	'-r'|'--remove'|'--delete')
+		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
+		while [ -n "$1" ]
+		do
+		case "$3" in
+			'-a'|'--app') appdesktopfile=$(ls ~/.local/share/applications/ | grep -i $2 | head -1)
+				if test -f ~/.local/share/applications/$appdesktopfile > /dev/null 2>&1; then
+					rm -f ~/.local/share/applications/*$2* > /dev/null 2>&1
+					rm -f ~/.local/share/applications/$appdesktopfile > /dev/null 2>&1
+					echo " $2 has been successfully removed!"
+					break
+				else
+					echo " ERROR: there is no *.desktop file exported for the app $2."; break
+				fi;;
+			'-s'|'--service') servicedesktopfile=$(ls ~/.junest/etc/xdg/autostart/ | grep -i $2 | head -1)
+				if test -f ~/.config/autostart/$servicedesktopfile > /dev/null 2>&1; then
+					rm -f ~/.config/autostart/*$2* > /dev/null 2>&1
+					rm -f ~/.config/autostart/$servicedesktopfile > /dev/null 2>&1
+					echo " $2 has been successfully removed!"
+					break
+				else
+					echo " ERROR: there is no *.desktop file exported for the service '$2'."; break
+				fi;;
+			''|*) echo "\n USAGE:\n\n   junest-export --remove {APPNAME} {FLAG}\n\n"
+				echo " FLAGS:\n\n   --app/-a:             the item is an application\n   --service/-s:         the item is a service\n"
+				echo " EXAMPLES:\n\n   junest-export --remove kdenlive --app\n   junest-export --remove pamac --service\n"; exit;;
+		esac
+		done;;
+		
+		
 	'-s'|'--service')
 		if [ -n "$SUDO_COMMAND" ]; then echo -e "\n WARNING: You don't need to run the option '$1' with SUDO.\n"; exit; fi
 		while [ -n "$1" ]
@@ -117,6 +151,14 @@ case "$1" in
 		wget -q https://raw.githubusercontent.com/ivan-hc/junest/master/bin/junest-export -O /tmp/junest-export.sh && chmod a+x /tmp/junest-export.sh
 		mv /tmp/junest-export.sh $DIR/junest-export > /dev/null 2>&1
 		echo " This script is updated to the version $($DIR/junest-export -v)";;
+  '--disable-completion')
+		if [ $(cat ~/.bash_completion | grep -o appman | head -1) == appman  ]; then
+			grep -v 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' ~/.bash_completion > ~/.bash_completion.backup &&
+			mv ~/.bash_completion.backup ~/.bash_completion
+			echo " Completion disabled! "
+		else
+			echo " Completion script is NOT enabled! "
+		fi;;
   '--enable-completion')
 		if test -f ~/.bash_completion; then
 			echo 'complete -W "$(cat ~/.cache/junest-list 2>/dev/null)" junest-export' >> ~/.bash_completion
@@ -127,6 +169,7 @@ case "$1" in
 		 	chmod a+x ~/.bash_completion
 		 	echo " Completion enabled! "
 		fi;;
-	'-v'|'--version') echo "0.0.3-1";;
+	'-v'|'--version') echo "0.0.4";;
+	*) junest-export;;
 esac
 		
