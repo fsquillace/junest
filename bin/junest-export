@@ -40,22 +40,22 @@ case "$1" in
 				cp ~/.junest/usr/share/applications/$desktopfile ~/.cache/junest-export > /dev/null 2>&1
 			fi
 			appiconname=$(cat ~/.cache/junest-export/* > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
-			addmedia='"--bind /media /media"'
+			addmedia='-b "--bind /media /media"'
 			sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/* > /dev/null 2>&1
 			sed -i "/^Exec=/ s/$/$(echo \')/" ~/.cache/junest-export/* > /dev/null 2>&1
 			while [ -n "$3" ]
 			do
 			case "$3" in
-				'-S'|'--sudo')	sed -i "s#junest --#junest -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
-				'-m'|'--media')	sed -i "s#junest --#junest -b $addmedia --#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-S'|'--sudo')	sed -i "s#junest #junest -f #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest #junest $addmedia #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
 				''|*)	break;;
 			esac
 			done
 			while [ -n "$4" ]
 			do
 			case "$4" in
-				'-S'|'--sudo')	sed -i "s#junest -b $addmedia --#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
-				'-m'|'--media')	sed -i "s#junest -- sudo#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-S'|'--sudo')	sed -i "s#junest #junest -f #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest #junest $addmedia #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
 				''|*)	break;;
 			esac
 			done
@@ -116,22 +116,22 @@ case "$1" in
 				cp ~/.junest/etc/xdg/autostart/$desktopfile ~/.cache/junest-export > /dev/null 2>&1
 			fi
 			appiconname=$(cat ~/.cache/junest-export/* > /dev/null 2>&1 | grep Icon | cut -c 6- | head -1)
-			addmedia='"--bind /media /media"'
+			addmedia='-b "--bind /media /media"'
 			sed -i "s#Exec=#Exec=sh -c '~/.local/share/junest/bin/junest -- #g" ~/.cache/junest-export/* > /dev/null 2>&1
 			sed -i "/^Exec=/ s/$/$(echo \')/" ~/.cache/junest-export/* > /dev/null 2>&1
 			while [ -n "$3" ]
 			do
 			case "$3" in
-				'-S'|'--sudo')	sed -i "s#junest --#junest -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
-				'-m'|'--media')	sed -i "s#junest --#junest -b $addmedia --#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-S'|'--sudo')	sed -i "s#junest #junest -f #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest #junest $addmedia #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
 				''|*)	break;;
 			esac
 			done
 			while [ -n "$4" ]
 			do
 			case "$4" in
-				'-S'|'--sudo')	sed -i "s#junest -b $addmedia --#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
-				'-m'|'--media')	sed -i "s#junest -- sudo#junest -b $addmedia -- sudo#g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-S'|'--sudo')	sed -i "s#junest #junest -f #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
+				'-m'|'--media')	sed -i "s#junest #junest $addmedia #g" ~/.cache/junest-export/* > /dev/null 2>&1; break;;
 				''|*)	break;;
 			esac
 			done
@@ -170,7 +170,7 @@ case "$1" in
 		 	chmod a+x ~/.bash_completion
 		 	echo " Completion enabled! "
 		fi;;
-	'-v'|'--version') echo "0.0.4-1";;
+	'-v'|'--version') echo "0.0.4-2";;
 	*) junest-export;;
 esac
 		
