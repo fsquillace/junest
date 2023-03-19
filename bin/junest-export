@@ -16,6 +16,7 @@ case "$1" in
 		echo "   --app/-a:             name of the application to export"
 		echo "   --disable-completion  disable bash completion"
 		echo "   --enable-completion   enable bash completion"
+		echo "   --remove/--delete/-r  delete exported application or service"
 		echo "   --service/-s:         name of the service to export"
 		echo "   --update/-u:          update this script (requires 'wget')"
 		echo "   --version/-v:         shows the version of this script"
@@ -169,7 +170,7 @@ case "$1" in
 		 	chmod a+x ~/.bash_completion
 		 	echo " Completion enabled! "
 		fi;;
-	'-v'|'--version') echo "0.0.4";;
+	'-v'|'--version') echo "0.0.4-1";;
 	*) junest-export;;
 esac
 		
