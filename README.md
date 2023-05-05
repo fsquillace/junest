@@ -149,14 +149,11 @@ command. In `proot` mode, JuNest does no longer support the building of AUR pack
 first:
 
 ```sh
-pacman -Syu --ignore sudo base-devel
-:: sudo is in IgnorePkg/IgnoreGroup. Install anyway? [Y/n] n
-...
-...
+pacman -S base-devel
 ```
 
-JuNest uses a modified version of `sudo`. That's why the original `sudo`
-package **must be ignored** in the previous command.
+JuNest uses a modified version of `sudo` provided by `junest/sudo-fake`. And the original `core/sudo`
+package will be ignored **(and must not be installed)** during the installation of `base-devel`.
 
 Have fun!
 ---------
@@ -387,9 +384,9 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 > In order to install AUR packages you need to install the package group `base-devel` first
 > that contains all the essential packages for compiling from source code (such as gcc, make, patch, etc):
 
-    #> pacman -S --ignore sudo base-devel
+    #> pacman -S base-devel
 
-> Remember to ignore `sudo` as it conflicts with `sudo-fake` package.
+> Remember to not install `core/sudo` as it conflicts with `junest/sudo-fake` package.
 
 ## Can't set user and group as root
 
