@@ -33,9 +33,8 @@ function _run_env_as_xroot(){
         copy_common_files
     fi
 
-    # Resets PATH to avoid polluting with host related bin paths
     # shellcheck disable=SC2086
-    PATH='' JUNEST_ENV=1 $cmd $backend_args "$JUNEST_HOME" "${DEFAULT_SH[@]}" "${args[@]}"
+    JUNEST_ENV=1 $cmd $backend_args "$JUNEST_HOME" "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 #######################################
