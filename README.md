@@ -110,9 +110,9 @@ used, see the [Usage](#usage) section below.
 Run JuNest installed programs directly from host OS
 ---------------------------------------
 
-Program installed within JuNest can be accessible directly from host machine
-without entering directly into a JuNest session
-(no need to call `junest` command first).
+Programs installed within JuNest can be accessible directly from host machine
+without entering into a JuNest session
+(namely, no need to call `junest` command first).
 For instance, supposing the host OS is an Ubuntu distro you can directly
 run `pacman` by simply updating the `PATH` variable:
 
@@ -123,7 +123,7 @@ htop
 ```
 
 By default the wrappers use `ns` mode. To use the `ns --fakeroot` you can use the convenient command helper `sudoj`.
-For more control on backend mode you can use the `JUNEST_ARGS` environment variable.
+For more control on backend modes you can use the `JUNEST_ARGS` environment variable too.
 For instance, if you want to run `iftop` with real root privileges:
 
 ```
@@ -136,6 +136,22 @@ corrupted) with:
 
 ```
 junest create-bin-wrappers -f
+```
+
+Bin wrappers are automatically generated each time they get installed inside JuNest.
+This only works for executables located in `/usr/bin` path.
+For executables in other locations (say `/usr/mybinpath`) you can only create
+wrappers manually by executing the command:
+
+```
+junest create-bin-wrappers --bin-path /usr/mybinpath
+```
+
+Obviously, to get access to the corresponding bin wrappers you will need to
+update your `PATH` variable accordingly:
+
+```
+export PATH="$PATH:~/.junest/usr/mybinpath_wrappers"
 ```
 
 Install packages from AUR
