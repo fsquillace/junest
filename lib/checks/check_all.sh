@@ -24,4 +24,8 @@ sudo -E "$JUNEST_SCRIPT" groot -- "$CHECK_SCRIPT" --run-root-tests --skip-aur-te
 # Test the wrappers work
 "$JUNEST_SCRIPT" create-bin-wrappers --force
 "$JUNEST_HOME"/usr/bin_wrappers/pacman --help
+
+"$JUNEST_SCRIPT" create-bin-wrappers --force --bin-path /usr/bin/core_perl/
+"$JUNEST_HOME"/usr/bin/core_perl_wrappers/shasum --help
+
 "${JUNEST_BASE}/bin/sudoj" pacman -Syu
