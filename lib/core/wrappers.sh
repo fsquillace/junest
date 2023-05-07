@@ -20,7 +20,9 @@
 #######################################
 function create_wrappers() {
     local force=${1:-false}
-    mkdir -p "${JUNEST_HOME}/usr/bin_wrappers"
+    local bin_path=${2:-/usr/bin}
+    bin_path=${bin_path%/}
+    mkdir -p "${JUNEST_HOME}${bin_path}_wrappers"
     # Arguments inside a variable (i.e. `JUNEST_ARGS`) separated by quotes
     # are not recognized normally unless using `eval`. More info here:
     # https://github.com/fsquillace/junest/issues/262
@@ -33,26 +35,26 @@ junest "\${junest_args_array[@]}" -- \$(basename \${0}) "\$@"
 EOF
     chmod +x "${JUNEST_HOME}/usr/bin/junest_wrapper"
 
-    cd "${JUNEST_HOME}/usr/bin" || return 1
+    cd "${JUNEST_HOME}${bin_path}" || return 1
     for file in *
     do
         [[ -d $file ]] && continue
-        # Symlinks outside junest appear as broken even though the are correct
+        # Symlinks outside junest appear as broken even though they are correct
         # within a junest session. The following do not skip broken symlinks:
         [[ -x $file || -L $file ]] || continue
-        if [[ -e ${JUNEST_HOME}/usr/bin_wrappers/$file ]] && ! $force
+        if [[ -e ${JUNEST_HOME}${bin_path}_wrappers/$file ]] && ! $force
         then
             continue
         fi
-        rm -f "${JUNEST_HOME}/usr/bin_wrappers/$file"
-        ln -s "../bin/junest_wrapper" "${JUNEST_HOME}/usr/bin_wrappers/$file"
+        rm -f "${JUNEST_HOME}${bin_path}_wrappers/$file"
+        ln -s "${JUNEST_HOME}/usr/bin/junest_wrapper" "${JUNEST_HOME}${bin_path}_wrappers/$file"
     done
 
     # Remove wrappers no longer needed
-    cd "${JUNEST_HOME}/usr/bin_wrappers" || return 1
+    cd "${JUNEST_HOME}${bin_path}_wrappers" || return 1
     for file in *
     do
-        [[ -e ${JUNEST_HOME}/usr/bin/$file || -L ${JUNEST_HOME}/usr/bin/$file ]] || rm -f "$file"
+        [[ -e ${JUNEST_HOME}${bin_path}/$file || -L ${JUNEST_HOME}${bin_path}/$file ]] || rm -f "$file"
     done
 
 }
