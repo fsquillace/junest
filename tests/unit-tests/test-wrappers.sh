@@ -124,4 +124,15 @@ function test_create_wrappers_executable_no_longer_exist(){
     assertTrue "myfile wrapper should not exist" "[ ! -x $JUNEST_HOME/usr/bin_wrappers/myfile ]"
 }
 
+function test_create_wrappers_custom_bin_path(){
+    mkdir -p "$JUNEST_HOME"/usr/mybindir
+    touch "$JUNEST_HOME"/usr/mybindir/myfile
+    chmod +x "$JUNEST_HOME"/usr/mybindir/myfile
+    assertCommandSuccess create_wrappers false /usr/mybindir/
+    assertEquals "" "$(cat "$STDOUTF")"
+    assertTrue "bin_wrappers should exist" "[ -e $JUNEST_HOME/usr/mybindir_wrappers ]"
+    assertTrue "myfile wrapper should exist" "[ -x $JUNEST_HOME/usr/mybindir_wrappers/myfile ]"
+}
+
+
 source "$(dirname "$0")"/../utils/shunit2

@@ -69,8 +69,11 @@ usage() {
     echo -e "  b[uild]                                  Build a $NAME image (must run in ArchLinux)"
     echo -e "            -n, --disable-check            Disable the $NAME image check"
     echo
-    echo -e "  create-bin-wrappers                      Create bin wrappers in $JUNEST_HOME/usr/bin_wrappers"
+    echo -e "  create-bin-wrappers                      Create a bin wrappers directory according to --bin-path option"
+    echo -e "                                           Default path is $JUNEST_HOME/usr/bin_wrappers"
     echo -e "            -f, --force                    Create the wrapper files even if they already exist"
+    echo -e "            -p, --bin-path                 The source directory where executable are located in JuNest"
+    echo -e "                                           Default value is: /usr/bin"
     echo
 }
 
@@ -215,10 +218,12 @@ function _parse_build_opts() {
 
 function _parse_create_wrappers_opts() {
     OPT_FORCE=false
+    OPT_BIN_PATH=""
     while [[ -n "$1" ]]
     do
         case "$1" in
             -f|--force) OPT_FORCE=true ; shift ;;
+            -p|--bin-path) shift ; OPT_BIN_PATH="$1" ; shift ;;
             *) die "Invalid option $1" ;;
         esac
     done
@@ -276,7 +281,7 @@ function execute_operation() {
     fi
 
     if $ACT_CREATE_WRAPPERS; then
-        create_wrappers $OPT_FORCE
+        create_wrappers $OPT_FORCE "$OPT_BIN_PATH"
         exit
     fi
 
