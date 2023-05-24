@@ -103,6 +103,7 @@ function run_env_as_bwrap_fakeroot(){
 
     # Fix PATH to /usr/bin to make sudo working and avoid polluting with host related bin paths
     # shellcheck disable=SC2086
+    local JUNEST_ORIGINAL_PATH="$PATH"
     PATH="/usr/bin" BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
@@ -153,6 +154,7 @@ function run_env_as_bwrap_user() {
 
     # Resets PATH to avoid polluting with host related bin paths
     # shellcheck disable=SC2086
+    local JUNEST_ORIGINAL_PATH="$PATH"
     PATH='' BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
 }
 

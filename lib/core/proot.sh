@@ -18,6 +18,7 @@ function _run_env_with_proot(){
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
     # Resets PATH to avoid polluting with host related bin paths
+    local JUNEST_ORIGINAL_PATH="$PATH"
     PATH='' PROOT="${backend_command}" JUNEST_ENV=1 proot_cmd "${backend_args}" "${DEFAULT_SH[@]}" "${args[@]}"
 }
 

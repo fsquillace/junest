@@ -19,6 +19,7 @@
 #   None
 #######################################
 function create_wrappers() {
+    local PATH="${JUNEST_ORIGINAL_PATH:-"$PATH"}"
     local force=${1:-false}
     local bin_path=${2:-/usr/bin}
     bin_path=${bin_path%/}
