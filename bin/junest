@@ -305,7 +305,7 @@ function execute_operation() {
     fi
 
     # Call create_wrappers in case new bin files have been created
-    trap "create_wrappers" EXIT QUIT TERM
+    trap "PATH=$PATH create_wrappers" EXIT QUIT TERM
     $run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
 }
 
