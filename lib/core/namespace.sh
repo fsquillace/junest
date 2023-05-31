@@ -15,8 +15,24 @@ COMMON_BWRAP_OPTION="--bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp 
 CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
 PROC_USERNS_CLONE_FILE="/proc/sys/kernel/unprivileged_userns_clone"
+PROC_USERNS_FILE="/proc/$$/ns/user"
 
 function _is_user_namespace_enabled() {
+    if [[ -L $PROC_USERNS_FILE ]]
+    then
+        return 0
+    fi
+
+    if [[ -e $PROC_USERNS_CLONE_FILE ]]
+    then
+        # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+        # Use redirect to /dev/null instead
+        if zgrep_cmd "1" "$PROC_USERNS_CLONE_FILE" > /dev/null
+        then
+            return 0
+        fi
+    fi
+
     local config_file=""
     if [[ -e $CONFIG_PROC_FILE ]]
     then
@@ -35,19 +51,7 @@ function _is_user_namespace_enabled() {
         return "$NO_CONFIG_FOUND"
     fi
 
-    if [[ ! -e $PROC_USERNS_CLONE_FILE ]]
-    then
-        return 0
-    fi
-
-    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
-    # Use redirect to /dev/null instead
-    if ! zgrep_cmd "1" $PROC_USERNS_CLONE_FILE > /dev/null
-    then
-        return "$UNPRIVILEGED_USERNS_DISABLED"
-    fi
-
-    return 0
+    return "$UNPRIVILEGED_USERNS_DISABLED"
 }
 
 function _check_user_namespace() {
