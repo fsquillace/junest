@@ -11,7 +11,7 @@ The lightweight Arch Linux based distro that runs, without root privileges, on t
 
 |Project Status|Donation|Communication|
 |:------------:|:------:|:-----------:|
-| [![Build status](https://api.travis-ci.com/fsquillace/junest.png?branch=master)](https://app.travis-ci.com/github/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![Github Sponsors](https://img.shields.io/badge/GitHub-Sponsors-orange.svg)](https://github.com/sponsors/fsquillace) [![PayPal](https://img.shields.io/badge/PayPal-Donation-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) | [![Join the Discord server at https://discord.gg/ttfBT7MKve](https://img.shields.io/badge/Discord-Server-blueviolet.svg)](https://discord.gg/ttfBT7MKve) |
+| [![Build status](https://api.travis-ci.com/fsquillace/junest.png?branch=master)](https://app.travis-ci.com/github/fsquillace/junest) [![OpenHub](https://www.openhub.net/p/junest/widgets/project_thin_badge.gif)](https://www.openhub.net/p/junest) | [![Github Sponsors](https://img.shields.io/badge/GitHub-Sponsors-orange.svg)](https://github.com/sponsors/fsquillace) [![PayPal](https://img.shields.io/badge/PayPal-Donation-blue.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8LEHQKBCYTACY) [![Buy me a coffee](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/fsquillace) | [![Join the Discord server at https://discord.gg/ttfBT7MKve](https://img.shields.io/badge/Discord-Server-blueviolet.svg)](https://discord.gg/ttfBT7MKve) |
 
 **Table of Contents**
 - [Description](#description)
