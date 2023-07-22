@@ -70,7 +70,9 @@ Setup environment
 -----------------
 
 The first operation required is to install the JuNest environment in the
-location of your choice (by default `~/.junest`, configurable via the environment variable `JUNEST_HOME`):
+location of your choice via `JUNEST_HOME` environment variable
+(it must contain an absolute path) which by
+default is `~/.junest`:
 
 ```sh
 junest setup
