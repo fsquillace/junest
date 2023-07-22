@@ -58,6 +58,8 @@ function build_image_env(){
         sudo bash -c "echo 'Server = $DEFAULT_MIRROR' >> ${maindir}/root/etc/pacman.d/mirrorlist"
     fi
     sudo mkdir -p "${maindir}"/root/run/lock
+    echo "BEFORE"
+    cat "${maindir}"/root/etc/pacman.conf
 
     sudo tee -a "${maindir}"/root/etc/pacman.conf > /dev/null <<EOT
 
@@ -65,6 +67,8 @@ function build_image_env(){
 SigLevel = Optional TrustedOnly
 Server = https://raw.githubusercontent.com/fsquillace/junest-repo/master/any
 EOT
+    echo "AFTER"
+    cat "${maindir}"/root/etc/pacman.conf
     sudo pacman --noconfirm --config "${maindir}"/root/etc/pacman.conf --root "${maindir}"/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt yay
 
     echo "Generating the metadata info"
