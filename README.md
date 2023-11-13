@@ -63,6 +63,37 @@ This allows interaction between processes belonging to both host OS and JuNest.
 For example, you can install the `top` command in JuNest and use it to monitor
 processes belonging to the host OS.
 
+Installation
+============
+
+## Dependencies ##
+JuNest comes with a very short list of dependencies in order to be installed in most
+of GNU/Linux distributions.
+Before installing JuNest be sure that all dependencies are properly installed in your system:
+
+- [bash (>=4.0)](https://www.gnu.org/software/bash/)
+- [GNU coreutils](https://www.gnu.org/software/coreutils/)
+
+## Installation from git repository ##
+Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
+
+```sh
+git clone https://github.com/fsquillace/junest.git ~/.local/share/junest
+export PATH=~/.local/share/junest/bin:$PATH
+```
+
+Optionally you want to use the wrappers to run commands
+installed in JuNest directly from host:
+
+```sh
+export PATH="$PATH:~/.junest/usr/bin_wrappers"
+```
+Update your `~/.bashrc` or `~/.zshrc` to get always the wrappers available.
+
+### Installation using AUR (Arch Linux only) ###
+If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/packages/junest-git/).
+JuNest will be located in `/opt/junest/`
+
 Quickstart
 ==========
 
@@ -176,37 +207,6 @@ Have fun!
 
 If you are new on Arch Linux and you are not familiar with `pacman` package manager
 visit the [pacman rosetta page](https://wiki.archlinux.org/index.php/Pacman_Rosetta).
-
-Installation
-============
-
-## Dependencies ##
-JuNest comes with a very short list of dependencies in order to be installed in most
-of GNU/Linux distributions.
-Before installing JuNest be sure that all dependencies are properly installed in your system:
-
-- [bash (>=4.0)](https://www.gnu.org/software/bash/)
-- [GNU coreutils](https://www.gnu.org/software/coreutils/)
-
-## Installation from git repository ##
-Just clone the JuNest repo somewhere (for example in ~/.local/share/junest):
-
-```sh
-git clone https://github.com/fsquillace/junest.git ~/.local/share/junest
-export PATH=~/.local/share/junest/bin:$PATH
-```
-
-Optionally you want to use the wrappers to run commands
-installed in JuNest directly from host:
-
-```sh
-export PATH="$PATH:~/.junest/usr/bin_wrappers"
-```
-Update your `~/.bashrc` or `~/.zshrc` to get always the wrappers available.
-
-### Installation using AUR (Arch Linux only) ###
-If you are using an Arch Linux system you can, alternatively, install JuNest from the [AUR repository](https://aur.archlinux.org/packages/junest-git/).
-JuNest will be located in `/opt/junest/`
 
 Usage
 =====
