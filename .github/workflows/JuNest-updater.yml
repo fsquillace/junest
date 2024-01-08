@@ -19,6 +19,10 @@ jobs:
         wget https://raw.githubusercontent.com/ivan-hc/junest/master/junest-updater.sh
         chmod a+x ./junest-updater.sh
         ./junest-updater.sh
+        cd ./.junest
+        tar -czvf junest-x86_64.tar.gz .
+        cd ..
+        mv ./.junest/*.tar.gz ./
         mkdir dist
         mv *tar.gz dist/
     - uses: gautamkrishnar/keepalive-workflow@v1
