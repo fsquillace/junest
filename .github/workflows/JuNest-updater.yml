@@ -4,6 +4,8 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  schedule:
+    - cron: "0 23 * * 0-6"
   workflow_dispatch:
 
 jobs:
@@ -46,8 +48,8 @@ jobs:
           uses: marvinpinto/action-automatic-releases@latest
           with:
             title: Continuous build
-            automatic_release_tag: test
-            prerelease: true
+            automatic_release_tag: continuous
+            prerelease: false
             draft: false
             files: |
               junest-x86_64.tar.gz
