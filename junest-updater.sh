@@ -17,3 +17,4 @@ sed -i 's/Required DatabaseOptional/Never/g' ./.junest/etc/pacman.conf
 # UPDATE ARCH LINUX IN JUNEST
 ./.local/share/junest/bin/junest -- sudo pacman -Syy
 ./.local/share/junest/bin/junest -- sudo pacman --noconfirm -Syu
+echo yes | ./.local/share/junest/bin/junest -- sudo pacman -Scc
