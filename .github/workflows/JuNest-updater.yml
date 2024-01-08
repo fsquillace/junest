@@ -16,7 +16,7 @@ jobs:
       if: always()
       run: |
         sudo apt update
-        wget https://raw.githubusercontent.com/ivan-hc/junest/main/junest-updater.sh
+        wget https://raw.githubusercontent.com/ivan-hc/junest/master/junest-updater.sh
         chmod a+x ./junest-updater.sh
         ./junest-updater.sh
         mkdir dist
