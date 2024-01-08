@@ -1,0 +1,53 @@
+name: JuNest Builder
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: build
+      if: always()
+      run: |
+        sudo apt update
+        wget https://raw.githubusercontent.com/ivan-hc/junest/main/junest-updater.sh
+        chmod a+x ./junest-updater.sh
+        ./junest-updater.sh
+        mkdir dist
+        mv *tar.gz dist/
+    - uses: gautamkrishnar/keepalive-workflow@v1
+      with:
+        gh_token: ${{ secrets.GH_TOKEN }}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: junest-x86_64.tar.gz
+        path: 'dist'
+        
+  release:
+      needs: [build]
+      permissions: write-all
+      runs-on: ubuntu-latest
+
+      steps:
+        - uses: actions/download-artifact@v1
+          with:
+            name: junest-x86_64.tar.gz
+
+        - name: release
+          uses: marvinpinto/action-automatic-releases@latest
+          with:
+            title: Continuous build
+            automatic_release_tag: test
+            prerelease: true
+            draft: false
+            files: |
+              junest-x86_64.tar.gz
+            repo_token: ${{ secrets.GITHUB_TOKEN }}
+
