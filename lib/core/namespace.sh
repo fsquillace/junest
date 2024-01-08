@@ -15,8 +15,24 @@ COMMON_BWRAP_OPTION="--bind "$JUNEST_HOME" / --bind "$HOME" "$HOME" --bind /tmp 
 CONFIG_PROC_FILE="/proc/config.gz"
 CONFIG_BOOT_FILE="/boot/config-$($UNAME -r)"
 PROC_USERNS_CLONE_FILE="/proc/sys/kernel/unprivileged_userns_clone"
+PROC_USERNS_FILE="/proc/$$/ns/user"
 
 function _is_user_namespace_enabled() {
+    if [[ -L $PROC_USERNS_FILE ]]
+    then
+        return 0
+    fi
+
+    if [[ -e $PROC_USERNS_CLONE_FILE ]]
+    then
+        # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
+        # Use redirect to /dev/null instead
+        if zgrep_cmd "1" "$PROC_USERNS_CLONE_FILE" > /dev/null
+        then
+            return 0
+        fi
+    fi
+
     local config_file=""
     if [[ -e $CONFIG_PROC_FILE ]]
     then
@@ -35,19 +51,7 @@ function _is_user_namespace_enabled() {
         return "$NO_CONFIG_FOUND"
     fi
 
-    if [[ ! -e $PROC_USERNS_CLONE_FILE ]]
-    then
-        return 0
-    fi
-
-    # `-q` option in zgrep may cause a gzip: stdout: Broken pipe
-    # Use redirect to /dev/null instead
-    if ! zgrep_cmd "1" $PROC_USERNS_CLONE_FILE > /dev/null
-    then
-        return "$UNPRIVILEGED_USERNS_DISABLED"
-    fi
-
-    return 0
+    return "$UNPRIVILEGED_USERNS_DISABLED"
 }
 
 function _check_user_namespace() {
@@ -101,8 +105,9 @@ function run_env_as_bwrap_fakeroot(){
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
+    # Fix PATH to /usr/bin to make sudo working and avoid polluting with host related bin paths
     # shellcheck disable=SC2086
-    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
+    PATH="/usr/bin" BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION --cap-add ALL --uid 0 --gid 0 $backend_args sudo "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 
@@ -150,8 +155,9 @@ function run_env_as_bwrap_user() {
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
+    # Resets PATH to avoid polluting with host related bin paths
     # shellcheck disable=SC2086
-    BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
+    PATH='' BWRAP="${backend_command}" JUNEST_ENV=1 bwrap_cmd $COMMON_BWRAP_OPTION $backend_args "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 

@@ -110,9 +110,9 @@ used, see the [Usage](#usage) section below.
 Run JuNest installed programs directly from host OS
 ---------------------------------------
 
-Program installed within JuNest can be accessible directly from host machine
-without entering directly into a JuNest session
-(no need to call `junest` command first).
+Programs installed within JuNest can be accessible directly from host machine
+without entering into a JuNest session
+(namely, no need to call `junest` command first).
 For instance, supposing the host OS is an Ubuntu distro you can directly
 run `pacman` by simply updating the `PATH` variable:
 
@@ -123,7 +123,7 @@ htop
 ```
 
 By default the wrappers use `ns` mode. To use the `ns --fakeroot` you can use the convenient command helper `sudoj`.
-For more control on backend mode you can use the `JUNEST_ARGS` environment variable.
+For more control on backend modes you can use the `JUNEST_ARGS` environment variable too.
 For instance, if you want to run `iftop` with real root privileges:
 
 ```
@@ -138,6 +138,22 @@ corrupted) with:
 junest create-bin-wrappers -f
 ```
 
+Bin wrappers are automatically generated each time they get installed inside JuNest.
+This only works for executables located in `/usr/bin` path.
+For executables in other locations (say `/usr/mybinpath`) you can only create
+wrappers manually by executing the command:
+
+```
+junest create-bin-wrappers --bin-path /usr/mybinpath
+```
+
+Obviously, to get access to the corresponding bin wrappers you will need to
+update your `PATH` variable accordingly:
+
+```
+export PATH="$PATH:~/.junest/usr/mybinpath_wrappers"
+```
+
 Install packages from AUR
 -------------------------
 
@@ -149,14 +165,11 @@ command. In `proot` mode, JuNest does no longer support the building of AUR pack
 first:
 
 ```sh
-pacman -Syu --ignore sudo base-devel
-:: sudo is in IgnorePkg/IgnoreGroup. Install anyway? [Y/n] n
-...
-...
+pacman -S base-devel
 ```
 
-JuNest uses a modified version of `sudo`. That's why the original `sudo`
-package **must be ignored** in the previous command.
+JuNest uses a modified version of `sudo` provided by `junest/sudo-fake`. And the original `core/sudo`
+package will be ignored **(and must not be installed)** during the installation of `base-devel`.
 
 Have fun!
 ---------
@@ -387,9 +400,9 @@ For Arch Linux related FAQs take a look at the [General troubleshooting page](ht
 > In order to install AUR packages you need to install the package group `base-devel` first
 > that contains all the essential packages for compiling from source code (such as gcc, make, patch, etc):
 
-    #> pacman -S --ignore sudo base-devel
+    #> pacman -S base-devel
 
-> Remember to ignore `sudo` as it conflicts with `sudo-fake` package.
+> Remember to not install `core/sudo` as it conflicts with `junest/sudo-fake` package.
 
 ## Can't set user and group as root
 

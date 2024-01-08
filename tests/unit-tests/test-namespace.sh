@@ -58,47 +58,42 @@ function _test_copy_remaining_files() {
 }
 
 function test_is_user_namespace_enabled_no_config_file(){
+    PROC_USERNS_FILE="blah"
+    PROC_USERNS_CLONE_FILE="blah"
     CONFIG_PROC_FILE="blah"
     CONFIG_BOOT_FILE="blah"
     assertCommandFailOnStatus "$NOT_EXISTING_FILE" _is_user_namespace_enabled
 }
 
 function test_is_user_namespace_enabled_no_config(){
+    PROC_USERNS_FILE="blah"
+    PROC_USERNS_CLONE_FILE="blah"
     touch config
     gzip config
+    # shellcheck disable=SC2034
     CONFIG_PROC_FILE="config.gz"
+    # shellcheck disable=SC2034
     CONFIG_BOOT_FILE="blah"
     assertCommandFailOnStatus "$NO_CONFIG_FOUND" _is_user_namespace_enabled
 }
 
-function test_is_user_namespace_enabled_with_config(){
-    echo "CONFIG_USER_NS=y" > config
-    gzip config
-    CONFIG_PROC_FILE="config.gz"
-    CONFIG_BOOT_FILE="blah"
-    PROC_USERNS_CLONE_FILE="not-existing-file"
-    assertCommandSuccess _is_user_namespace_enabled
-}
-
 function test_is_user_namespace_enabled_with_userns_clone_file_disabled(){
-    echo "CONFIG_USER_NS=y" > config
-    gzip config
-    CONFIG_PROC_FILE="config.gz"
-    CONFIG_BOOT_FILE="blah"
+    PROC_USERNS_FILE="blah"
     PROC_USERNS_CLONE_FILE="unprivileged_userns_clone"
     echo "0" > $PROC_USERNS_CLONE_FILE
     assertCommandFailOnStatus "$UNPRIVILEGED_USERNS_DISABLED" _is_user_namespace_enabled
 }
 
 function test_is_user_namespace_enabled_with_userns_clone_file_enabled(){
-    echo "CONFIG_USER_NS=y" > config
-    gzip config
-    # shellcheck disable=SC2034
-    CONFIG_PROC_FILE="config.gz"
-    # shellcheck disable=SC2034
-    CONFIG_BOOT_FILE="blah"
     PROC_USERNS_CLONE_FILE="unprivileged_userns_clone"
     echo "1" > $PROC_USERNS_CLONE_FILE
+    assertCommandSuccess _is_user_namespace_enabled
+}
+
+function test_is_user_namespace_enabled_with_proc_userns_file_existing(){
+    PROC_USERNS_FILE="user"
+    ln -s . $PROC_USERNS_FILE
+    PROC_USERNS_CLONE_FILE="blah"
     assertCommandSuccess _is_user_namespace_enabled
 }
 

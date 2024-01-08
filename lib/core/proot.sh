@@ -17,7 +17,8 @@ function _run_env_with_proot(){
     local args=()
     [[ "$1" != "" ]] && args=("-c" "$(insert_quotes_on_spaces "${@}")")
 
-    PROOT="${backend_command}" JUNEST_ENV=1 proot_cmd "${backend_args}" "${DEFAULT_SH[@]}" "${args[@]}"
+    # Resets PATH to avoid polluting with host related bin paths
+    PATH='' PROOT="${backend_command}" JUNEST_ENV=1 proot_cmd "${backend_args}" "${DEFAULT_SH[@]}" "${args[@]}"
 }
 
 function _run_env_with_qemu(){
