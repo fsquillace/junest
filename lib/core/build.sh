@@ -25,7 +25,8 @@ function _install_pkg(){
 function _prepare() {
     # ArchLinux System initialization
     prepare_archlinux
-    sudo pacman -S --noconfirm git arch-install-scripts haveged
+    # curl is used to download pacman.conf file
+    sudo pacman -S --noconfirm git arch-install-scripts haveged curl
 }
 
 function build_image_env(){
@@ -59,12 +60,19 @@ function build_image_env(){
     fi
     sudo mkdir -p "${maindir}"/root/run/lock
 
-    sudo tee -a "${maindir}"/root/etc/pacman.conf > /dev/null <<EOT
+    # For some reasons, pacstrap does not create the pacman.conf file,
+    # I could not reproduce the issue locally though:
+    # https://app.travis-ci.com/github/fsquillace/junest/builds/268216346
+    [[ -e "${maindir}"/root/etc/pacman.conf ]] || sudo curl "https://gitlab.archlinux.org/archlinux/packaging/packages/pacman/-/raw/main/pacman.conf" -o "${maindir}/root/etc/pacman.conf"
+
+    sudo tee -a "${maindir}"/root/etc/pacman.conf <<EOT
 
 [junest]
 SigLevel = Optional TrustedOnly
 Server = https://raw.githubusercontent.com/fsquillace/junest-repo/master/any
 EOT
+    info "pacman.conf being used:"
+    cat "${maindir}"/root/etc/pacman.conf
     sudo pacman --noconfirm --config "${maindir}"/root/etc/pacman.conf --root "${maindir}"/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt yay
 
     echo "Generating the metadata info"
