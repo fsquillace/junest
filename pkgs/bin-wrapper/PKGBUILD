@@ -1,0 +1,25 @@
+# Maintainer: Jonathon Fernyhough <jonathon at+manjarodotorg>
+
+pkgname=bin-wrapper
+pkgver=0.0.1
+pkgrel=1
+pkgdesc="Automatically wrap JuNest executables for use in outer system's PATH"
+arch=(any)
+url="https://github.com/fsquillace/junest"
+license=(GPL)
+source=(create-wrapper
+        delete-wrapper
+        junest-wrapper
+        create-wrapper.hook
+        delete-wrapper.hook)
+sha256sums=('0b9d2fe31fee1d514295399fade8ae178d8c6fcc918e81286084337cfd900663'
+            '46ecdd2404e6bf8310e02fcfd8e0690405d52ce07b82dff2f0c9cbad31e40f67'
+            'f27807aae86daec311d601b1b954be1ee274232f9416963449514a2b00b34b83'
+            'ed6ce2ab02368427aab12d3aa36e2b1741cca526bd4caf55a90687bb117ea358'
+            '3a08a9c2889d9cb97fc2a53a5e045372477fde7261b0cbda1c332cd0c4ec1b1f')
+
+package() {
+	install -Dm644 -t "$pkgdir"/usr/lib/libalpm/hooks     *.hook
+	install -Dm644 -t "$pkgdir"/usr/share/doc/bin-wrapper README
+	install -D     -t "$pkgdir"/wrappers                  *-wrapper
+}
