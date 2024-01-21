@@ -25,9 +25,7 @@ jobs:
         tar -czvf junest-x86_64.tar.gz -C ./.junest/ .
         mkdir dist
         mv *tar.gz dist/
-    - uses: gautamkrishnar/keepalive-workflow@v1
-      with:
-        gh_token: ${{ secrets.GH_TOKEN }}
+
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
