@@ -29,12 +29,15 @@ function tearDown(){
 
 function init_mocks() {
     chroot_cmd() {
+        # shellcheck disable=SC2317
         [ "$JUNEST_ENV" != "1" ] && return 1
+        # shellcheck disable=SC2317
         echo "chroot_cmd $*"
     }
     # shellcheck disable=SC2034
     GROOT=chroot_cmd
     mychroot() {
+        # shellcheck disable=SC2317
         echo mychroot "$*"
     }
 }

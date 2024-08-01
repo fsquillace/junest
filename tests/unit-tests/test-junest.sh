@@ -15,25 +15,32 @@ function oneTimeSetUp(){
 
 function setUp(){
     ## Mock functions ##
+    # shellcheck disable=SC2317
     function usage(){
         echo "usage"
     }
+    # shellcheck disable=SC2317
     function version(){
         echo "version"
     }
+    # shellcheck disable=SC2317
     function build_image_env(){
         local disable_check=$1
         echo "build_image_env($disable_check)"
     }
+    # shellcheck disable=SC2317
     function delete_env(){
         echo "delete_env"
     }
+    # shellcheck disable=SC2317
     function setup_env_from_file(){
         echo "setup_env_from_file($1)"
     }
+    # shellcheck disable=SC2317
     function setup_env(){
         echo "setup_env($1)"
     }
+    # shellcheck disable=SC2317
     function run_env_as_proot_fakeroot(){
         local backend_command="$1"
         local backend_args="$2"
@@ -41,6 +48,7 @@ function setUp(){
         shift 3
         echo "run_env_as_proot_fakeroot($backend_command,$backend_args,$no_copy_files,$*)"
     }
+    # shellcheck disable=SC2317
     function run_env_as_groot(){
         local backend_command="$1"
         local backend_args="$2"
@@ -48,6 +56,7 @@ function setUp(){
         shift 3
         echo "run_env_as_groot($backend_command,$backend_args,$no_copy_files,$*)"
     }
+    # shellcheck disable=SC2317
     function run_env_as_chroot(){
         local backend_command="$1"
         local backend_args="$2"
@@ -55,6 +64,7 @@ function setUp(){
         shift 3
         echo "run_env_as_chroot($backend_command,$backend_args,$no_copy_files,$*)"
     }
+    # shellcheck disable=SC2317
     function run_env_as_proot_user(){
         local backend_command="$1"
         local backend_args="$2"
@@ -62,6 +72,7 @@ function setUp(){
         shift 3
         echo "run_env_as_proot_user($backend_command,$backend_args,$no_copy_files,$*)"
     }
+    # shellcheck disable=SC2317
     function run_env_as_bwrap_fakeroot(){
         local backend_command="$1"
         local backend_args="$2"
@@ -69,6 +80,7 @@ function setUp(){
         shift 3
         echo "run_env_as_bwrap_fakeroot($backend_command,$backend_args,$no_copy_files,$*)"
     }
+    # shellcheck disable=SC2317
     function run_env_as_bwrap_user(){
         local backend_command="$1"
         local backend_args="$2"
@@ -76,9 +88,11 @@ function setUp(){
         shift 3
         echo "run_env_as_bwrap_user($backend_command,$backend_args,$no_copy_files,$*)"
     }
+    # shellcheck disable=SC2317
     function is_env_installed(){
         return 0
     }
+    # shellcheck disable=SC2317
     function create_wrappers(){
         :
     }
@@ -108,6 +122,7 @@ function test_build_image_env(){
 }
 
 function test_create_wrappers(){
+    # shellcheck disable=SC2317
     function create_wrappers(){
         local force=$1
         echo "create_wrappers($force)"
@@ -126,6 +141,7 @@ function test_delete_env(){
     assertEquals "delete_env" "$(cat "$STDOUTF")"
 }
 function test_setup_env_from_file(){
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }
@@ -134,6 +150,7 @@ function test_setup_env_from_file(){
     assertCommandSuccess main setup --from-file myimage
     assertEquals "setup_env_from_file(myimage)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 0
     }
@@ -141,6 +158,7 @@ function test_setup_env_from_file(){
 }
 
 function test_setup_env(){
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }
@@ -153,6 +171,7 @@ function test_setup_env(){
     assertCommandSuccess main setup --arch arm
     assertEquals "setup_env(arm)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 0
     }
@@ -181,6 +200,7 @@ function test_run_env_as_proot_fakeroot(){
     assertCommandSuccess main proot -f  -- command --as
     assertEquals "run_env_as_proot_fakeroot(,,false,command --as)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }
@@ -207,6 +227,7 @@ function test_run_env_as_user(){
     assertCommandSuccess main proot -- command -ls
     assertEquals "run_env_as_proot_user(,,false,command -ls)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }
@@ -231,6 +252,7 @@ function test_run_env_as_groot(){
     assertCommandSuccess main groot -- command
     assertEquals "run_env_as_groot(,,false,command)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }
@@ -253,6 +275,7 @@ function test_run_env_as_chroot(){
     assertCommandSuccess main root -- command
     assertEquals "run_env_as_chroot(,,false,command)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }
@@ -295,6 +318,7 @@ function test_run_env_as_bwrap_fakeroot(){
     assertCommandSuccess main -f -- command --as
     assertEquals "run_env_as_bwrap_fakeroot(,,false,command --as)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }
@@ -337,6 +361,7 @@ function test_run_env_as_bwrap_user(){
     assertCommandSuccess main -- command --as
     assertEquals "run_env_as_bwrap_user(,,false,command --as)" "$(cat "$STDOUTF")"
 
+    # shellcheck disable=SC2317
     is_env_installed(){
         return 1
     }

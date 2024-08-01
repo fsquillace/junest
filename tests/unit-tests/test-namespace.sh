@@ -16,6 +16,7 @@ function oneTimeSetUp(){
 
 ## Mock functions ##
 function init_mocks() {
+    # shellcheck disable=SC2317
     function bwrap_cmd(){
         echo "$BWRAP $*"
     }

@@ -250,6 +250,7 @@ function execute_operation() {
     $ACT_VERSION && version && return
 
     if $ACT_BUILD; then
+        # shellcheck disable=SC2086
         build_image_env $OPT_DISABLE_CHECK
         return
     fi
@@ -281,6 +282,7 @@ function execute_operation() {
     fi
 
     if $ACT_CREATE_WRAPPERS; then
+        # shellcheck disable=SC2086
         create_wrappers $OPT_FORCE "$OPT_BIN_PATH"
         exit
     fi
@@ -307,6 +309,7 @@ function execute_operation() {
     # Call create_wrappers in case new bin files have been created
     # shellcheck disable=SC2064
     trap "PATH=$PATH create_wrappers" EXIT QUIT TERM
+    # shellcheck disable=SC2086
     $run_env "$BACKEND_COMMAND" "${BACKEND_ARGS}" $OPT_NO_COPY_FILES "${ARGS[@]}"
 }
 

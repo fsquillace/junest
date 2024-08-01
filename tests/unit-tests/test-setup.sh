@@ -35,6 +35,7 @@ function test_is_env_installed(){
 
 function test_setup_env(){
     rm -rf "${JUNEST_HOME:?}"/*
+    # shellcheck disable=SC2317
     wget_mock(){
         # Proof that the setup is happening
         # inside $JUNEST_TEMPDIR

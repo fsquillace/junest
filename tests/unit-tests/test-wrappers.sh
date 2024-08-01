@@ -70,6 +70,7 @@ function test_create_wrappers_verify_content(){
     assertEquals "" "$(cat "$STDOUTF")"
 
     # Mock junest command to capture the actual output generated from myfile script
+    # shellcheck disable=SC2317
     junest(){
         for arg in "$@"
         do

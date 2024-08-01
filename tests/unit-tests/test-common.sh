@@ -22,8 +22,10 @@ function oneTimeTearDown(){
 
 function setUp(){
     ld_exec_mock() {
+        # shellcheck disable=SC2317
         echo "ld_exec $*"
     }
+    # shellcheck disable=SC2317
     ld_exec_mock_false() {
         echo "ld_exec $*"
         return 1
@@ -32,11 +34,13 @@ function setUp(){
     LD_EXEC=ld_exec_mock
 
     unshare_mock() {
+        # shellcheck disable=SC2317
         echo "unshare $*"
     }
     # shellcheck disable=SC2034
     UNSHARE=unshare_mock
 
+    # shellcheck disable=SC2317
     bwrap_mock() {
         echo "bwrap $*"
     }
@@ -173,6 +177,7 @@ function test_proot_cmd_compat(){
 
 function test_proot_cmd_seccomp(){
     envv(){
+        # shellcheck disable=SC2317
         env
     }
     PROOT=envv
@@ -180,6 +185,7 @@ function test_proot_cmd_seccomp(){
     assertEquals "" "$(grep "^PROOT_NO_SECCOMP" "$STDOUTF")"
 
     envv(){
+        # shellcheck disable=SC2317
         env | grep "^PROOT_NO_SECCOMP"
     }
     # shellcheck disable=SC2034
@@ -193,6 +199,7 @@ PROOT_NO_SECCOMP=1" "$(grep "^PROOT_NO_SECCOMP" "$STDOUTF")"
 
 function test_copy_passwd_and_group(){
     getent_cmd_mock() {
+        # shellcheck disable=SC2317
         echo "$*"
     }
     GETENT=getent_cmd_mock assertCommandSuccess copy_passwd_and_group
@@ -202,6 +209,7 @@ function test_copy_passwd_and_group(){
 
 function test_copy_passwd_and_group_fallback(){
     cp_cmd_mock() {
+        # shellcheck disable=SC2317
         echo "$*"
     }
     CP=cp_cmd_mock GETENT=false LD_EXEC=false assertCommandSuccess copy_passwd_and_group

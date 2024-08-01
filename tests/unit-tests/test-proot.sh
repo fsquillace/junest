@@ -49,6 +49,7 @@ function _test_copy_remaining_files() {
 }
 
 function test_run_env_as_proot_user(){
+    # shellcheck disable=SC2317
     _run_env_with_qemu() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
@@ -66,6 +67,7 @@ function test_run_env_as_proot_user(){
 }
 
 function test_run_env_as_proot_user_with_backend_command(){
+    # shellcheck disable=SC2317
     _run_env_with_qemu() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
@@ -83,6 +85,7 @@ function test_run_env_as_proot_user_with_backend_command(){
 }
 
 function test_run_env_as_proot_user_no_copy(){
+    # shellcheck disable=SC2317
     _run_env_with_qemu() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
@@ -120,6 +123,7 @@ function test_run_env_as_proot_user_nested_env(){
 }
 
 function test_run_env_as_proot_fakeroot(){
+    # shellcheck disable=SC2317
     _run_env_with_qemu() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
@@ -136,6 +140,7 @@ function test_run_env_as_proot_fakeroot(){
 }
 
 function test_run_env_as_proot_fakeroot_with_backend_command(){
+    # shellcheck disable=SC2317
     _run_env_with_qemu() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
@@ -159,6 +164,7 @@ function test_run_env_as_proot_fakeroot_nested_env(){
 }
 
 function test_run_env_with_quotes(){
+    # shellcheck disable=SC2317
     _run_env_with_qemu() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
@@ -169,6 +175,7 @@ function test_run_env_with_quotes(){
 }
 
 function test_run_env_with_proot_args(){
+    # shellcheck disable=SC2317
     proot_cmd() {
         [ "$JUNEST_ENV" != "1" ] && return 1
         # shellcheck disable=SC2086
@@ -187,16 +194,19 @@ function test_run_env_with_proot_args(){
 
 function test_qemu() {
     echo "JUNEST_ARCH=arm" > "${JUNEST_HOME}"/etc/junest/info
+    # shellcheck disable=SC2317
     rm_cmd() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
         echo $*
     }
+    # shellcheck disable=SC2317
     ln_cmd() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
         echo $*
     }
+    # shellcheck disable=SC2317
     _run_env_with_proot() {
         # shellcheck disable=SC2086
         # shellcheck disable=SC2048
