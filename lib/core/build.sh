@@ -65,6 +65,9 @@ function build_image_env(){
     # https://app.travis-ci.com/github/fsquillace/junest/builds/268216346
     [[ -e "${maindir}"/root/etc/pacman.conf ]] || sudo curl "https://gitlab.archlinux.org/archlinux/packaging/packages/pacman/-/raw/main/pacman.conf" -o "${maindir}/root/etc/pacman.conf"
 
+    # Pacman/pacstrap bug: https://gitlab.archlinux.org/archlinux/packaging/packages/arch-install-scripts/-/issues/3
+    sudo sed -i '/^DownloadUser = alpm$/d' "${maindir}"/root/etc/pacman.conf
+
     sudo tee -a "${maindir}"/root/etc/pacman.conf <<EOT
 
 [junest]
