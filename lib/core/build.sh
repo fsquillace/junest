@@ -87,13 +87,13 @@ EOT
     info "Generating the locales..."
     # sed command is required for locale-gen but it is required by fakeroot
     # and cannot be removed
-    # localedef (called by locale-gen) requires gzip
+    # localedef (called by locale-gen) requires gzip but it is supposed to be
+    # already installed as systemd already depends on it
     sudo pacman --noconfirm --root "${maindir}"/root -S sed gzip
     sudo ln -sf /usr/share/zoneinfo/posix/UTC "${maindir}"/root/etc/localtime
     sudo bash -c "echo 'en_US.UTF-8 UTF-8' >> ${maindir}/root/etc/locale.gen"
     sudo "${maindir}"/root/bin/groot "${maindir}"/root locale-gen
     sudo bash -c "echo LANG=\"en_US.UTF-8\" >> ${maindir}/root/etc/locale.conf"
-    sudo pacman --noconfirm --root "${maindir}"/root -Rsn gzip
 
     info "Setting up the pacman keyring (this might take a while!)..."
     if [[ $(uname -m) == *"arm"* ]]
