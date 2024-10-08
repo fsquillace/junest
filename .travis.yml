@@ -51,7 +51,7 @@ script:
   - junest setup -i junest-x86_64.tar.gz
   # TODO The check does not work at the moment: https://app.travis-ci.com/github/fsquillace/junest/builds/271706037
   #  Disabling it in order to avoid having stale version of junest images.
-  # - ${PWD}/lib/checks/check_all.sh
+  - ${PWD}/lib/checks/check_all.sh
   - yes | junest setup --delete
 
 
