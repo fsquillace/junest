@@ -76,7 +76,7 @@ Server = https://raw.githubusercontent.com/fsquillace/junest-repo/master/any
 EOT
     info "pacman.conf being used:"
     cat "${maindir}"/root/etc/pacman.conf
-    sudo pacman --noconfirm --config "${maindir}"/root/etc/pacman.conf --root "${maindir}"/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt yay
+    sudo pacman --noconfirm --config "${maindir}"/root/etc/pacman.conf --root "${maindir}"/root -Sy sudo-fake groot-git proot-static qemu-user-static-bin-alt yay-git
 
     echo "Generating the metadata info"
     sudo install -d -m 755 "${maindir}/root/etc/${CMD}"
