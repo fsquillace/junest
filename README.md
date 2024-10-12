@@ -1,5 +1,12 @@
 JuNest
 ======
+
+> [!IMPORTANT]
+> Starting from Ubuntu 23.10+, [unprivileged user namespaces has been restricted](https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces).
+> If using JuNest within Ubuntu, you may need root privileges in order to enable it.
+> Alternatively, you can access JuNest using the `proot` mode as described
+> [below](#Proot-based).
+
 The lightweight Arch Linux based distro that runs, without root privileges, on top of any other Linux distro.
 
 <h1 align="center">
