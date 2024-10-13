@@ -1,0 +1,10 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Path
+Target = usr/bin/?*
+[Action]
+Description = Create/Update JuNest wrapper
+When = PostTransaction
+Exec = /wrappers/create-wrapper
+NeedsTargets

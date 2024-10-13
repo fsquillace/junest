@@ -1,0 +1,14 @@
+This set of scripts and hooks will trigger pacman to create a wrapper script
+for any executable installed under /usr/bin/. The wrapper will be removed when
+the executable is removed.
+
+This will allow you to place $JUNEST_HOME/wrappers in your $PATH and use any
+JuNest-installed application transparently, including the use of a desktop
+launcher.
+
+The wrapper script targets the default (ns) JuNest back-end and will bind to
+any locations specified by a $JUNEST_BINDS environment variable, e.g.:
+
+export JUNEST_BINDS="--bind /media /media"
+
+You will have to export $JUNEST_HOME as normal. junest must be on your $PATH.
